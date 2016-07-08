@@ -1,0 +1,2 @@
+recursive-include singularity/templates *
+recursive-include singularity/testing *
