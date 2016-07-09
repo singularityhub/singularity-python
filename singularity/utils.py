@@ -7,6 +7,8 @@ utils.py: part of singularity package
 from exceptions import OSError
 import subprocess
 import tempfile
+import zipfile
+import shutil
 import os
 
 def check_install():
@@ -49,8 +51,48 @@ def export_image(image,export_format="tar"):
     return tmptar
 
 
-def zip_up(file_list):
+def zip_up(file_list,zip_name,output_folder=None):
     '''zip_up will zip up some list of files into a package (.zip)
     :param file_list: a list of files to include in the zip.
+    :param output_folder: the output folder to create the zip in. If not 
+    :param zip_name: the name of the zipfile to return.
+    specified, a temporary folder will be given.
     '''
-    print("WRITE ME!")
+    tmpdir = tempfile.mkdtemp()
+   
+    # Make a new archive    
+    output_zip = "%s/%s" %(tmpdir,zip_name)
+    zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED)
+
+    # Write files to zip, depending on type
+    for filename,content in file_list.iteritems():
+        # If it's a list, write to new file, and save
+        if isinstance(content,list):
+            filey = write_file("%s/%s" %(tmpdir,filename),"\n".join(content))
+            print("Adding %s to package..." %(filename))
+            zf.write(filey,filename)
+            os.remove(filey)
+        # If the file exists, just write it into a new archive
+        elif os.path.exists(content):
+            print("Adding %s to package..." %(filename))
+            zf.write(content,filename)
+
+    # Close the zip file    
+    zf.close()
+
+    if output_folder != None:
+        shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
+        shutil.rmtree(tmpdir)
+        output_zip = "%s/%s"%(output_folder,zip_name)
+
+    return output_zip
+
+
+def write_file(filename,content):
+    '''write_file will open a file, "filename" and write content, "content"
+    and properly close the file
+    '''
+    filey = open(filename,'wb')
+    filey.writelines(content)
+    filey.close()
+    return filename
