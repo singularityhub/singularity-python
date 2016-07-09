@@ -32,7 +32,11 @@ After installation, you should be able to run `shub` on the command line, withou
 
 #### Package your container
 
-A package is a zipped up file that contains the image, the singularity runscript as runscript, and a list of files `files.txt` and folders `folders.txt` in the container. The reason to create this package is that a higher level application might want to extract meta data about the container without needing to mount it. These are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. First, go to where you have some images:
+A package is a zipped up file that contains the image, the singularity runscript as runscript, and a list of files `files.txt` and folders `folders.txt` in the container. 
+
+![img/singularity-package.png](img/singularity-package.png)
+
+The reason to create this package is that a higher level application might want to extract meta data about the container without needing to mount it. These are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. First, go to where you have some images:
 
       cd singularity-images
       ls
