@@ -72,6 +72,12 @@ def zip_up(file_list,zip_name,output_folder=None):
             print("Adding %s to package..." %(filename))
             zf.write(filey,filename)
             os.remove(filey)
+        # If it's a string, do the same
+        elif isinstance(content,str):
+            filey = write_file("%s/%s" %(tmpdir,filename),content)
+            print("Adding %s to package..." %(filename))
+            zf.write(filey,filename)
+            os.remove(filey)
         # If the file exists, just write it into a new archive
         elif os.path.exists(content):
             print("Adding %s to package..." %(filename))
