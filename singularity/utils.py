@@ -4,6 +4,7 @@
 utils.py: part of singularity package
 
 '''
+import singularity.__init__ as hello
 from exceptions import OSError
 import subprocess
 import tempfile
@@ -27,6 +28,12 @@ def check_install():
         return False
     print("Found Singularity version %s" %version)
     return True
+
+
+def get_installdir():
+    '''get_installdir returns the installation directory of the application
+    '''
+    return os.path.abspath(os.path.dirname(hello.__file__))
 
 
 def export_image(image,export_format="tar"):
