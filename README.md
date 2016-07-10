@@ -54,9 +54,20 @@ If no output folder is specified, the resulting image (named in the format `ubun
 For the package command, you will need to put in your password to grant sudo priviledges, as packaging requires using the singularity `export` functionality.
 
 
-### shub --help
+#### Generate a runscript template
 
-      usage: shub [-h] [--image IMAGE] [--outfolder OUTFOLDER] [--package]
+A `runscript` is a file that sits in the base of a singularity image (at `/`) and gets executed when the container is called. This script is essentially the portal from your local machine to the bits in the container, and so being able to programatically extract command line arguments and allowable options is essential for an application to be able to (somewhat intelligently) use your containers. Toward this goal, we are providing runscript templates, or simple scripts (in various languages) that use standards that can be easily parsed (also by the shub tool). You can use the command line tool to generate these starter templates as follows:
+
+      # Generate a python run script in the present working directory
+      shub --runscript py
+
+      # Generate a python run script somewhere else
+      shub --runscript py --outfolder /home/vanessa/Desktop
+
+The only supported language is currently python (specify "py" as in the example above) and we will have more included as the software is developed. If you are a debutante for your favorite language(s) of choice, please contribute to the repo! Contribution means adding a runscript.{{ext}} to the [templates](singularity/templates) folder, and a function to the [runscript.py](singularity/runscript.py) module to parse it into a data structure to be included in the image package. More details coming soon, as the python verison of this (the first) is still under development.
+
+
+### shub --help
 
       package Singularity containers for singularity hub.
 
@@ -67,8 +78,11 @@ For the package command, you will need to put in your password to grant sudo pri
         --outfolder OUTFOLDER
                               full path to folder for output, if not specified, will
                               go to pwd
+        --runscript RUNSCRIPT
+                              specify extension to generate a runscript template in
+                              the PWD, or include --outfolder to change output
+                              directory. Currently supported types are py (python).
         --package             package a singularity container for singularity hub
-
 
 
 ### Functions Provided
