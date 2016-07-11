@@ -5,13 +5,35 @@ runscript.py: module for working with singularity runscripts
 
 '''
 
-from singularity.utils import get_installdir
+from singularity.utils import get_installdir, read_file
+from pygments.lexers import guess_lexer
+from pygments.util import ClassNotFound
 import subprocess
 import tempfile
 import zipfile
 import shutil
 import re
 import os
+
+def detect_language(runscript):
+    '''detect_language will use pygments to detect the language of a run script
+    :param runscript: the full path to the run script
+    '''
+    if os.path.exists(runscript):
+        content = read_file(runscript)
+        try:
+            language = guess_lexer(''.join(content))
+            if language.name == "Python":
+                return "python"
+            else:
+                print("Language %s is not yet supported." %(language.name))
+                return None
+        except ClassNotFound:
+            print("Cannot detect language.")
+            return None
+    else:
+        print("Cannot find %s" %runscript)
+    
 
 def get_runscript_template(output_folder=None,script_name="singularity",language="py"):
     '''get_runscript_template returns a template runscript "singularity" for the user

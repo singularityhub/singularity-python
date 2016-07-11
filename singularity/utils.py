@@ -101,11 +101,20 @@ def zip_up(file_list,zip_name,output_folder=None):
     return output_zip
 
 
-def write_file(filename,content):
+def write_file(filename,content,mode="wb"):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
     '''
-    filey = open(filename,'wb')
+    filey = open(filename,mode)
     filey.writelines(content)
     filey.close()
     return filename
+
+def read_file(filename,mode="rb"):
+    '''write_file will open a file, "filename" and write content, "content"
+    and properly close the file
+    '''
+    filey = open(filename,mode)
+    content = filey.readlines()
+    filey.close()
+    return content
