@@ -10,12 +10,18 @@ import argparse
 import sys
 import os
 
-def main():
+def get_parser():
+    '''get_parser returns the arg parse object, for use by an external application (and this script)
+    '''
     parser = argparse.ArgumentParser(
     description="This is a description of your tool's functionality.")
     parser.add_argument("--string", dest='string', help="This is a string argument with default None", type=str, default=None)
     parser.add_argument("--integer", dest='integer', help="This is a string argument with default None", type=int, default=9999)
     parser.add_argument('--boolean', dest='boolean', help="This is a boolean argument that defaults to False, and when set, returns True", default=False, action='store_true')
+    return parser
+
+def main():
+    parser = get_parser()
     try:
         args = parser.parse_args()
     except:

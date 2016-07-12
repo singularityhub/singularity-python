@@ -1,41 +1,53 @@
 #!/usr/bin/env python
 
 '''
-runscript.py: module for working with singularity runscripts
+runscript.py: template executable for an application
 
 '''
 
-from singularity.utils import get_installdir
-import subprocess
-import tempfile
-import zipfile
-import shutil
-import re
+# import your functions here
+import argparse
+import sys
 import os
 
-def get_runscript_template(output_folder=None,script_name="singularity",language="py"):
-    '''get_runscript_template returns a template runscript "singularity" for the user
-    :param output_folder: output folder for template, if not specified, will use PWD
-    :param script_name: the name to give the template script, default is "singularity" to work
-    with singularity containers
-    :param language: corresponds to language extension, to find script. Default is python (py)
+def get_parser():
+    '''get_parser returns the arg parse object, for use by an external application (and this script)
     '''
-    base = get_installdir()
-    template_folder = "%s/templates" %(base)
+    parser = argparse.ArgumentParser(
+    description="This is a description of your tool's functionality.")
+    parser.add_argument("--string", dest='string', help="This is a string argument with default None", type=str, default=None)
+    parser.add_argument("--integer", dest='integer', help="This is a string argument with default None", type=int, default=9999)
+    parser.add_argument('--boolean', dest='boolean', help="This is a boolean argument that defaults to False, and when set, returns True", default=False, action='store_true')
+    return parser
 
-    # If no output folder provided, will be returned to PWD
-    if output_folder == None:
-        output_folder = os.getcwd()
+def main():
+    parser = get_parser()
+    try:
+        args = parser.parse_args()
+    except:
+        parser.print_help()
+        sys.exit(0)
 
-    # If the user gave an extension with dots, remove them first
-    while re.search("^[.]",language):
-        language = language[1:]
-        
-    template_file = "%s/runscript.%s" %(base,language)
-    if not os.path.exists(template_file):
-        print("Template for extension %s is not currently provided.\n please submit an issue to https://github.com/singularityware/singularity-python/issues.")
+    # What is the integer argument set to?
+    if args.integer == 9999:
+        print("The argument --integer is set to its default, 9999.")
     else:
-        runscript = "%s/%s" %(output_folder,script_name)
-        shutil.copyfile(template_file,runscript)
-        print("Runscript template saved to %s!" %(runscript))
-        return runscript
+        print("The argument --integer is set to be %s" %(args.integer))
+
+
+    # What is the string argument set to?
+    if args.string == None:
+        print("The argument --string is set to its default, None.")
+    else:
+        print("The argument --string is set to %s." %(args.string))
+
+
+    # What is the boolean argument set to?
+    if args.boolean == False:
+        print("The argument --boolean is not specified, returns %s" %(args.boolean))
+    else:
+        print("The argument --boolean is specified, set to %s." %(args.boolean))
+
+
+if __name__ == '__main__':
+    main()
