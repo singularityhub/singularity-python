@@ -1,4 +1,4 @@
-#### Package your container
+# Package your container
 
 A package is a zipped up file that contains the image, the singularity runscript as `runscript`, a [boutique schema descriptor](https://github.com/boutiques/schema) with acceptable input arguments, a `VERSION` file, and a list of files `files.txt` and folders `folders.txt` in the container. 
 
@@ -12,7 +12,8 @@ The reason to create this package is that a higher level application might want 
    - {{image}}.json: is the boutiques schema describing the inputs ([more detail here](examples/package_image))
 
 
-#### Walk through an example
+
+## Walk through an example
 
 I've provided a sample image with a python runscript that uses `argparse` to generate input args, and thus conforms to our current standard that this tool can parse. If you want to generate your own template, there are instructions under [make_runscript](../make_runscript).
 
@@ -53,25 +54,26 @@ For the package command, you will need to put in your password to grant sudo pri
       Package created at /home/vanessa/Desktop/ubuntu:latest-2016-04-06.img.zip
 
 
-##### Inspecting the outputs
 
-###### ubuntu:latest-2016-04-06.img
+### Inspecting the outputs
+
+#### ubuntu:latest-2016-04-06.img
 
 This is the original image. It will be extracted from the zip and saved to singularity-hub equivalently to an image uploaded that is not packaged. The main difference in providing the image in a package is that it brings rich meta data about inputs, software included, and versioning.
 
-###### VERSION
+#### VERSION
 
 The `VERSION` file is a simple text file that is an md5 hash of the container/image when it was packaged. This is important for applications / future use to ensure that the meta-data in the package is associated with the correct image. If you look at the boutiques json specified next, you will see that we store this VERSION there as well.
 
 
       4b315329b7f8b18799bb8c68def515e8
 
-###### runscript
+#### runscript
 
 This is the runscript, meaning the `/singularity` file extracted from the container, if one is provided. This will be provided in the application for the user to easily see, and is also useful to have it available for applications so they do not need to mount the container.
 
 
-###### ubuntu:latest-2016-04-06.img.json
+#### ubuntu:latest-2016-04-06.img.json
 
 This is the boutiques spec, and largely it will store the parsed input options. The schema requires specification of an output, but in this format I don't have a good idea for how to get that yet. Since the user will be manually generating workflows (click click!) using singularity hub, for now we will require him/her to specify the output types when uploading the package. In the future it would be ideal to have an improved solution for this, such as a testing suite (a node on SLURM cluster, for example) where an analysis component can be packaged, and outputs can be determined based on files generated after the job is completed.
 
