@@ -15,7 +15,7 @@ The reason to create this package is that a higher level application might want 
 
 ## Walk through an example
 
-I've provided a sample image with a python runscript that uses `argparse` to generate input args, and thus conforms to our current standard that this tool can parse. If you want to generate your own template, there are instructions under [make_runscript](../make_runscript).
+I've provided a sample image with a python runscript that uses `argparse` to generate input args, and thus conforms to our current standard that this tool can parse. If you want to generate your own template, there are instructions under [make_runscript](../make_runscript). You can also skip the example and [downloaded the example package](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img.zip), or the [image used to create it](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img).
 
 First, download this image:
 
