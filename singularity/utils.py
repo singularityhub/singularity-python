@@ -4,9 +4,11 @@
 utils.py: part of singularity package
 
 '''
+
 import singularity.__init__ as hello
 from exceptions import OSError
 import subprocess
+import simplejson
 import tempfile
 import zipfile
 import shutil
@@ -73,21 +75,26 @@ def zip_up(file_list,zip_name,output_folder=None):
 
     # Write files to zip, depending on type
     for filename,content in file_list.iteritems():
+
+        print("Adding %s to package..." %(filename))
+
         # If it's a list, write to new file, and save
         if isinstance(content,list):
             filey = write_file("%s/%s" %(tmpdir,filename),"\n".join(content))
-            print("Adding %s to package..." %(filename))
+            zf.write(filey,filename)
+            os.remove(filey)
+        # If it's a dict, save to json
+        elif isinstance(content,dict):
+            filey = write_json(content,"%s/%s" %(tmpdir,filename))
             zf.write(filey,filename)
             os.remove(filey)
         # If it's a string, do the same
         elif isinstance(content,str):
             filey = write_file("%s/%s" %(tmpdir,filename),content)
-            print("Adding %s to package..." %(filename))
             zf.write(filey,filename)
             os.remove(filey)
         # If the file exists, just write it into a new archive
         elif os.path.exists(content):
-            print("Adding %s to package..." %(filename))
             zf.write(content,filename)
 
     # Close the zip file    
@@ -110,6 +117,22 @@ def write_file(filename,content,mode="wb"):
     filey.close()
     return filename
 
+
+def write_json(json_obj,filename,mode="w",print_pretty=True):
+    '''write_json will (optionally,pretty print) a json object to file
+    :param json_obj: the dict to print to json
+    :param filename: the output file to write to
+    :param pretty_print: if True, will use nicer formatting   
+    '''
+    filey = open(filename,mode)
+    if print_pretty == True:
+        filey.writelines(simplejson.dumps(json_obj, indent=4, separators=(',', ': ')))
+    else:
+        filey.writelines(simplejson.dumps(json_obj))
+    filey.close()
+    return filename
+
+
 def read_file(filename,mode="rb"):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
@@ -118,3 +141,4 @@ def read_file(filename,mode="rb"):
     content = filey.readlines()
     filey.close()
     return content
+

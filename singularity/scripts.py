@@ -51,7 +51,7 @@ def main():
 
                # The user wants to package the image
                if args.package == True:
-                   package(image=image,
+                   package(image_path=image,
                            output_folder=output_folder,
                            runscript=True,
                            software=True)

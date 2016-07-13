@@ -32,11 +32,19 @@ After installation, you should be able to run `shub` on the command line, withou
 
 #### Package your container
 
-A package is a zipped up file that contains the image, the singularity runscript as runscript, and a list of files `files.txt` and folders `folders.txt` in the container. 
+A package is a zipped up file that contains the image, the singularity runscript as `runscript`, a [boutique schema descriptor](https://github.com/boutiques/schema) with acceptable input arguments, a `VERSION` file, and a list of files `files.txt` and folders `folders.txt` in the container. 
 
 ![img/singularity-package.png](img/singularity-package.png)
 
-The reason to create this package is that a higher level application might want to extract meta data about the container without needing to mount it. These are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. First, go to where you have some images:
+The example package can be [downloaded for inspection](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img.zip), as can the [image used to create it](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img). The reason to create this package is that a higher level application might want to extract meta data about the container without needing to mount it. 
+
+  - files.txt and folders.txt: are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. 
+  - VERSION: is a text file with one line, an md5 hash generated for the image when it was packaged. This version is also included with the boutiques schema. This is to ensure that the meta data about an image matches the current image, to the best of our knowledge.
+   - {{image}}.img: is of course the original singularity container (usually a .img file)
+   - {{image}}.json: is the boutiques schema describing the inputs ([more detail here](examples/package_image))
+
+
+First, go to where you have some images:
 
       cd singularity-images
       ls
@@ -52,6 +60,8 @@ If no output folder is specified, the resulting image (named in the format `ubun
       shub --image ubuntu:latest-2016-04-06.img --package --outfolder /home/vanessa/Desktop
 
 For the package command, you will need to put in your password to grant sudo priviledges, as packaging requires using the singularity `export` functionality.
+
+For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
 
 
 #### Generate a runscript template
