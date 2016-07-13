@@ -6,10 +6,10 @@ A package is a zipped up file that contains the image, the singularity runscript
 
 The reason to create this package is that a higher level application might want to extract meta data about the container without needing to mount it. 
 
-  - files.txt and folders.txt: are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. 
-  - VERSION: is a text file with one line, an md5 hash generated for the image when it was packaged. This version is also included with the boutiques schema. This is to ensure that the meta data about an image matches the current image, to the best of our knowledge.
-   - {{image}}.img: is of course the original singularity container (usually a .img file)
-   - {{image}}.json: is the boutiques schema describing the inputs ([more detail here](examples/package_image))
+  - **files.txt** and **folders.txt**: are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. 
+  - **VERSION**: is a text file with one line, an md5 hash generated for the image when it was packaged. This version is also included with the boutiques schema. This is to ensure that the meta data about an image matches the current image, to the best of our knowledge.
+   - **{{image}}.img**: is of course the original singularity container (usually a .img file)
+   - **{{image}}.img.json**: is the boutiques schema describing the inputs ([more detail here](examples/package_image))
 
 
 
