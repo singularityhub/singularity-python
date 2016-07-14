@@ -7,22 +7,24 @@ package.py: part of singularity package
 
 from singularity.runscript import get_runscript_parameters
 from singularity.utils import export_image, zip_up
+from singularity.cli import Singularity
 import tempfile
 import tarfile
 import hashlib
 import os
 
 
-def package(image_path,output_folder=None,runscript=True,software=True,remove_image=False):
+def package(image_path,output_folder=None,runscript=True,software=True,remove_image=False,verbose=False):
     '''package will take an image and generate a zip (including the image
     to a user specified output_folder.
     :param image_path: full path to singularity image file
     :param runscript: if True, will extract runscript to include in package as runscript
     :param software: if True, will extract files.txt and folders.txt to package
     :param remove_image: if True, will not include original image in package (default,False)
+    :param verbose: be verbose when using singularity --export (default,False)
     '''    
-
-    tmptar = export_image(image_path)
+    S = Singularity(verbose=verbose)
+    tmptar = S.export(image_path=image_path,pipe=False)
     tar = tarfile.open(tmptar)
     members = tar.getmembers()
     image_name = os.path.basename(image_path)

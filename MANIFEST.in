@@ -1,2 +1,3 @@
 recursive-include singularity/templates *
+recursive-include singularity/scripts *
 recursive-include singularity/testing *

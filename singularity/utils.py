@@ -14,22 +14,19 @@ import zipfile
 import shutil
 import os
 
-def check_install():
+
+def check_install(software="singularity"):
     '''check_install will attempt to run the singularity command, and return an error
     if not installed. The command line utils will not run without this check.
     '''    
-
-    try:
-        process = subprocess.Popen(["singularity", "--version"],stdout=subprocess.PIPE)
-        version, err = process.communicate()
-    except OSError as error: 
-        if error.errno == os.errno.ENOENT:
-            print('Cannot find singularity. Is it installed?')
-        else:
-            print('Another error')
+  
+    cmd = [software,'--version']
+    version = run_command(cmd,error_message="Cannot find singularity. Is it installed?")
+    if version != None:
+        print("Found %s version %s" %(software.upper(),version))
+        return True
+    else:
         return False
-    print("Found Singularity version %s" %version)
-    return True
 
 
 def get_installdir():
@@ -38,27 +35,56 @@ def get_installdir():
     return os.path.abspath(os.path.dirname(hello.__file__))
 
 
-def export_image(image,export_format="tar"):
-    '''export_image uses singularity command line (bash) tool to export tar to a temporary directory
-    :param export_format: the export format, currently only supported type is tar
+def get_script(script_name):
+    '''get_script will return a script_name, if it is included in singularity/scripts,
+    otherwise will alert the user and return None
+    :param script_name: the name of the script to look for
     '''
-
-    if export_format != "tar":
-        print("Currently only supported export format is tar.")
+    install_dir = get_installdir()
+    script_path = "%s/scripts/%s" %(install_dir,script_name)
+    if os.path.exists(script_path):
+        return script_path
+    else:
+        print("Script %s is not included in singularity-python!")
         return None
 
-    # We need sudo to export
+def getsudo():
     sudopw = raw_input('[sudo] password for %s: ' %(os.environ['USER']))
-    
-    _,tmptar = tempfile.mkstemp(suffix=".%s" %export_format)
-    os.remove(tmptar)
-    cmd = ' '.join(["echo", sudopw,"|","sudo","-S","singularity","export","-f",tmptar,image])
-    os.system(cmd)
-    if not os.path.exists(tmptar):
-        print('Error generating image tar')
-        return None
-    return tmptar
+    return sudopw
 
+
+def run_command(cmd,error_message=None,sudopw=None,suppress=False):
+    '''run_command uses subprocess to send a command to the terminal.
+    :param cmd: the command to send, should be a list for subprocess
+    :param error_message: the error message to give to user if fails, 
+    if none specified, will alert that command failed.
+    :param execute: if True, will add `` around command (default is False)
+    :param sudopw: if specified (not None) command will be run asking for sudo
+    '''
+    if sudopw != None:
+        cmd = ' '.join(["echo", sudopw,"|","sudo","-S"] + cmd)
+        if suppress == False:
+            output = os.popen(cmd).read().strip('\n')
+        else:
+            output = cmd
+            os.system(cmd)
+    else:
+        try:
+            process = subprocess.Popen(cmd,stdout=subprocess.PIPE)
+            output, err = process.communicate()
+        except OSError as error: 
+            if error.errno == os.errno.ENOENT:
+                print(error_message)
+            else:
+                print(err)
+            return None
+    
+    return output
+
+
+############################################################################
+## FILE OPERATIONS #########################################################
+############################################################################
 
 def zip_up(file_list,zip_name,output_folder=None):
     '''zip_up will zip up some list of files into a package (.zip)
