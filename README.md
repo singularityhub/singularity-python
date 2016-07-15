@@ -30,6 +30,20 @@ After installation, you should be able to run `shub` on the command line, withou
       Please specify a singularity image with --image.
 
 
+#### Export Docker to Singularity
+
+This tool currently has command line and (functions) to convert a Docker image to Singularity. Currently, we don't add any sort of runscript from the CMD, as this needs to be better developed. To use on the command line:
+
+
+     shub --docker ubuntu:latest
+
+ 
+will export the image `ubuntu:latest-2016-04-06.img` into your current working directory. If you want to export to a different folder:
+
+
+      shub --docker ubuntu:latest --outfolder /home/vanessa/Desktop
+
+
 #### Package your container
 
 A package is a zipped up file that contains the image, the singularity runscript as `runscript`, a [boutique schema descriptor](https://github.com/boutiques/schema) with acceptable input arguments, a `VERSION` file, and a list of files `files.txt` and folders `folders.txt` in the container. 
@@ -85,6 +99,9 @@ The only supported language is currently python (specify "py" as in the example 
         -h, --help            show this help message and exit
         --image IMAGE         full path to singularity image (for use with
                               --package)
+        --docker2singularity DOCKER
+                              name of Docker image to export to Singularity (does
+                              not include runscript cmd)
         --outfolder OUTFOLDER
                               full path to folder for output, if not specified, will
                               go to pwd
@@ -93,6 +110,10 @@ The only supported language is currently python (specify "py" as in the example 
                               the PWD, or include --outfolder to change output
                               directory. Currently supported types are py (python).
         --package             package a singularity container for singularity hub
+
+
+        usage: shub [-h] [--image IMAGE] [--docker2singularity DOCKER]
+                    [--outfolder OUTFOLDER] [--runscript RUNSCRIPT] [--package]
 
 
 ### Functions Provided
