@@ -6,9 +6,9 @@ Runtime executable, "shub"
 
 '''
 
+from singularity.package import package, docker2singularity
 from singularity.runscript import get_runscript_template
 from singularity.utils import check_install
-from singularity.package import package
 from glob import glob
 import argparse
 import sys
@@ -18,6 +18,7 @@ def main():
     parser = argparse.ArgumentParser(
     description="package Singularity containers for singularity hub.")
     parser.add_argument("--image", dest='image', help="full path to singularity image (for use with --package)", type=str, default=None)
+    parser.add_argument("--docker2singularity", dest='docker', help="name of Docker image to export to Singularity (does not include runscript cmd)", type=str, default=None)
     parser.add_argument("--outfolder", dest='outfolder', help="full path to folder for output, if not specified, will go to pwd", type=str, default=None)
     parser.add_argument("--runscript", dest='runscript', help="specify extension to generate a runscript template in the PWD, or include --outfolder to change output directory. Currently supported types are py (python).", type=str, default=None)
     parser.add_argument('--package', help="package a singularity container for singularity hub", dest='package', default=False, action='store_true')
@@ -38,6 +39,13 @@ def main():
         get_runscript_template(output_folder=output_folder,
                                script_name="singularity",
                                language=args.runscript)
+
+
+    # If the user wants to export docker2singularity!
+    if args.docker != None:
+        docker2singularity(output_folder=output_folder,
+                           docker_image=args.docker)
+
 
     # We can only continue if singularity is installed
     if check_install() == True:
