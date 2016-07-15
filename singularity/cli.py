@@ -259,7 +259,7 @@ class Singularity:
             self.create(image_path=new_container_name,size=size)
 
             # export running docker container 
-            cmd = ['docker','export',container_id,'|','sudo','singularity','import',new_container_name,'--debug']
+            cmd = ['docker','export',container_id,'|','sudo','singularity','import',new_container_name]
             self.run_command(cmd,sudo=sudo,suppress=True)
 
             # Add stuff about the container to it
@@ -281,17 +281,17 @@ class Singularity:
             os.remove('grouphost')
             os.remove('group')
 
-            # Runscript!
-            cmd = ['docker','inspect',"--format='{{json .Config.Cmd}}'",docker_image]
-            command = self.run_command(cmd,sudo=sudo)
-            command = command.replace('["',"").replace('"]',"")
-            if command != "none":
-                write_file(runscript,command)
-                cmd = ['chmod','+x',runscript]
-                self.run_command(cmd,sudo=sudo)
-                cmd = ['singularity','copy',new_container_name,runscript,'/']
-                self.run_command(cmd,sudo=sudo)
-                os.remove(runscript)
+            # Runscript! Currently disabling - having some bugs with this
+            #cmd = ['docker','inspect',"--format='{{json .Config.Cmd}}'",docker_image]
+            #command = self.run_command(cmd,sudo=sudo)
+            #command = command.replace('["',"").replace('"]',"")
+            #if command != "none":
+            #    write_file(runscript,command)
+            #    cmd = ['chmod','+x',runscript]
+            #    self.run_command(cmd,sudo=sudo)
+            #    cmd = ['singularity','copy',new_container_name,runscript,'/']
+            #    self.run_command(cmd,sudo=sudo)
+            #    os.remove(runscript)
             print("Stopping container... please wait!")
             cmd = ['docker','stop',container_id]
             self.run_command(cmd,sudo=sudo)
