@@ -14,7 +14,7 @@ import hashlib
 import os
 
 
-def package(image_path,output_folder=None,runscript=True,software=True,remove_image=False,verbose=False):
+def package(image_path,output_folder=None,runscript=True,software=True,remove_image=False,verbose=False,S=None):
     '''package will take an image and generate a zip (including the image
     to a user specified output_folder.
     :param image_path: full path to singularity image file
@@ -22,8 +22,10 @@ def package(image_path,output_folder=None,runscript=True,software=True,remove_im
     :param software: if True, will extract files.txt and folders.txt to package
     :param remove_image: if True, will not include original image in package (default,False)
     :param verbose: be verbose when using singularity --export (default,False)
+    :param S: the Singularity object (optional) will be created if not required.
     '''    
-    S = Singularity(verbose=verbose)
+    if S == None:
+        S = Singularity(verbose=verbose)
     tmptar = S.export(image_path=image_path,pipe=False)
     tar = tarfile.open(tmptar)
     members = tar.getmembers()
