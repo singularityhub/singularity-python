@@ -87,6 +87,64 @@ def list_package(package_path):
     return zf.namelist()
     
 
+def compare_package(pkg1,pkg2,include_files=False,include_folders=True):
+    '''compare_package will return the lists of files or folders (or both) that are 
+    different and equal between two packages
+    :param pkg1: package 1
+    :param pkg1: package 2
+    :param include_files: boolean, default False. If true, will include files
+    :param include_folders: boolean, default True. If true, will include files
+    '''
+    if include_files == False and include_folders == False:
+        print("Please specify include_files and/or include_folders to be True.")
+    else:
+
+        # For future reference
+        pkg1_name = os.path.basename(pkg1)
+        pkg2_name = os.path.basename(pkg2)
+
+        # Lists for all comparators for each package
+        pkg1_comparators = []
+        pkg2_comparators = []
+
+        pkg1_includes = list_package(pkg1)
+        pkg2_includes = list_package(pkg2)
+
+        # Include files in comparison?
+        if include_files == True:
+            if "files.txt" in pkg1_includes and "files.txt" in pkg2_includes:
+                pkg1_comparators += load_package(pkg1,get="files.txt")["files.txt"]
+                pkg2_comparators += load_package(pkg2,get="files.txt")["files.txt"]
+
+        # Include folders in comparison?
+        if include_folders == True:
+            if "folders.txt" in pkg2_includes and "folders.txt" in pkg2_includes:
+                pkg1_comparators += load_package(pkg1,get="folders.txt")["folders.txt"]
+                pkg2_comparators += load_package(pkg2,get="folders.txt")["folders.txt"]
+
+
+        # Do the comparison
+        intersect = [x for x in pkg1_comparators if x in pkg2_comparators]
+        unique_pkg1 = [x for x in pkg1_comparators if x not in pkg2_comparators]
+        unique_pkg2 = [x for x in pkg2_comparators if x not in pkg1_comparators]
+
+        # Alert user if one is a child/parent (might want a data structure for this in future)
+        if len(unique_pkg1) == 0 and len(unique_pkg2) == 0:
+            print("Package %s and %s are identical" %(pkg1_name,pkg2_name))
+        elif len(unique_pkg1) == 0:
+            print("Package %s is a child of %s" %(pkg1_name,pkg2_name))
+        elif len(unique_pkg2) == 0:
+            print("Package %s is a parent of %s" %(pkg1_name,pkg2_name))
+
+        # Return data structure
+        comparison = {"intersect":intersect,
+                      "unique_%s" %(pkg1_name): unique_pkg1,
+                      "unique_%s" %(pkg2_name): unique_pkg2}
+
+        return comparison
+
+
+
 def load_package(package_path,get=None):
     '''load_package will return the contents of a package, read into memory
     :param package_path: the full path to the package
@@ -94,6 +152,9 @@ def load_package(package_path,get=None):
     '''
     if get == None:
         get = list_package(package_path)
+
+    # Open the zipfile
+    zf = zipfile.ZipFile(package_path, 'r')
 
     # The user might have provided a string and not a list
     if isinstance(get,str): 
