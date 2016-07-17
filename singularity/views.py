@@ -49,10 +49,16 @@ def tree(image_path,port=9999,S=None,view=True):
             html_snippet = make_package_tree(folders=retrieved["folders"],
                                              files=retrieved["files"])
 
+            # TODO: Write files and templates to output folder
+            write_file("%s/index.html" %(tmpdir),html_snippet)
+
+            # TODO: we may want to zip the stuffs for the user, and export to
+            # some output folder
+
             # Does the user want to open the visualization in the browser?
             if view == True:
-                # Extract dependencies to temporary directory, write index
-                write_file("%s/index.html" %(tmpdir),html_snippet)
+                webserver(tmpdir,port=port,description="image tree")
+
     else:
         print("Cannot find folders.txt and files.txt in package, cannot create visualization.")
 
@@ -65,8 +71,13 @@ def make_package_tree(folders,files):
     :param files: a list of files in the folder
     '''
     print('WRITE ME')
-
-
+    # stopped here -
+    # 1) find a nice graph visualization for data, render into right output format, make graph
+    # 2) add graph as template into singularity-python, test function with webserver
+    # 3) add to command line tools something like "--viewtree"
+    # 4) write function to generate an entire GROUP of graphs and an index to browse them
+    # 5) make option in command line to take in comma separated list to produce the above.
+    # 6) 
 
 ###################################################################################################
 # WEBSERVER FUNCTIONS #############################################################################
