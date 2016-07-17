@@ -6,11 +6,13 @@ package.py: part of singularity package
 '''
 
 from singularity.runscript import get_runscript_parameters
+from singularity.utils import zip_up, read_file
 from singularity.cli import Singularity
-from singularity.utils import zip_up
 import tempfile
 import tarfile
 import hashlib
+import zipfile
+import json
 import os
 
 
@@ -75,6 +77,45 @@ def package(image_path,output_folder=None,runscript=True,software=True,remove_im
 
     # return package to user
     return zipfile
+
+
+def list_package(package_path):
+    '''list_package will list the contents of a package, without reading anything into memory
+    :package_path: the full path to the package
+    '''
+    zf = zipfile.ZipFile(package_path, 'r')
+    return zf.namelist()
+    
+
+def load_package(package_path,get=None):
+    '''load_package will return the contents of a package, read into memory
+    :param package_path: the full path to the package
+    :param get: the files to load. If none specified, all things loaded
+    '''
+    if get == None:
+        get = list_package(package_path)
+
+    # The user might have provided a string and not a list
+    if isinstance(get,str): 
+        get = [get]
+
+    retrieved = dict()
+    for g in get:
+
+        filename,ext = os.path.splitext(g)
+
+        if ext in [".img"]:
+            print("Found image %s, skipping as not feasible to load into memory." %(g))
+        elif ext in [".txt"] or g == "runscript":
+            retrieved[g] = zf.read(g).split('\n')
+        elif g == "VERSION":
+            retrieved[g] = zf.read(g)
+        elif ext in [".json"]:
+            retrieved[g] = json.loads(zf.read(g))
+        else:
+            print("Unknown extension %s, skipping %s" %(ext,g))
+
+    return retrieved
 
 
 def get_image_hash(image_path):
