@@ -87,6 +87,29 @@ def list_package(package_path):
     return zf.namelist()
     
 
+def calculate_similarity(pkg1,pkg2,include_files=False,include_folders=True):
+    '''calculate_similarity will calculate similarity of images in packages based on
+    a comparator list of (files or folders) in each package, default will calculate
+    2.0*len(intersect) / total package1 + total package2
+    :param pkg1: packaged image 1
+    :param pkg2: packaged image 2
+    :param include_files: boolean, default False. If true, will include files
+    :param include_folders: boolean, default True. If true, will include files
+    '''
+    # Base names will be indices for full lists for comparator return object
+    pkg1_name = os.path.basename(pkg1)
+    pkg2_name = os.path.basename(pkg2)
+
+    comparison = compare_package(pkg1,pkg2,include_files=include_files,include_folders=include_folders)
+    score = 2.0*len(comparison["intersect"]) / (len(comparison[pkg1_name])+len(comparison[pkg2_name]))
+    
+    # Alert user if one is a child/parent (might want a data structure for this in future)
+    if score == 1.0:
+        print("Package %s and %s are identical by this metric!" %(pkg1_name,pkg2_name))
+
+    return score
+
+
 def compare_package(pkg1,pkg2,include_files=False,include_folders=True):
     '''compare_package will return the lists of files or folders (or both) that are 
     different and equal between two packages
@@ -94,6 +117,7 @@ def compare_package(pkg1,pkg2,include_files=False,include_folders=True):
     :param pkg1: package 2
     :param include_files: boolean, default False. If true, will include files
     :param include_folders: boolean, default True. If true, will include files
+    :param get_score: if True, will calculate overall similarity as 2*len(intersect) / len(uniques) + len(intersect) 
     '''
     if include_files == False and include_folders == False:
         print("Please specify include_files and/or include_folders to be True.")
@@ -128,21 +152,14 @@ def compare_package(pkg1,pkg2,include_files=False,include_folders=True):
         unique_pkg1 = [x for x in pkg1_comparators if x not in pkg2_comparators]
         unique_pkg2 = [x for x in pkg2_comparators if x not in pkg1_comparators]
 
-        # Alert user if one is a child/parent (might want a data structure for this in future)
-        if len(unique_pkg1) == 0 and len(unique_pkg2) == 0:
-            print("Package %s and %s are identical" %(pkg1_name,pkg2_name))
-        elif len(unique_pkg1) == 0:
-            print("Package %s is a child of %s" %(pkg1_name,pkg2_name))
-        elif len(unique_pkg2) == 0:
-            print("Package %s is a parent of %s" %(pkg1_name,pkg2_name))
-
         # Return data structure
         comparison = {"intersect":intersect,
                       "unique_%s" %(pkg1_name): unique_pkg1,
-                      "unique_%s" %(pkg2_name): unique_pkg2}
+                      "unique_%s" %(pkg2_name): unique_pkg2,
+                      pkg1_name:pkg1_comparators,
+                      pkg2_name:pkg2_comparators}
 
         return comparison
-
 
 
 def load_package(package_path,get=None):
