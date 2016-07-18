@@ -32,8 +32,7 @@ done
 
 if [[ $permission == false ]]; then
     echo "Sorry you need to be at least sudoer to run this script. Bye."
-    # Is it a normal output ...?
-    exit 0;
+    exit 1
 fi
 
 
@@ -50,7 +49,7 @@ runningid=`$SUDOCMD docker run -d $image tail -f /dev/null`
 container_id=`echo ${runningid} | cut -c1-12`
 
 # Network address, if needed
-network_address=$SUDOCMD docker inspect --format="{{.NetworkSettings.IPAddress}}" $container_id
+network_address=`$SUDOCMD docker inspect --format="{{.NetworkSettings.IPAddress}}" $container_id`
 
 
 ################################################################################
