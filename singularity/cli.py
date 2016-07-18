@@ -33,15 +33,15 @@ import tempfile
 import shutil
 import json
 import os
-
+import re
 
 class Singularity:
     
-    def __init__(self,sudo=True,verbose=False):
+    def __init__(self,sudo=True,verbose=False,sudopw=None):
        '''upon init, store user password to not ask for it again'''
 
-       self.sudopw = None 
-       if sudo == True:
+       self.sudopw = sudopw
+       if sudo == True and self.sudopw == None:
            self.sudopw = getsudo()
            self.verbose = verbose
 
@@ -249,13 +249,12 @@ class Singularity:
             size=size+size/2
 
             # Create the image
+            tmpdir = tempfile.mkdtemp()
             new_container_name = "%s-%s.img" %(image_name,creation_date)
-            json_file = "singularity.json"
-            runscript = "singularity"
+            json_file = "%s/singularity.json" %(tmpdir)
+            runscript = "%s/singularity" %(tmpdir)
             if output_dir != None:
                 new_container_name = "%s/%s" %(output_dir,new_container_name)
-                json_file = "%s/%s" %(output_dir,json_file)
-                runscript = "%s/%s" %(output_dir,runscript)
             self.create(image_path=new_container_name,size=size)
 
             # export running docker container 
@@ -273,28 +272,86 @@ class Singularity:
             cmd = ['singularity','copy',new_container_name,json_file,'/']
             self.run_command(cmd,sudo=sudo)
 
-            # Merge the /etc/group file, and add to container
-            self.run_command(['docker','cp',"%s:/etc/group" %(container_id),'grouphost'],sudo=sudo)
-            self.run_command(['sort','/etc/group','grouphost','|','uniq','-u','>','group'],sudo=sudo)
-            self.run_command(['singularity','copy',new_container_name,'group','/etc/group'],sudo=sudo)
-            os.remove(json_file)
-            os.remove('grouphost')
-            os.remove('group')
 
-            # Runscript! Currently disabling - having some bugs with this
-            #cmd = ['docker','inspect',"--format='{{json .Config.Cmd}}'",docker_image]
-            #command = self.run_command(cmd,sudo=sudo)
-            #command = command.replace('["',"").replace('"]',"")
-            #if command != "none":
-            #    write_file(runscript,command)
-            #    cmd = ['chmod','+x',runscript]
-            #    self.run_command(cmd,sudo=sudo)
-            #    cmd = ['singularity','copy',new_container_name,runscript,'/']
-            #    self.run_command(cmd,sudo=sudo)
-            #    os.remove(runscript)
+            # We will need to merge the /etc/group files on host and container
+            grouphost = "%s/grouphost" %(tmpdir)
+            group = '%s/group' %(tmpdir)
+            invalid_commands = ["","null","none"]
+
+            # And add the merged to the container, and clean up            
+            self.run_command(['docker','cp',"%s:/etc/group" %(container_id),grouphost],sudo=sudo)
+            self.run_command(['sort','/etc/group',grouphost,'|','uniq','-u','>',group],sudo=sudo)
+            self.run_command(['singularity','copy',new_container_name,group,'/etc/group'],sudo=sudo)
+            os.remove(json_file)
+            os.remove(grouphost)
+            os.remove(group)
+
+            # Bootstrap the image to set up scripts for environemnt setup
+            self.run_command(['singularity','bootstrap',new_container_name],sudo=sudo)
+            self.run_command(['chmod','a+rw','-R',tmpdir],sudo=sudo)
+
+            # Runscript
+            command = self.run_command(['docker','inspect','--format="{{json .Config.Cmd}}"',docker_image],sudo=sudo)
+
+            if command not in invalid_commands:
+                command = "/bin/sh -c %s" %(command)
+
+            # Remove quotes, commas, and braces
+            command = re.sub('"|[[]|[]]',"",command)
+
+            # Get the entrypoint
+            entrypoint = self.run_command(['docker','inspect','--format="{{json .Config.Entrypoint}}"',docker_image],sudo=sudo)
+
+            if entrypoint not in invalid_commands:
+                entrypoint = "/bin/sh -c %s" %(entrypoint)
+
+            # Remove quotes, commas, and braces
+            entrypoint = re.sub('"|[[]|[]]',"",entrypoint)
+
+            runscript = "%s/singularity" %(tmpdir)
+            runscript_file = open(runscript,'w')
+            runscript_file.writelines('#!/bin/sh\n')
+            if entrypoint not in invalid_commands:
+                runscript_file.writelines('%s $@' %(entrypoint))
+            else:
+                if command not in invalid_commands:
+                    runscript_file.writelines('%s $@' %(command))
+
+            runscript_file.close()
+
+            self.run_command(['chmod','+x',runscript],sudo=sudo)
+            self.run_command(['singularity','copy',new_container_name,runscript,'/'],sudo=sudo)
+  
+            # Set up the environment
+            docker_environment = "%s/docker_environment" %(tmpdir)
+            environment = self.run_command(['docker','run','--rm','--entrypoint="/usr/bin/env"',docker_image],sudo=sudo).split('\n')
+            
+            # don't include HOME and HOSTNAME - they mess with local config
+            environment = [x for x in environment if not re.search("^HOME",x) and not re.search("^HOSTNAME",x)]
+            write_file(docker_environment,"\n".join(environment))
+ 
+            # Write to container
+            self.run_command(["chmod","u+x",docker_environment],sudo=sudo)
+            self.run_command(['singularity','copy',new_container_name,docker_environment,'/'],sudo=sudo)
+
+            self.run_command(['singularity','exec','--writable',new_container_name,'/bin/sh -c ',docker_environment,'/'],sudo=sudo)
+
+            cmd = """singularity exec --writable %s /bin/sh -c "echo '. /docker_environment' >> /environment"
+                  """ %(new_container_name)
+            self.run_command([cmd.replace('\n','')],sudo=sudo,suppress=True)
+            shutil.rmtree(tmpdir)
+
+            # Permissions - make sure any user can execute everything in container
+            cmd = """singularity exec --writable --contain %s /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -not -path '/sys*' -exec chmod a+r -R '{}' \;"
+                  """ %(new_container_name)
+            self.run_command([cmd.replace('\n','')],sudo=sudo,suppress=True)
+
+            cmd = """singularity exec --writable --contain %s /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -not -path '/sys*' -exec chmod a+x '{}' \;"
+                  """ %(new_container_name)
+            self.run_command([cmd.replace('\n','')],sudo=sudo,suppress=True)
+
             print("Stopping container... please wait!")
-            cmd = ['docker','stop',container_id]
-            self.run_command(cmd,sudo=sudo)
+            self.run_command(['docker','stop',container_id],sudo=sudo)
             return new_container_name
         else:
             return None

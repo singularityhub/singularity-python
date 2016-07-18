@@ -106,7 +106,7 @@ sudo singularity copy $new_container_name $TMPDIR/singularity.json /
 $SUDOCMD docker cp $container_id:/etc/group $TMPDIR/grouphost
 sort /etc/group $TMPDIR/grouphost | uniq -u > $TMPDIR/group
 $SUDOCMD singularity copy $new_container_name $TMPDIR/group /etc/group
-# Bootstrap the image to set up scripts for environemnt setup
+# Bootstrap the image to set up scripts for environment setup
 $SUDOCMD singularity bootstrap $new_container_name
 $SUDOCMD chmod a+rw -R $TMPDIR
 
