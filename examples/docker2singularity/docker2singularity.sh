@@ -108,20 +108,22 @@ $SUDOCMD chmod a+rw -R $TMPDIR
 ################################################################################
 
 CMD=$($SUDOCMD docker inspect --format='{{json .Config.Cmd}}' $image)
+if [[ $CMD != [* ]]; then
+	CMD="/bin/sh -c "$CMD
+fi
 # Remove quotes and braces
-CMD=`echo "${CMD//\"/}" | sed 's/\[/\/bin\/sh -c /g' | sed 's/\]//g'`
+CMD=`echo "${CMD//\"/}" | sed 's/\[/\//g' | sed 's/\]//g' | sed 's/,//g'`
 
 ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $image)
+if [[ $ENTRYPOINT != [* ]]; then
+	ENTRYPOINT="/bin/sh -c "$ENTRYPOINT
+fi
 # Remove quotes and braces
-ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[/\/bin\/sh -c /g' | sed 's/\]//g'`
+ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
 echo '#!/bin/sh' > $TMPDIR/singularity
 if [[ $ENTRYPOINT != "null" ]]; then
-    if [[ $CMD != "null" ]]; then
-        echo $ENTRYPOINT $CMD >> $TMPDIR/singularity;
-    else
-        echo $ENTRYPOINT >> $TMPDIR/singularity;
-    fi
+    echo $ENTRYPOINT >> $TMPDIR/singularity;
 else
     echo $CMD >> $TMPDIR/singularity;
 fi
