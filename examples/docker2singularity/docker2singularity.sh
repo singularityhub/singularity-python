@@ -163,8 +163,8 @@ rm -rf $TMPDIR
 
 # making sure that any user can read and execute everything in the container
 echo "Fixing permissions."
-$SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -exec chmod a+r -R '{}' \;"
-$SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -exec chmod a+x '{}' \;"
+$SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -not -path '/sys*' -exec chmod a+r -R '{}' \;"
+$SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -not -path '/sys*' -exec chmod a+x '{}' \;"
 
 
 echo "Stopping container, please wait."
