@@ -88,6 +88,7 @@ echo "Size: $size MB for the singularity container"
 ### IMAGE CREATION #############################################################
 ################################################################################
 TMPDIR=$(mktemp -u -d)
+mkdir -p $TMPDIR
 
 creation_date=`echo ${creation_date} | cut -c1-10`
 new_container_name=$image_name-$creation_date.img
