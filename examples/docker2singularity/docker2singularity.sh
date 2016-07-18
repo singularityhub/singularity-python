@@ -131,10 +131,10 @@ $SUDOCMD singularity copy $new_container_name /tmp/singularity /
 rm /tmp/singularity
 
 ################################################################################
-### SINGULARITY ENVIRONMET #####################################################
+### SINGULARITY ENVIRONMENT ####################################################
 ################################################################################
 
-docker run --entrypoint env scitran/fsl-fast > /tmp/docker_environment
+docker run --entrypoint env $new_container_name > /tmp/docker_environment
 $SUDOCMD singularity copy $new_container_name /tmp/docker_environment /
 $SUDOCMD singularity exec --writable $new_container_name /bin/sh -c "echo '. /docker_environment' >> /environment"
 rm /tmp/docker_environment
