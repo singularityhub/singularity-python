@@ -66,11 +66,28 @@ def tree(image_path,port=9999,S=None,view=True):
 
 
 def make_package_tree(folders,files):
-    '''make_package_tree will return the html snippet for a tree/graph with folders and files
+    '''make_package_tree will convert a list of folders and files into a json structure that represents a graph.
     :param folders: a list of folders in the image
     :param files: a list of files in the folder
     '''
-    print('WRITE ME')
+    graph = {} # graph will be a dictionary structure of nodes
+    nodes = {} # nodes will be a lookup for each folder containing files 
+    for folder in folders:
+        if folder != ".":
+            folder = re.sub("^[.]/","",folder)
+            index = graph
+            path_components = folder.split('/')
+            for path_component in path_components:
+                if path_component not in index:
+                    index[path_component] = {}
+                index = index[path_component]
+                
+
+    # Add files - we know they must exist in graph
+    for file_path in files:
+        file_path = re.sub("^[.]/","",file_path)
+        file_parts = file_path.split("/")
+        file_name = file_parts.pop(-1)
     # stopped here -
     # 1) find a nice graph visualization for data, render into right output format, make graph
     # 2) add graph as template into singularity-python, test function with webserver

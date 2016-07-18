@@ -271,20 +271,7 @@ class Singularity:
             # Add singularity.json to container
             cmd = ['singularity','copy',new_container_name,json_file,'/']
             self.run_command(cmd,sudo=sudo)
-
-
-            # We will need to merge the /etc/group files on host and container
-            grouphost = "%s/grouphost" %(tmpdir)
-            group = '%s/group' %(tmpdir)
             invalid_commands = ["","null","none"]
-
-            # And add the merged to the container, and clean up            
-            self.run_command(['docker','cp',"%s:/etc/group" %(container_id),grouphost],sudo=sudo)
-            self.run_command(['sort','/etc/group',grouphost,'|','uniq','-u','>',group],sudo=sudo)
-            self.run_command(['singularity','copy',new_container_name,group,'/etc/group'],sudo=sudo)
-            os.remove(json_file)
-            os.remove(grouphost)
-            os.remove(group)
 
             # Bootstrap the image to set up scripts for environemnt setup
             self.run_command(['singularity','bootstrap',new_container_name],sudo=sudo)
