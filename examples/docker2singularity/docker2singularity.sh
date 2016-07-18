@@ -120,7 +120,7 @@ if [[ $CMD != [* ]]; then
 	CMD="/bin/sh -c "$CMD
 fi
 # Remove quotes, commas, and braces
-CMD=`echo "${CMD//\"/}" | sed 's/\[/\//g' | sed 's/\]//g' | sed 's/,//g'`
+CMD=`echo "${CMD//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
 ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $image)
 if [[ $ENTRYPOINT != [* ]]; then
