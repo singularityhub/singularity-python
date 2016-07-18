@@ -4,6 +4,8 @@
 # Must be run with sudo to use docker commands (eg aufs)
 #
 # USAGE: docker2singularity.sh ubuntu:14.04
+set -o errexit
+set -o nounset
 
 usage="$0 ubuntu:14.04"
 if [ -z $1 ]; then
