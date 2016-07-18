@@ -124,9 +124,9 @@ ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,
 
 echo '#!/bin/sh' > $TMPDIR/singularity
 if [[ $ENTRYPOINT != "null" ]]; then
-    echo $ENTRYPOINT >> $TMPDIR/singularity;
+    echo $ENTRYPOINT '$@' >> $TMPDIR/singularity;
 else
-    echo $CMD >> $TMPDIR/singularity;
+    echo $CMD '$@' >> $TMPDIR/singularity;
 fi
 
 chmod +x $TMPDIR/singularity
