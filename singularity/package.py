@@ -103,7 +103,7 @@ def calculate_similarity(pkg1,pkg2,include_files=False,include_folders=True):
     comparison = compare_package(pkg1,pkg2,include_files=include_files,include_folders=include_folders)
     score = 2.0*len(comparison["intersect"]) / (len(comparison[pkg1_name])+len(comparison[pkg2_name]))
     
-    # Alert user if one is a child/parent (might want a data structure for this in future)
+    # Alert user if images are identical
     if score == 1.0:
         print("Package %s and %s are identical by this metric!" %(pkg1_name,pkg2_name))
 
