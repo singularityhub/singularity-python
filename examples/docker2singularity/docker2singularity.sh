@@ -112,7 +112,7 @@ if [[ $CMD != [* ]]; then
 	CMD="/bin/sh -c "$CMD
 fi
 # Remove quotes and braces
-CMD=`echo "${CMD//\"/}" | sed 's/\[/\//g' | sed 's/\]//g' | sed 's/,//g'`
+CMD=`echo "${CMD//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
 ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $image)
 if [[ $ENTRYPOINT != [* ]]; then
@@ -148,9 +148,10 @@ rm -rf $TMPDIR
 ################################################################################
 
 # making sure that any user can read and execute everything in the container
-echo "Fixing permissions"
+echo "Fixing permissions."
 $SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -exec chmod a+r -R '{}' \;"
 $SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -exec chmod a+x '{}' \;"
+
 
 echo "Stopping container, please wait."
 $SUDOCMD docker stop $container_id
