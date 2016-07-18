@@ -3,6 +3,12 @@
 # docker2singularity.sh will convert a docker image into a singularity
 # Must be run with sudo to use docker commands (eg aufs)
 #
+# NOTES:
+# If the docker image uses both ENTRYPOINT and CMD the latter will be ignored
+#
+# KNOWN ISSUES:
+# Currently ENTRYPOINTs and CMDs with commas in the arguments are not supported
+#
 # USAGE: docker2singularity.sh ubuntu:14.04
 set -o errexit
 set -o nounset
@@ -100,6 +106,7 @@ sudo singularity copy $new_container_name $TMPDIR/singularity.json /
 $SUDOCMD docker cp $container_id:/etc/group $TMPDIR/grouphost
 sort /etc/group $TMPDIR/grouphost | uniq -u > $TMPDIR/group
 $SUDOCMD singularity copy $new_container_name $TMPDIR/group /etc/group
+# Bootstrap the image to set up scripts for environemnt setup
 $SUDOCMD singularity bootstrap $new_container_name
 $SUDOCMD chmod a+rw -R $TMPDIR
 
@@ -111,14 +118,14 @@ CMD=$($SUDOCMD docker inspect --format='{{json .Config.Cmd}}' $image)
 if [[ $CMD != [* ]]; then
 	CMD="/bin/sh -c "$CMD
 fi
-# Remove quotes and braces
+# Remove quotes, commas, and braces
 CMD=`echo "${CMD//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
 ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $image)
 if [[ $ENTRYPOINT != [* ]]; then
 	ENTRYPOINT="/bin/sh -c "$ENTRYPOINT
 fi
-# Remove quotes and braces
+# Remove quotes, commas, and braces
 ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
 echo '#!/bin/sh' > $TMPDIR/singularity
