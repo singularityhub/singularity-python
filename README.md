@@ -77,6 +77,10 @@ For the package command, you will need to put in your password to grant sudo pri
 
 For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
 
+#### Calculate similarity of packages
+
+I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
+
 
 #### Generate a runscript template
 
