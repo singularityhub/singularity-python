@@ -85,7 +85,7 @@ echo "Size: $size MB for the singularity container"
 ################################################################################
 ### IMAGE CREATION #############################################################
 ################################################################################
-TMPDIR=$(dirname $(mktemp -u))
+TMPDIR=$(mktemp -u -d)
 
 creation_date=`echo ${creation_date} | cut -c1-10`
 new_container_name=$image_name-$creation_date.img
@@ -131,7 +131,7 @@ $SUDOCMD singularity copy $new_container_name $TMPDIR/singularity /
 ### SINGULARITY ENVIRONMENT ####################################################
 ################################################################################
 
-docker run --entrypoint env $new_container_name > $TMPDIR/docker_environment
+docker run --entrypoint env $container_id > $TMPDIR/docker_environment
 $SUDOCMD singularity copy $new_container_name $TMPDIR/docker_environment /
 $SUDOCMD singularity exec --writable $new_container_name /bin/sh -c "echo '. /docker_environment' >> /environment"
 rm -rf $TMPDIR
