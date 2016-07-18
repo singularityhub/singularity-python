@@ -30,7 +30,7 @@ done
 
 if [[ $permission == false ]]; then
     echo "Sorry you need to be at least sudoer to run this script. Bye."
-    # Is it a normal output ...? 
+    # Is it a normal output ...?
     exit 0;
 fi
 
@@ -101,6 +101,7 @@ $SUDOCMD singularity copy $new_container_name group /etc/group
 rm singularity.json
 $SUDOCMD rm grouphost
 $SUDOCMD rm group
+$SUDOCMD singularity bootstrap $new_container_name
 
 ################################################################################
 ### SINGULARITY RUN SCRIPT #####################################################
@@ -108,14 +109,44 @@ $SUDOCMD rm group
 
 CMD=$($SUDOCMD docker inspect --format='{{json .Config.Cmd}}' $image)
 # Remove quotes and braces
-CMD=`echo "${CMD//\"/}" | sed 's/\[//g' | sed 's/\]//g'`
-if [[ $CMD != none ]]; then
-  echo '#!/bin/sh'
-  (IFS='[],'; echo $CMD)
-fi > singularity
-chmod +x singularity
-sudo singularity copy $new_container_name singularity /
-rm singularity
+CMD=`echo "${CMD//\"/}" | sed 's/\[/\/bin\/sh -c /g' | sed 's/\]//g'`
+
+ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $image)
+# Remove quotes and braces
+ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[/\/bin\/sh -c /g' | sed 's/\]//g'`
+
+echo '#!/bin/sh' > /tmp/singularity
+if [[ $ENTRYPOINT != "null" ]]; then
+    if [[ $CMD != "null" ]]; then
+        echo $ENTRYPOINT $CMD >> /tmp/singularity;
+    else
+        echo $ENTRYPOINT >> /tmp/singularity;
+    fi
+else
+    echo $CMD >> /tmp/singularity;
+fi
+
+chmod +x /tmp/singularity
+$SUDOCMD singularity copy $new_container_name /tmp/singularity /
+rm /tmp/singularity
+
+################################################################################
+### SINGULARITY ENVIRONMET #####################################################
+################################################################################
+
+docker run --entrypoint env scitran/fsl-fast > /tmp/docker_environment
+$SUDOCMD singularity copy $new_container_name /tmp/docker_environment /
+$SUDOCMD singularity exec --writable $new_container_name /bin/sh -c "echo '. /docker_environment' >> /environment"
+rm /tmp/docker_environment
+
+################################################################################
+### Permissions ################################################################
+################################################################################
+
+# making sure that any user can read and execute everything in the container
+echo "Fixing permissions"
+$SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -exec chmod a+r -R '{}' \;"
+$SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -exec chmod a+x '{}' \;"
 
 echo "Stopping container, please wait."
 $SUDOCMD docker stop $container_id
