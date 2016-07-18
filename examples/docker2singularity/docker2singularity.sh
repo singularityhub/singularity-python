@@ -135,6 +135,9 @@ $SUDOCMD singularity copy $new_container_name $TMPDIR/singularity /
 ################################################################################
 
 docker run --rm --entrypoint="/usr/bin/env" $image > $TMPDIR/docker_environment
+# don't include HOME and HOSTNAME - they mess with local config
+sed -i '/^HOME/d' $TMPDIR/docker_environment
+sed -i '/^HOSTNAME/d' $TMPDIR/docker_environment
 $SUDOCMD singularity copy $new_container_name $TMPDIR/docker_environment /
 $SUDOCMD singularity exec --writable $new_container_name /bin/sh -c "echo '. /docker_environment' >> /environment"
 rm -rf $TMPDIR
