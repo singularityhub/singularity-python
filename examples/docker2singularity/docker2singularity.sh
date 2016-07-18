@@ -85,23 +85,21 @@ echo "Size: $size MB for the singularity container"
 ################################################################################
 ### IMAGE CREATION #############################################################
 ################################################################################
-
+TMPDIR=$(dirname $(mktemp -u))
 
 creation_date=`echo ${creation_date} | cut -c1-10`
 new_container_name=$image_name-$creation_date.img
 $SUDOCMD singularity create -s $size $new_container_name
 $SUDOCMD docker export $container_id | $SUDOCMD singularity import $new_container_name
-$SUDOCMD docker inspect $container_id >> singularity.json
-sudo singularity copy $new_container_name singularity.json /
+$SUDOCMD docker inspect $container_id >> $TMPDIR/singularity.json
+sudo singularity copy $new_container_name $TMPDIR/singularity.json /
 
 # Merge the /etc/group file
-$SUDOCMD docker cp $container_id:/etc/group grouphost
-sort /etc/group grouphost | uniq -u > group
-$SUDOCMD singularity copy $new_container_name group /etc/group
-rm singularity.json
-$SUDOCMD rm grouphost
-$SUDOCMD rm group
+$SUDOCMD docker cp $container_id:/etc/group $TMPDIR/grouphost
+sort /etc/group $TMPDIR/grouphost | uniq -u > $TMPDIR/group
+$SUDOCMD singularity copy $new_container_name $TMPDIR/group /etc/group
 $SUDOCMD singularity bootstrap $new_container_name
+$SUDOCMD chmod a+rw -R $TMPDIR
 
 ################################################################################
 ### SINGULARITY RUN SCRIPT #####################################################
@@ -115,29 +113,28 @@ ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $ima
 # Remove quotes and braces
 ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[/\/bin\/sh -c /g' | sed 's/\]//g'`
 
-echo '#!/bin/sh' > /tmp/singularity
+echo '#!/bin/sh' > $TMPDIR/singularity
 if [[ $ENTRYPOINT != "null" ]]; then
     if [[ $CMD != "null" ]]; then
-        echo $ENTRYPOINT $CMD >> /tmp/singularity;
+        echo $ENTRYPOINT $CMD >> $TMPDIR/singularity;
     else
-        echo $ENTRYPOINT >> /tmp/singularity;
+        echo $ENTRYPOINT >> $TMPDIR/singularity;
     fi
 else
-    echo $CMD >> /tmp/singularity;
+    echo $CMD >> $TMPDIR/singularity;
 fi
 
-chmod +x /tmp/singularity
-$SUDOCMD singularity copy $new_container_name /tmp/singularity /
-rm /tmp/singularity
+chmod +x $TMPDIR/singularity
+$SUDOCMD singularity copy $new_container_name $TMPDIR/singularity /
 
 ################################################################################
 ### SINGULARITY ENVIRONMENT ####################################################
 ################################################################################
 
-docker run --entrypoint env $new_container_name > /tmp/docker_environment
-$SUDOCMD singularity copy $new_container_name /tmp/docker_environment /
+docker run --entrypoint env $new_container_name > $TMPDIR/docker_environment
+$SUDOCMD singularity copy $new_container_name $TMPDIR/docker_environment /
 $SUDOCMD singularity exec --writable $new_container_name /bin/sh -c "echo '. /docker_environment' >> /environment"
-rm /tmp/docker_environment
+rm -rf $TMPDIR
 
 ################################################################################
 ### Permissions ################################################################
