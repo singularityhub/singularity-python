@@ -38,8 +38,7 @@ done
 
 if [[ $permission == false ]]; then
     echo "Sorry you need to be at least sudoer to run this script. Bye."
-    # Is it a normal output ...?
-    exit 0;
+    exit 1
 fi
 
 
@@ -56,7 +55,7 @@ runningid=`$SUDOCMD docker run -d $image tail -f /dev/null`
 container_id=`echo ${runningid} | cut -c1-12`
 
 # Network address, if needed
-network_address=$SUDOCMD docker inspect --format="{{.NetworkSettings.IPAddress}}" $container_id
+network_address=`$SUDOCMD docker inspect --format="{{.NetworkSettings.IPAddress}}" $container_id`
 
 
 ################################################################################
@@ -117,15 +116,20 @@ $SUDOCMD chmod a+rw -R $TMPDIR
 
 CMD=$($SUDOCMD docker inspect --format='{{json .Config.Cmd}}' $image)
 if [[ $CMD != [* ]]; then
-	CMD="/bin/sh -c "$CMD
+    if [[ $CMD != "null" ]]; then
+        CMD="/bin/sh -c "$CMD
+    fi
 fi
 # Remove quotes, commas, and braces
 CMD=`echo "${CMD//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
 ENTRYPOINT=$($SUDOCMD docker inspect --format='{{json .Config.Entrypoint}}' $image)
 if [[ $ENTRYPOINT != [* ]]; then
-	ENTRYPOINT="/bin/sh -c "$ENTRYPOINT
+    if [[ $ENTRYPOINT != "null" ]]; then
+        ENTRYPOINT="/bin/sh -c "$ENTRYPOINT
+    fi
 fi
+
 # Remove quotes, commas, and braces
 ENTRYPOINT=`echo "${ENTRYPOINT//\"/}" | sed 's/\[//g' | sed 's/\]//g' | sed 's/,//g'`
 
@@ -133,7 +137,9 @@ echo '#!/bin/sh' > $TMPDIR/singularity
 if [[ $ENTRYPOINT != "null" ]]; then
     echo $ENTRYPOINT '$@' >> $TMPDIR/singularity;
 else
-    echo $CMD '$@' >> $TMPDIR/singularity;
+    if [[ $CMD != "null" ]]; then
+        echo $CMD '$@' >> $TMPDIR/singularity;
+    fi
 fi
 
 chmod +x $TMPDIR/singularity
@@ -156,9 +162,10 @@ rm -rf $TMPDIR
 ################################################################################
 
 # making sure that any user can read and execute everything in the container
-echo "Fixing permissions"
+echo "Fixing permissions."
 $SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -exec chmod a+r -R '{}' \;"
 $SUDOCMD singularity exec --writable --contain $new_container_name /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -exec chmod a+x '{}' \;"
+
 
 echo "Stopping container, please wait."
 $SUDOCMD docker stop $container_id
