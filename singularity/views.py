@@ -65,29 +65,46 @@ def tree(image_path,port=9999,S=None,view=True):
     shutil.rmtree(tmpdir)
 
 
-def make_package_tree(folders,files):
+def make_package_tree(folders,files,path_delim="/"):
     '''make_package_tree will convert a list of folders and files into a json structure that represents a graph.
     :param folders: a list of folders in the image
     :param files: a list of files in the folder
+    :param path_delim: the path delimiter, default is '/'
     '''
     graph = {} # graph will be a dictionary structure of nodes
     nodes = {} # nodes will be a lookup for each folder containing files 
+    count = 0  # count will hold an id for nodes
     for folder in folders:
         if folder != ".":
             folder = re.sub("^[.]/","",folder)
             index = graph
-            path_components = folder.split('/')
-            for path_component in path_components:
+            path_components = folder.split(path_delim)
+            for p in range(len(path_components)):
+                path_component = path_components[p]
                 if path_component not in index:
-                    index[path_component] = {}
-                index = index[path_component]
+                    index[path_component] = {"id":count,"children":{}}
+                    fullpath = path_delim.join(path_components[0:p+1])
+                    nodes[fullpath] = count
+                    count+=1
+                index = index[path_component]["children"]
                 
-
-    # Add files - we know they must exist in graph
+    # Files are endnodes
+    endnodes = {}
     for file_path in files:
         file_path = re.sub("^[.]/","",file_path)
-        file_parts = file_path.split("/")
+        file_parts = file_path.split(path_delim)
         file_name = file_parts.pop(-1)
+        fullpath = path_delim.join(file_parts)
+        if fullpath in nodes:
+            uid = nodes[fullpath]
+            if uid in endnodes:
+                endnodes[uid].append(file_name)
+            else:
+                endnodes[uid] = [file_name]
+ 
+    result = {"nodes":endnodes,"lookup":nodes,"graph":graph}
+    return result
+
     # stopped here -
     # 1) find a nice graph visualization for data, render into right output format, make graph
     # 2) add graph as template into singularity-python, test function with webserver
