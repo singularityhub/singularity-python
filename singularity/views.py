@@ -5,14 +5,15 @@ views.py: part of singularity package
 
 '''
 
-from singularity.utils import zip_up, read_file, load_image, write_file
-from singularity.package import list_package, package
+from singularity.package import list_package, load_package, package
+from singularity.utils import zip_up, read_file, write_file
 from singularity.cli import Singularity
 import SimpleHTTPServer
 import SocketServer
 import webbrowser
 import tempfile
 import zipfile
+import shutil
 import json
 import os
 import re
@@ -23,41 +24,29 @@ import re
 ###################################################################################################
 
 
-def tree(image_path,port=9999,S=None,view=True):
+def tree(image_path,S=None):
     '''tree will render an html tree (graph) of an image or package
     :param image_path: full path to the image, or package
-    :param port: the port to open on the user local machine
-    :param S: the Singularity object, will be generated if none provided
-    :param view: if True (default) will open in web browser. Otherwise, just return html
+    :param S: the Singularity object, only needed if image needs to be packaged.
     '''
-
-    if S == None:
-        S = Singularity()
 
     # Make a temporary directory for stuffs
     tmpdir = tempfile.mkdtemp()
 
     # If the user has provided an image, try to package it
     if re.search(".img$",image_path):
+        if S == None:
+            S = Singularity()
         image_path = package(image_path,output_folder=tmpdir,S=S)
 
     # If it's a package, look for folders.txt and files.txt
     if re.search(".zip$",image_path):
         guts = list_package(image_path)
         if "folders.txt" in guts and "files.txt" in guts:
-            retrieved = load_package(get=["folders.txt","files.txt"])
-            html_snippet = make_package_tree(folders=retrieved["folders"],
-                                             files=retrieved["files"])
-
-            # TODO: Write files and templates to output folder
-            write_file("%s/index.html" %(tmpdir),html_snippet)
-
-            # TODO: we may want to zip the stuffs for the user, and export to
-            # some output folder
-
-            # Does the user want to open the visualization in the browser?
-            if view == True:
-                webserver(tmpdir,port=port,description="image tree")
+            retrieved = load_package(image_path,get=["folders.txt","files.txt"])
+            tree = make_package_tree(folders=retrieved["folders.txt"],
+                                     files=retrieved['files.txt'])
+            return tree
 
     else:
         print("Cannot find folders.txt and files.txt in package, cannot create visualization.")
@@ -71,9 +60,10 @@ def make_package_tree(folders,files,path_delim="/"):
     :param files: a list of files in the folder
     :param path_delim: the path delimiter, default is '/'
     '''
-    graph = {} # graph will be a dictionary structure of nodes
-    nodes = {} # nodes will be a lookup for each folder containing files 
-    count = 0  # count will hold an id for nodes
+    nodes = {}  # first we will make a list of nodes
+    lookup = {}
+    count = 0   # count will hold an id for nodes, 0 is base node
+    max_level = 0
     for folder in folders:
         if folder != ".":
             folder = re.sub("^[.]/","",folder)
@@ -81,41 +71,49 @@ def make_package_tree(folders,files,path_delim="/"):
             path_components = folder.split(path_delim)
             for p in range(len(path_components)):
                 path_component = path_components[p]
-                if path_component not in index:
-                    index[path_component] = {"id":count,"children":{}}
-                    fullpath = path_delim.join(path_components[0:p+1])
-                    nodes[fullpath] = count
-                    count+=1
-                index = index[path_component]["children"]
-                
-    # Files are endnodes
-    endnodes = {}
-    for file_path in files:
-        file_path = re.sub("^[.]/","",file_path)
-        file_parts = file_path.split(path_delim)
-        file_name = file_parts.pop(-1)
-        fullpath = path_delim.join(file_parts)
-        if fullpath in nodes:
-            uid = nodes[fullpath]
-            if uid in endnodes:
-                endnodes[uid].append(file_name)
+                fullpath = path_delim.join(path_components[0:p+1])
+                # Have we created the node yet?
+                if fullpath not in lookup:
+                    lookup[fullpath] = count
+                    node = {"id":count,"name":path_component,"path":fullpath,"level":p,"children":[]}
+                    count +=1
+                    # Did we find a deeper level?
+                    if p > max_level:
+                        max_level = p
+                    # Does the node have a parent?
+                    if p==0: # base node, no parent
+                        parent_id = 0
+                    else: # look up the parent id
+                        parent_path = path_delim.join(path_components[0:p])
+                        parent_id = lookup[parent_path]                   
+                    node["parent"] = parent_id
+                    nodes[node['id']] = node
+              
+    # Now make the graph, we simply append children to their parents
+    seen = []
+    iters = range(max_depth+1) # 0,1,2,3...
+    iters.reverse()            # ...3,2,1,0
+    iters.pop()                # remove 0
+    for level in iters:
+        children = {x:y for x,y in nodes.iteritems() if y['level'] == level}
+        seen = seen + [y['id'] for x,y in children.iteritems()]
+        nodes = {x:y for x,y in nodes.iteritems() if y['id'] not in seen}
+        for node_id,child_node in children.iteritems():
+            if node_id == 0: #base node
+                graph[node_id] = child_node
             else:
-                endnodes[uid] = [file_name]
+                parent_id = child_node['parent']
+                nodes[parent_id]["children"].append(child_node)
  
-    result = {"nodes":endnodes,"lookup":nodes,"graph":graph}
+    result = {"graph":nodes,"lookup":lookup,"depth":max_depth+1}
     return result
 
-    # stopped here -
-    # 1) find a nice graph visualization for data, render into right output format, make graph
-    # 2) add graph as template into singularity-python, test function with webserver
-    # 3) add to command line tools something like "--viewtree"
-    # 4) write function to generate an entire GROUP of graphs and an index to browse them
-    # 5) make option in command line to take in comma separated list to produce the above.
-    # 6) 
 
 ###################################################################################################
 # WEBSERVER FUNCTIONS #############################################################################
 ###################################################################################################
+
+# These are currently not in use, but might be useful (later) for non-flask serving.
 
 def webserver(base_folder,port=None,description=None):
     '''webserver will generate a temporary webserver in some base_folder
