@@ -63,11 +63,10 @@ def make_package_tree(folders,files,path_delim="/"):
     nodes = {}  # first we will make a list of nodes
     lookup = {}
     count = 0   # count will hold an id for nodes, 0 is base node
-    max_level = 0
+    max_depth = 0
     for folder in folders:
         if folder != ".":
             folder = re.sub("^[.]/","",folder)
-            index = graph
             path_components = folder.split(path_delim)
             for p in range(len(path_components)):
                 path_component = path_components[p]
@@ -78,8 +77,8 @@ def make_package_tree(folders,files,path_delim="/"):
                     node = {"id":count,"name":path_component,"path":fullpath,"level":p,"children":[]}
                     count +=1
                     # Did we find a deeper level?
-                    if p > max_level:
-                        max_level = p
+                    if p > max_depth:
+                        max_depth = p
                     # Does the node have a parent?
                     if p==0: # base node, no parent
                         parent_id = 0
@@ -105,7 +104,13 @@ def make_package_tree(folders,files,path_delim="/"):
                 parent_id = child_node['parent']
                 nodes[parent_id]["children"].append(child_node)
  
-    result = {"graph":nodes,"lookup":lookup,"depth":max_depth+1}
+    # Now add the parents to graph, with name as main lookup
+    graph = []
+    for parent,parent_info in nodes.iteritems():
+        graph.append(parent_info)
+
+    graph = {"name":"base","children":graph}
+    result = {"graph":graph,"lookup":lookup,"depth":max_depth+1}
     return result
 
 
