@@ -54,15 +54,16 @@ def tree(image_path,S=None):
     shutil.rmtree(tmpdir)
 
 
-def make_package_tree(folders,files,path_delim="/"):
+def make_package_tree(folders,files,path_delim="/",parse_files=True):
     '''make_package_tree will convert a list of folders and files into a json structure that represents a graph.
     :param folders: a list of folders in the image
     :param files: a list of files in the folder
+    :param parse_files: return 'files' lookup in result, to associate ID of node with files (default True)
     :param path_delim: the path delimiter, default is '/'
     '''
     nodes = {}  # first we will make a list of nodes
     lookup = {}
-    count = 0   # count will hold an id for nodes, 0 is base node
+    count = 1   # count will hold an id for nodes
     max_depth = 0
     for folder in folders:
         if folder != ".":
@@ -111,6 +112,26 @@ def make_package_tree(folders,files,path_delim="/"):
 
     graph = {"name":"base","children":graph}
     result = {"graph":graph,"lookup":lookup,"depth":max_depth+1}
+
+    # Parse files to include in tree
+    if parse_files == True:
+        file_lookup = {}
+        for filey in files:
+            filey = re.sub("^[.]/","",filey)
+            filepath,filename = os.path.split(filey)
+            if filepath in lookup:
+                folder_id = lookup[filepath]
+                if folder_id in file_lookup:
+                    file_lookup[folder_id].append(filename)
+                else:
+                    file_lookup[folder_id] = [filename]
+            elif filepath == '': # base folder
+                if 0 in file_lookup:
+                    file_lookup[0].append(filename)
+                else:
+                    file_lookup[0] = [filename]
+        result['files'] = file_lookup
+
     return result
 
 
