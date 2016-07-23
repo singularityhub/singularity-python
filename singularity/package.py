@@ -185,11 +185,11 @@ def load_package(package_path,get=None):
         if ext in [".img"]:
             print("Found image %s, skipping as not feasible to load into memory." %(g))
         elif ext in [".txt"] or g == "runscript":
-            retrieved[g] = zf.read(g).split('\n')
+            retrieved[g] = zf.open(g).read().split('\n')
         elif g == "VERSION":
-            retrieved[g] = zf.read(g)
+            retrieved[g] = zf.open(g).read()
         elif ext in [".json"]:
-            retrieved[g] = json.loads(zf.read(g))
+            retrieved[g] = json.loads(zf.open(g).read())
         else:
             print("Unknown extension %s, skipping %s" %(ext,g))
 
