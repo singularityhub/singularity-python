@@ -82,6 +82,19 @@ For more details, and a walkthrough with sample data, please see [examples/packa
 I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
 
 
+#### View the inside of a container or package
+
+What's inside that container? Right now, the main way to answer this question is to do some equivalent of ssh. shub provides a command line function for rendering a view to (immediately) show the contents of an image (folders and files) in your web browser:
+
+      shub --tree --image ubuntu:latest-2016-04-06.img.zip
+
+This will open up something that looks like this:
+
+![img/files.png](img/files.png)
+
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/container_tree) is also available, and see the [example](examples/container_tree) for updates. Note that if you specify an image file, it will need to be packaged, and the console will hang as it waits for you to type it in and press enter.
+
+
 #### Generate a runscript template
 
 A `runscript` is a file that sits in the base of a singularity image (at `/`) and gets executed when the container is called. This script is essentially the portal from your local machine to the bits in the container, and so being able to programatically extract command line arguments and allowable options is essential for an application to be able to (somewhat intelligently) use your containers. Toward this goal, we are providing runscript templates, or simple scripts (in various languages) that use standards that can be easily parsed (also by the shub tool). You can use the command line tool to generate these starter templates as follows:
@@ -114,6 +127,7 @@ The only supported language is currently python (specify "py" as in the example 
                               the PWD, or include --outfolder to change output
                               directory. Currently supported types are py (python).
         --package             package a singularity container for singularity hub
+        --tree                view the guts of an image or package.
 
 
         usage: shub [-h] [--image IMAGE] [--docker2singularity DOCKER]
