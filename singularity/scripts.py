@@ -9,6 +9,7 @@ Runtime executable, "shub"
 from singularity.package import package, docker2singularity
 from singularity.runscript import get_runscript_template
 from singularity.utils import check_install
+from singularity.app import make_tree
 from glob import glob
 import argparse
 import sys
@@ -22,6 +23,7 @@ def main():
     parser.add_argument("--outfolder", dest='outfolder', help="full path to folder for output, if not specified, will go to pwd", type=str, default=None)
     parser.add_argument("--runscript", dest='runscript', help="specify extension to generate a runscript template in the PWD, or include --outfolder to change output directory. Currently supported types are py (python).", type=str, default=None)
     parser.add_argument('--package', help="package a singularity container for singularity hub", dest='package', default=False, action='store_true')
+    parser.add_argument('--tree', help="view the guts of an image or package.", dest='tree', default=False, action='store_true')
     try:
         args = parser.parse_args()
     except:
@@ -57,8 +59,12 @@ def main():
            # Make sure the image exists!
            if os.path.exists(image):
 
+               # the user wants to make a tree for an image
+               if args.tree == True:
+                   make_tree(image)
+
                # The user wants to package the image
-               if args.package == True:
+               elif args.package == True:
                    package(image_path=image,
                            output_folder=output_folder,
                            runscript=True,

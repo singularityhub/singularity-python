@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <title>Singularity Container: {{ container_name }}</title>    
-        <link rel='stylesheet prefetch' href="{{ url_for('static', filename='css/font-awesome.min.css') }}">
+        <link rel='stylesheet prefetch' href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
         <link rel='stylesheet prefetch' href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
         <link href='https://fonts.googleapis.com/css?family=Questrial' rel='stylesheet' type='text/css'>
 
@@ -17,8 +17,18 @@ body {
     font-family: 'Questrial', sans-serif;
 }
 
+#tree {
+  z-index:10;
+}
+
 #files {
   background-color: #F7F7F7;
+  border-radius: 5px;
+}
+
+.filealert {
+  margin-bottom:10px;
+  padding:4px;
 }
 
 .node {
@@ -26,9 +36,8 @@ body {
 }
 
 .node circle {
-  fill: #fff;
-  stroke: steelblue;
-  stroke-width: 1.5px;
+  fill: none;
+  stroke: none;
 }
 
 .node text {
@@ -57,7 +66,10 @@ body {
             <!-- Visualization tree will be appended here-->
         </div>
         <div class="col-md-3" id="files">
-            <!-- Files will be shown here-->
+            <h3>Files</h3>
+                <div id="filelist">
+                <!-- Files will be shown here-->
+                </div>
         </div>
     </div>
 </div><!--end container-->
@@ -103,6 +115,17 @@ var svg = d3.select("#tree").append("svg")
   root.children.forEach(collapse);
   update(root);
 
+  // Add base files to file viewer
+  var fileList = files[0]
+  if (fileList != null){
+      $.each(fileList,function(e,i){
+          $("#filelist").append('<div class="alert alert-info filealert">' + i + '</div>');
+      })
+  } else {
+      $("#filelist").append('<div class="alert alert-warning filealert">NO FILES</div>');
+  } 
+
+
 d3.select(self.frameElement).style("height", "800px");
 
 function update(source) {
@@ -122,17 +145,31 @@ function update(source) {
   var nodeEnter = node.enter().append("g")
       .attr("class", "node")
       .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
-      .on("click", click);
+      .on("click", click)
+      .on("mouseover", showFiles);
+
+  nodeEnter.append("image")
+      .attr("xlink:href",function(d) {
+          if (d._children.length > 0) {
+              return  "/static/img/folder-blue.png";
+          } else {
+              return "/static/img/folder.png";
+          }
+      })
+      .attr("x", "-8px")
+      .attr("y", "-8px")
+      .attr("width", "24px")
+      .attr("height", "24px");
 
   nodeEnter.append("circle")
       .attr("r", 1e-6)
-      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+      .style("fill", function(d) { return d._children ? "transparent" : "lightsteelblue"; });
 
   nodeEnter.append("text")
       .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
       .attr("dy", ".35em")
       .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
-      .text(function(d) { return d.name; })
+      .text(function(d) { return d.name})
       .style("fill-opacity", 1e-6);
 
   // Transition nodes to their new position.
@@ -142,7 +179,7 @@ function update(source) {
 
   nodeUpdate.select("circle")
       .attr("r", 4.5)
-      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+      .style("fill", function(d) { return d._children ? "transparent" : "lightsteelblue"; });
 
   nodeUpdate.select("text")
       .style("fill-opacity", 1);
@@ -190,6 +227,7 @@ function update(source) {
     d.x0 = d.x;
     d.y0 = d.y;
   });
+
 }
 
 // Toggle children on click.
@@ -202,6 +240,19 @@ function click(d) {
     d._children = null;
   }
   update(d);
+}
+
+// Show files on mouseover
+function showFiles(d) {
+  var fileList = files[d.id]
+  $("#filelist").text("");
+  if (fileList != null){
+      $.each(fileList,function(e,i){
+          $("#filelist").append('<div class="alert alert-info filealert">' + i + '</div>');
+      })
+  } else {
+      $("#filelist").append('<div class="alert alert-warning filealert">NO FILES</div>');
+  } 
 }
 
 </script>
