@@ -151,9 +151,9 @@ function update(source) {
   nodeEnter.append("image")
       .attr("xlink:href",function(d) {
           if (d._children.length > 0) {
-              return  "/static/img/folder-blue.png";
+              return  "https://github.com/singularityware/singularity-python/raw/master/singularity/static/img/folder-blue.png";
           } else {
-              return "/static/img/folder.png";
+              return "https://github.com/singularityware/singularity-python/raw/master/singularity/static/img/folder.png";
           }
       })
       .attr("x", "-8px")
