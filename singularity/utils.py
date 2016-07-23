@@ -6,13 +6,17 @@ utils.py: part of singularity package
 '''
 
 import singularity.__init__ as hello
-from exceptions import OSError
 import subprocess
 import simplejson
 import tempfile
 import zipfile
 import shutil
+import sys
 import os
+
+# Python less than version 3 must import OSError
+if sys.version_info[0] < 3:
+    from exceptions import OSError
 
 
 def check_install(software="singularity"):
