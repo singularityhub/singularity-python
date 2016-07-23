@@ -36,6 +36,7 @@ def tree(image_path,S=None):
     # If the user has provided an image, try to package it
     if re.search(".img$",image_path):
         if S == None:
+            print("\n\nYOU MUST ENTER YOUR PASSWORD [ENTER] TO CONTINUE.")
             S = Singularity()
         image_path = package(image_path,output_folder=tmpdir,S=S)
 
