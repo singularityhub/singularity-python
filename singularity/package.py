@@ -183,7 +183,10 @@ def load_package(package_path,get=None):
         filename,ext = os.path.splitext(g)
 
         if ext in [".img"]:
-            print("Found image %s, skipping as not feasible to load into memory." %(g))
+            tmpdir = tempfile.mkdtemp()
+            print("Extracting image %s to %s..." %(g,tmpdir))
+            image_extracted_path = zf.extract(g,tmpdir)
+            retrieved[g] = image_extracted_path
         elif ext in [".txt"] or g == "runscript":
             retrieved[g] = zf.read(g).decode('utf-8').split('\n')
         elif g == "VERSION":
