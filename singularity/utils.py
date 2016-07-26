@@ -101,7 +101,7 @@ def zip_up(file_list,zip_name,output_folder=None):
    
     # Make a new archive    
     output_zip = "%s/%s" %(tmpdir,zip_name)
-    zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED)
+    zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED, allowZip64=True)
 
     # Write files to zip, depending on type
     for filename,content in file_list.iteritems():
