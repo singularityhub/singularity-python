@@ -108,8 +108,14 @@ def zip_up(file_list,zip_name,output_folder=None):
 
         print("Adding %s to package..." %(filename))
 
+        # If it's the files list, move files into the archive
+        if filename.lower() == "files":
+            if not isinstance(content,list): 
+                content = [content]
+            for copyfile in content:
+                zf.write(copyfile,os.path.basename(copyfile))
         # If it's a list, write to new file, and save
-        if isinstance(content,list):
+        elif isinstance(content,list):
             filey = write_file("%s/%s" %(tmpdir,filename),"\n".join(content))
             zf.write(filey,filename)
             os.remove(filey)
@@ -123,8 +129,8 @@ def zip_up(file_list,zip_name,output_folder=None):
             filey = write_file("%s/%s" %(tmpdir,filename),content)
             zf.write(filey,filename)
             os.remove(filey)
-        # If the file exists, just write it into a new archive
-        elif os.path.exists(content):
+        # Otherwise, just write the content into a new archive
+        else: 
             zf.write(content,filename)
 
     # Close the zip file    

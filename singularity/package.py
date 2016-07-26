@@ -38,7 +38,8 @@ def package(image_path,output_folder=None,runscript=True,software=True,remove_im
     if remove_image:
        to_package = dict()
     else:
-       to_package = {image_name:image_path}
+       to_package = {"files":[image_path]}
+    to_package['NAME'] = image_name
 
     # Package the image with an md5 sum as VERSION
     version = get_image_hash(image_path)
