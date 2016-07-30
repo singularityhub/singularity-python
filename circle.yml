@@ -2,6 +2,10 @@ machine:
   environment:
     TEST_RUN_FOLDER: /tmp
 
+general:
+  artifacts:
+    - .
+
 test:
   override:
     - bash singularity/testing/run_tests.sh $PWD/singularity/testing $TEST_RUN_FOLDER
