@@ -1,0 +1,8 @@
+numpy
+flask
+flask-restful
+gitpython
+selenium
+simplejson
+numexpr
+pygments

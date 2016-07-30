@@ -97,21 +97,26 @@ def calculate_similarity(pkg1,pkg2,include_files=False,include_folders=True):
     :param include_files: boolean, default False. If true, will include files
     :param include_folders: boolean, default True. If true, will include files
     '''
-    # Base names will be indices for full lists for comparator return object
-    pkg1_name = os.path.basename(pkg1)
-    pkg2_name = os.path.basename(pkg2)
+    if include_files == False and include_folders == False:
+        print("Please specify include_files and/or include_folders to be True.")
+        return None
+    else:
 
-    comparison = compare_package(pkg1,pkg2,include_files=include_files,include_folders=include_folders)
-    score = 2.0*len(comparison["intersect"]) / (len(comparison[pkg1_name])+len(comparison[pkg2_name]))
+        # Base names will be indices for full lists for comparator return object
+        pkg1_name = os.path.basename(pkg1)
+        pkg2_name = os.path.basename(pkg2)
+
+        comparison = compare_package(pkg1,pkg2,include_files=include_files,include_folders=include_folders)
+        score = 2.0*len(comparison["intersect"]) / (len(comparison[pkg1_name])+len(comparison[pkg2_name]))
     
-    # Alert user if images are identical
-    if score == 1.0:
-        print("Package %s and %s are identical by this metric!" %(pkg1_name,pkg2_name))
+        # Alert user if images are identical
+        if score == 1.0:
+            print("Package %s and %s are identical by this metric!" %(pkg1_name,pkg2_name))
 
     return score
 
 
-def compare_package(pkg1,pkg2,include_files=False,include_folders=True):
+def compare_package(pkg1,pkg2,include_files=False,include_folders=True,S=None,verbose=False):
     '''compare_package will return the lists of files or folders (or both) that are 
     different and equal between two packages
     :param pkg1: package 1
@@ -119,14 +124,29 @@ def compare_package(pkg1,pkg2,include_files=False,include_folders=True):
     :param include_files: boolean, default False. If true, will include files
     :param include_folders: boolean, default True. If true, will include files
     :param get_score: if True, will calculate overall similarity as 2*len(intersect) / len(uniques) + len(intersect) 
+    :param S: the singularity object to use - if the user provides an image and not a package, this will be needed.
+    :param verbose: be verbose when using singularity --export (default,False)
     '''
     if include_files == False and include_folders == False:
         print("Please specify include_files and/or include_folders to be True.")
+        return None
     else:
 
         # For future reference
         pkg1_name = os.path.basename(pkg1)
         pkg2_name = os.path.basename(pkg2)
+
+        # If it's an image and not a package, package it
+        if not is_package(pkg1) or not is_package(pkg2):
+            tmpdir = tempfile.mkdtemp()
+            if S == None:
+                S = Singularity(verbose=verbose)
+            if not is_package(pkg1):
+                pkg1 = package(pkg1,output_folder=tmpdir,S=S)
+                pkg1_name = os.path.basename(pkg1)
+            if not is_package(pkg2):
+                pkg2 = package(pkg2,output_folder=tmpdir,S=S)
+                pkg2_name = os.path.basename(pkg2)
 
         # Lists for all comparators for each package
         pkg1_comparators = []
@@ -190,7 +210,7 @@ def load_package(package_path,get=None):
             retrieved[g] = image_extracted_path
         elif ext in [".txt"] or g == "runscript":
             retrieved[g] = zf.read(g).decode('utf-8').split('\n')
-        elif g == "VERSION":
+        elif g in ["VERSION","NAME"]:
             retrieved[g] = zf.read(g).decode('utf-8')
         elif ext in [".json"]:
             retrieved[g] = json.loads(zf.read(g).decode('utf-8'))
@@ -213,6 +233,18 @@ def get_image_hash(image_path):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
 
+
+def is_package(contender_path,extension=".zip"):
+    '''is_package will look at the extension of a contender_path and return True if it's
+    a package. The extension variable can be customized to check for other file types.
+    :param contender_path: the path or basename of the file to checl
+    :param extension: the extension to check for to return True (default is .zip)
+    '''
+    path = os.path.basename(contender_path)
+    _,ext = os.path.splitext(path)
+    if ext == extension:
+        return True
+    return False
 
 def docker2singularity(docker_image,output_folder=None):
     '''docker2singulrity is a wrapper for the Singularity.docker2singularity
