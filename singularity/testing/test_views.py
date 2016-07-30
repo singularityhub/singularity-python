@@ -38,7 +38,7 @@ class TestViews(unittest.TestCase):
         views = {}
 
         # This template has actual paths to static files instead of Flask
-        html_template = read_file("%s/templates/container_tree_circleci.html" %(self.pwd))
+        html_template = " ".join(read_file("%s/templates/container_tree_circleci.html" %(self.pwd)))
         viz = tree(self.pkg1)
         # Make replacements in the template
         html_template = html_template.replace("{{ graph | safe }}",json.dumps(viz["graph"]))
@@ -50,9 +50,9 @@ class TestViews(unittest.TestCase):
 
         # Finally, write the index page
         links = ''
-        for viewname,view_file in views:
+        for viewname,view_file in views.iteritems():
             links = '%s\n<h3><a href="%s">%s</a></h3>' %(links,view_file,viewname)
-        html_template = read_file("%s/templates/index_circleci.html" %(self.pwd))
+        html_template = " ".join(read_file("%s/templates/index_circleci.html" %(self.pwd)))
         html_template = html_template.replace("{{ links }}",links)
         write_file("index.html",html_template)
 
