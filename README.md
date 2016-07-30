@@ -1,5 +1,7 @@
 # Singularity Python
 
+[![CircleCI](https://circleci.com/gh/singularityware/singularity-python.svg?style=svg)](https://circleci.com/gh/singularityware/singularity-python)
+
 This is a python command line tool for working with [Singularity](singularityware.github.io) containers, specifically providing functions to package containers for import of meta data into [singularity-hub](https://github.com/singularityware/singularity-hub). Testing, and examples are coming soon, and while the package is under development, notes will be provided in this README. Please contribute to the package, or post feedback and questions as [issues](https://github.com/singularityware/singularity-python). For points that require discussion of the larger group, please use the [Singularity List](https://groups.google.com/a/lbl.gov/forum/#!forum/singularity).
 
 The Singularity-Python code is licensed under the MIT open source license, which is a highly permissive license that places few limits upon reuse. This ensures that the code will be usable by the greatest number of researchers, in both academia and industry. 
