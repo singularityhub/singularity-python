@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+        <meta charset="UTF-8">
+        <title>Singularity Container: ubuntu:latest-2016-04-06</title>    
+        <link rel='stylesheet prefetch' href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+        <link rel='stylesheet prefetch' href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <link href='https://fonts.googleapis.com/css?family=Questrial' rel='stylesheet' type='text/css'>
+
+<style>
+
+.container-fluid {
+  margin: 5px;
+}
+
+body {
+    font-family: 'Questrial', sans-serif;
+}
+
+#tree {
+  z-index:10;
+}
+
+#files {
+  background-color: #F7F7F7;
+  border-radius: 5px;
+}
+
+.filealert {
+  margin-bottom:10px;
+  padding:4px;
+}
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: none;
+  stroke: none;
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>cirros-2016-01-04 minus busybox-2016-02-16</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-9" id="tree">
+            <!-- Visualization tree will be appended here-->
+        </div>
+        <div class="col-md-3" id="files">
+            <h3>Files</h3>
+                <div id="filelist">
+                <!-- Files will be shown here-->
+                </div>
+        </div>
+    </div>
+</div><!--end container-->
+
+
+<script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 20, right: 120, bottom: 20, left: 120},
+    width = 960 - margin.right - margin.left,
+    height = 800 - margin.top - margin.bottom;
+
+var i = 0,
+    duration = 750,
+    root;
+
+var tree = d3.layout.tree()
+    .size([height, width]);
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.y, d.x]; });
+
+var svg = d3.select("#tree").append("svg")
+    .attr("width", width + margin.right + margin.left)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  files = {0: ['init'], 2: ['look', 'hexdump', 'setsid', 'script', 'pg', 'flock', 'getopt', 'getconf', 'cal', 'setterm', 'ipcrm', 'whereis', 'col', 'parse-interfaces', 'scriptreplay', 'tailf', 'chkdupexe', 'mcookie', 'colcrt', 'ul', 'namei', 'logger', 'setarch', 'ldd', 'screen', 'cytune', 'ipcmk', 'ipcs', 'ssh-import-id', 'lscpu', 'ssh-add-key', 'isosize', 'curl', 'ec2metadata', 'json2fstree', 'sudo', 'column', 'renice', 'colrm', 'rev'], 4: ['getopt-parse.tcsh', 'getopt-parse.bash'], 5: ['functions'], 7: ['screen'], 8: ['xterm-xfree86', 'xterm', 'xterm-color'], 9: ['linux'], 10: ['vt102', 'vt220', 'vt200', 'vt100'], 11: ['ansi'], 12: ['default.script'], 13: ['logo'], 15: ['cd', '19', 'c3', '04', '02', '18', 'c2', 'c8', 'cc', '01', 'a1', '03', 'd6', 'c4', 'c7', 'c6', 'bf'], 16: ['libz.so.1.2.6', 'libcrypto.so.1.0.0', 'libss.so.2.0', 'libe2p.so.2.3', 'libncurses.so.5.7', 'libcom_err.so.2.1', 'libssl.so.1.0.0', 'libext2fs.so.2.4', 'libcurl.so.4.2.0'], 17: ['uncloud-init'], 18: ['sudoers.so'], 23: ['.shrc', '.profile'], 25: ['libdl-0.9.32.1.so', 'libuuid.so.1.3.0', 'libresolv-0.9.32.1.so', 'libgcc_s.so.1', 'libpthread-0.9.32.1.so', 'libblkid.so.1.1.0', 'librt-0.9.32.1.so', 'libcrypt-0.9.32.1.so', 'libutil-0.9.32.1.so', 'libnsl-0.9.32.1.so', 'libm-0.9.32.1.so', 'libuClibc-0.9.32.1.so', 'ld64-uClibc-0.9.32.1.so'], 26: ['shlib_cirros', 'shlib'], 27: ['nocloud', 'ec2', 'configdrive'], 28: ['screenrc', 'profile', 'modules', 'mke2fs.conf', 'ld.so.conf', 'fstab', 'TZ', 'securetty', 'inputrc', 'sudoers', 'os-release', 'issue', 'inittab', 'protocols', 'random-seed', 'services'], 29: ['openssl.cnf'], 30: ['ca-certificates.crt'], 31: ['CA.sh', 'CA.pl', 'tsget', 'c_issuer', 'c_name', 'c_info', 'c_hash'], 34: ['cirros-apply-net', 'S40network', 'cirros-apply-local', 'acpid', 'S20urandom', 'cirros-check-version', 'rcS', 'S01logging', 'logo', 'S50dropbear', 'load-modules', 'cirros-ds-net', 'rc.sysinit', 'resizefs', 'rcK', 'cirros-userdata', 'cirros-status', 'cirros-ds-local'], 35: ['90-cirros-user'], 36: ['version'], 38: ['00000080'], 39: ['interfaces'], 47: ['udhcpc', 'resizefs'], 48: ['ds-configdrive', 'ds-nocloud', 'config', 'ds-ec2'], 58: ['sfdisk', 'mkfs', 'cfdisk', 'hwclock', 'swaplabel', 'ldconfig', 'blockdev', 'wipefs', 'mkfs.minix', 'blkid', 'fstrim', 'mkfs.bfs', 'growpart', 'mkswap', 'resize-filesystem', 'findfs', 'fsck.minix', 'cirros-dhcpc', 'cirros-apply', 'cirros-ds', 'fsfreeze', 'cirros-userdata', 'cirros-status', 'ctrlaltdel', 'fdisk'], 60: ['menu.lst'], 62: ['.placeholder']};
+  root = {'name': 'base', 'children': [{'name': 'usr', 'parent': 0, 'level': 0, 'children': [{'name': 'bin', 'parent': 1, 'level': 1, 'children': [], 'path': 'usr/bin', 'id': 2}, {'name': 'share', 'parent': 1, 'level': 1, 'children': [{'name': 'getopt', 'parent': 3, 'level': 2, 'children': [], 'path': 'usr/share/getopt', 'id': 4}, {'name': 'cloud', 'parent': 3, 'level': 2, 'children': [], 'path': 'usr/share/cloud', 'id': 5}, {'name': 'terminfo', 'parent': 3, 'level': 2, 'children': [{'name': 's', 'parent': 6, 'level': 3, 'children': [], 'path': 'usr/share/terminfo/s', 'id': 7}, {'name': 'x', 'parent': 6, 'level': 3, 'children': [], 'path': 'usr/share/terminfo/x', 'id': 8}, {'name': 'l', 'parent': 6, 'level': 3, 'children': [], 'path': 'usr/share/terminfo/l', 'id': 9}, {'name': 'v', 'parent': 6, 'level': 3, 'children': [], 'path': 'usr/share/terminfo/v', 'id': 10}, {'name': 'a', 'parent': 6, 'level': 3, 'children': [], 'path': 'usr/share/terminfo/a', 'id': 11}], 'path': 'usr/share/terminfo', 'id': 6}, {'name': 'udhcpc', 'parent': 3, 'level': 2, 'children': [], 'path': 'usr/share/udhcpc', 'id': 12}, {'name': 'cirros', 'parent': 3, 'level': 2, 'children': [], 'path': 'usr/share/cirros', 'id': 13}, {'name': 'screen', 'parent': 3, 'level': 2, 'children': [{'name': 'utf8encodings', 'parent': 14, 'level': 3, 'children': [], 'path': 'usr/share/screen/utf8encodings', 'id': 15}], 'path': 'usr/share/screen', 'id': 14}], 'path': 'usr/share', 'id': 3}, {'name': 'lib', 'parent': 1, 'level': 1, 'children': [{'name': 'cloud-init', 'parent': 16, 'level': 2, 'children': [], 'path': 'usr/lib/cloud-init', 'id': 17}, {'name': 'sudo', 'parent': 16, 'level': 2, 'children': [], 'path': 'usr/lib/sudo', 'id': 18}], 'path': 'usr/lib', 'id': 16}], 'path': 'usr', 'id': 1}, {'name': 'mnt', 'parent': 0, 'level': 0, 'children': [], 'path': 'mnt', 'id': 49}, {'name': 'var', 'parent': 0, 'level': 0, 'children': [{'name': 'lock', 'parent': 50, 'level': 1, 'children': [], 'path': 'var/lock', 'id': 51}, {'name': 'pcmcia', 'parent': 50, 'level': 1, 'children': [], 'path': 'var/pcmcia', 'id': 52}, {'name': 'cache', 'parent': 50, 'level': 1, 'children': [], 'path': 'var/cache', 'id': 53}, {'name': 'lib', 'parent': 50, 'level': 1, 'children': [{'name': 'cloud', 'parent': 54, 'level': 2, 'children': [], 'path': 'var/lib/cloud', 'id': 56}, {'name': 'pcmcia', 'parent': 54, 'level': 2, 'children': [], 'path': 'var/lib/pcmcia', 'id': 55}], 'path': 'var/lib', 'id': 54}, {'name': 'log', 'parent': 50, 'level': 1, 'children': [], 'path': 'var/log', 'id': 57}], 'path': 'var', 'id': 50}, {'name': 'run', 'parent': 0, 'level': 0, 'children': [], 'path': 'run', 'id': 19}, {'name': 'tmp', 'parent': 0, 'level': 0, 'children': [{'name': 'ldconfig', 'parent': 20, 'level': 1, 'children': [], 'path': 'tmp/ldconfig', 'id': 21}], 'path': 'tmp', 'id': 20}, {'name': 'home', 'parent': 0, 'level': 0, 'children': [{'name': 'cirros', 'parent': 22, 'level': 1, 'children': [], 'path': 'home/cirros', 'id': 23}, {'name': 'ftp', 'parent': 22, 'level': 1, 'children': [], 'path': 'home/ftp', 'id': 24}], 'path': 'home', 'id': 22}, {'name': 'lib', 'parent': 0, 'level': 0, 'children': [{'name': 'cirros', 'parent': 25, 'level': 1, 'children': [{'name': 'ds', 'parent': 26, 'level': 2, 'children': [], 'path': 'lib/cirros/ds', 'id': 27}], 'path': 'lib/cirros', 'id': 26}], 'path': 'lib', 'id': 25}, {'name': 'sbin', 'parent': 0, 'level': 0, 'children': [], 'path': 'sbin', 'id': 58}, {'name': 'boot', 'parent': 0, 'level': 0, 'children': [{'name': 'grub', 'parent': 59, 'level': 1, 'children': [], 'path': 'boot/grub', 'id': 60}], 'path': 'boot', 'id': 59}, {'name': 'etc', 'parent': 0, 'level': 0, 'children': [{'name': 'ssl', 'parent': 28, 'level': 1, 'children': [{'name': 'private', 'parent': 29, 'level': 2, 'children': [], 'path': 'etc/ssl/private', 'id': 32}, {'name': 'certs', 'parent': 29, 'level': 2, 'children': [], 'path': 'etc/ssl/certs', 'id': 30}, {'name': 'misc', 'parent': 29, 'level': 2, 'children': [], 'path': 'etc/ssl/misc', 'id': 31}], 'path': 'etc/ssl', 'id': 29}, {'name': 'ld.so.conf.d', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/ld.so.conf.d', 'id': 33}, {'name': 'init.d', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/init.d', 'id': 34}, {'name': 'sudoers.d', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/sudoers.d', 'id': 35}, {'name': 'cirros', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/cirros', 'id': 36}, {'name': 'acpi', 'parent': 28, 'level': 1, 'children': [{'name': 'PWRF', 'parent': 37, 'level': 2, 'children': [], 'path': 'etc/acpi/PWRF', 'id': 38}], 'path': 'etc/acpi', 'id': 37}, {'name': 'network', 'parent': 28, 'level': 1, 'children': [{'name': 'if-post-up.d', 'parent': 39, 'level': 2, 'children': [], 'path': 'etc/network/if-post-up.d', 'id': 45}, {'name': 'if-pre-down.d', 'parent': 39, 'level': 2, 'children': [], 'path': 'etc/network/if-pre-down.d', 'id': 41}, {'name': 'if-post-down.d', 'parent': 39, 'level': 2, 'children': [], 'path': 'etc/network/if-post-down.d', 'id': 42}, {'name': 'if-up.d', 'parent': 39, 'level': 2, 'children': [], 'path': 'etc/network/if-up.d', 'id': 43}, {'name': 'if-pre-up.d', 'parent': 39, 'level': 2, 'children': [], 'path': 'etc/network/if-pre-up.d', 'id': 44}, {'name': 'if-down.d', 'parent': 39, 'level': 2, 'children': [], 'path': 'etc/network/if-down.d', 'id': 40}], 'path': 'etc/network', 'id': 39}, {'name': 'rc3.d', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/rc3.d', 'id': 46}, {'name': 'default', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/default', 'id': 47}, {'name': 'cirros-init', 'parent': 28, 'level': 1, 'children': [], 'path': 'etc/cirros-init', 'id': 48}], 'path': 'etc', 'id': 28}, {'name': 'media', 'parent': 0, 'level': 0, 'children': [], 'path': 'media', 'id': 61}, {'name': 'old-root', 'parent': 0, 'level': 0, 'children': [], 'path': 'old-root', 'id': 62}, {'name': 'opt', 'parent': 0, 'level': 0, 'children': [], 'path': 'opt', 'id': 63}]};
+  root.x0 = height / 2;
+  root.y0 = 0;
+
+  function collapse(d) {
+    if (d.children) {
+      d._children = d.children;
+      d._children.forEach(collapse);
+      d.children = null;
+    }
+  }
+
+  root.children.forEach(collapse);
+  update(root);
+
+  // Add base files to file viewer
+  var fileList = files[0]
+  if (fileList != null){
+      $.each(fileList,function(e,i){
+          $("#filelist").append('<div class="alert alert-info filealert">' + i + '</div>');
+      })
+  } else {
+      $("#filelist").append('<div class="alert alert-warning filealert">NO FILES</div>');
+  } 
+
+
+d3.select(self.frameElement).style("height", "800px");
+
+function update(source) {
+
+  // Compute the new tree layout.
+  var nodes = tree.nodes(root).reverse(),
+      links = tree.links(nodes);
+
+  // Normalize for fixed-depth.
+  nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+  // Update the nodes…
+  var node = svg.selectAll("g.node")
+      .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+  // Enter any new nodes at the parent's previous position.
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+      .on("click", click)
+      .on("mouseover", showFiles);
+
+  nodeEnter.append("image")
+      .attr("xlink:href",function(d) {
+          if (d._children.length > 0) {
+              return  "/static/img/folder-blue.png";
+          } else {
+              return "/static/img/folder.png";
+          }
+      })
+      .attr("x", "-8px")
+      .attr("y", "-8px")
+      .attr("width", "24px")
+      .attr("height", "24px");
+
+  nodeEnter.append("circle")
+      .attr("r", 1e-6)
+      .style("fill", function(d) { return d._children ? "transparent" : "lightsteelblue"; });
+
+  nodeEnter.append("text")
+      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+      .text(function(d) { return d.name})
+      .style("fill-opacity", 1e-6);
+
+  // Transition nodes to their new position.
+  var nodeUpdate = node.transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+  nodeUpdate.select("circle")
+      .attr("r", 4.5)
+      .style("fill", function(d) { return d._children ? "transparent" : "lightsteelblue"; });
+
+  nodeUpdate.select("text")
+      .style("fill-opacity", 1);
+
+  // Transition exiting nodes to the parent's new position.
+  var nodeExit = node.exit().transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+      .remove();
+
+  nodeExit.select("circle")
+      .attr("r", 1e-6);
+
+  nodeExit.select("text")
+      .style("fill-opacity", 1e-6);
+
+  // Update the links…
+  var link = svg.selectAll("path.link")
+      .data(links, function(d) { return d.target.id; });
+
+  // Enter any new links at the parent's previous position.
+  link.enter().insert("path", "g")
+      .attr("class", "link")
+      .attr("d", function(d) {
+        var o = {x: source.x0, y: source.y0};
+        return diagonal({source: o, target: o});
+      });
+
+  // Transition links to their new position.
+  link.transition()
+      .duration(duration)
+      .attr("d", diagonal);
+
+  // Transition exiting nodes to the parent's new position.
+  link.exit().transition()
+      .duration(duration)
+      .attr("d", function(d) {
+        var o = {x: source.x, y: source.y};
+        return diagonal({source: o, target: o});
+      })
+      .remove();
+
+  // Stash the old positions for transition.
+  nodes.forEach(function(d) {
+    d.x0 = d.x;
+    d.y0 = d.y;
+  });
+
+}
+
+// Toggle children on click.
+function click(d) {
+  if (d.children) {
+    d._children = d.children;
+    d.children = null;
+  } else {
+    d.children = d._children;
+    d._children = null;
+  }
+  update(d);
+}
+
+// Show files on mouseover
+function showFiles(d) {
+  var fileList = files[d.id]
+  $("#filelist").text("");
+  if (fileList != null){
+      $.each(fileList,function(e,i){
+          $("#filelist").append('<div class="alert alert-info filealert">' + i + '</div>');
+      })
+  } else {
+      $("#filelist").append('<div class="alert alert-warning filealert">NO FILES</div>');
+  } 
+}
+
+</script>
+  </body>
+</html>

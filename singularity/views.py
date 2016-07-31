@@ -5,8 +5,8 @@ views.py: part of singularity package
 
 '''
 
-from singularity.package import list_package, load_package, package
-from singularity.utils import zip_up, read_file, write_file
+from singularity.package import list_package, load_package, package, check_packages, compare_package
+from singularity.utils import zip_up, read_file, write_file, remove_unicode_dict
 from singularity.cli import Singularity
 import SimpleHTTPServer
 import SocketServer
@@ -23,6 +23,30 @@ import re
 # PACKAGE TREES ###################################################################################
 ###################################################################################################
 
+def diff_tree(base_image,subtracted_image,S=None):
+    '''difference_tree will render an html tree (graph) of the differences between an image or package
+    :param base_image: full path to the image, or package, as base for comparison
+    :param subtracted_image: full path to the image, or package, to subtract
+    :param S: the Singularity object, only needed if image needs to be packaged.
+    '''
+
+    # Make sure that images are all packages
+    tmpdir = tempfile.mkdtemp()
+    base,subtracted = check_packages([base_image,subtracted_image],S=S,tmpdir=tmpdir)
+
+    # Get differences between packages
+    different_folders = compare_package(base,subtracted,S=S)
+    different_files = compare_package(base,subtracted,include_files=True,include_folders=False,S=S)
+
+    # Make a list of files and folders that are unique to base (subtracted is removed)
+    folders = different_folders["unique_%s" %(os.path.basename(base))]
+    files = different_files["unique_%s" %(os.path.basename(base))]
+    tree = make_package_tree(folders=folders,
+                             files=files)
+    shutil.rmtree(tmpdir)
+    return tree
+    
+
 def tree(image_path,S=None):
     '''tree will render an html tree (graph) of an image or package
     :param image_path: full path to the image, or package
@@ -32,22 +56,17 @@ def tree(image_path,S=None):
     # Make a temporary directory for stuffs
     tmpdir = tempfile.mkdtemp()
 
-    # If the user has provided an image, try to package it
-    if re.search(".img$",image_path):
-        if S == None:
-            print("\n\nYOU MUST ENTER YOUR PASSWORD [ENTER] TO CONTINUE.")
-            S = Singularity()
-        image_path = package(image_path,output_folder=tmpdir,S=S)
+    # Make sure that images are all packages
+    tmpdir = tempfile.mkdtemp()
+    image_path = check_packages([image_path],S=S,tmpdir=tmpdir)[0]
 
-    # If it's a package, look for folders.txt and files.txt
-    if re.search(".zip$",image_path):
-        guts = list_package(image_path)
-        if "folders.txt" in guts and "files.txt" in guts:
-            retrieved = load_package(image_path,get=["folders.txt","files.txt"])
-            tree = make_package_tree(folders=retrieved["folders.txt"],
-                                     files=retrieved['files.txt'])
-            return tree
-
+    # When it's a package, look for folders.txt and files.txt
+    guts = list_package(image_path)
+    if "folders.txt" in guts and "files.txt" in guts:
+        retrieved = load_package(image_path,get=["folders.txt","files.txt"])
+        tree = make_package_tree(folders=retrieved["folders.txt"],
+                                 files=retrieved['files.txt'])
+        return tree
     else:
         print("Cannot find folders.txt and files.txt in package, cannot create visualization.")
 
@@ -132,6 +151,7 @@ def make_package_tree(folders,files,path_delim="/",parse_files=True):
                     file_lookup[0] = [filename]
         result['files'] = file_lookup
 
+    result = remove_unicode_dict(result)
     return result
 
 

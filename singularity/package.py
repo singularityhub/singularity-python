@@ -12,6 +12,7 @@ import tempfile
 import tarfile
 import hashlib
 import zipfile
+import shutil
 import json
 import os
 
@@ -132,21 +133,11 @@ def compare_package(pkg1,pkg2,include_files=False,include_folders=True,S=None,ve
         return None
     else:
 
-        # For future reference
+        # Ensure all are packages, not images
+        tmpdir = tempfile.mkdtemp()
+        pkg1,pkg2 = check_packages([pkg1,pkg2],S=S,tmpdir=tmpdir)
         pkg1_name = os.path.basename(pkg1)
         pkg2_name = os.path.basename(pkg2)
-
-        # If it's an image and not a package, package it
-        if not is_package(pkg1) or not is_package(pkg2):
-            tmpdir = tempfile.mkdtemp()
-            if S == None:
-                S = Singularity(verbose=verbose)
-            if not is_package(pkg1):
-                pkg1 = package(pkg1,output_folder=tmpdir,S=S)
-                pkg1_name = os.path.basename(pkg1)
-            if not is_package(pkg2):
-                pkg2 = package(pkg2,output_folder=tmpdir,S=S)
-                pkg2_name = os.path.basename(pkg2)
 
         # Lists for all comparators for each package
         pkg1_comparators = []
@@ -180,7 +171,38 @@ def compare_package(pkg1,pkg2,include_files=False,include_folders=True,S=None,ve
                       pkg1_name:pkg1_comparators,
                       pkg2_name:pkg2_comparators}
 
+        shutil.rmtree(tmpdir)
         return comparison
+
+
+def check_packages(packages,S=None,tmpdir=None,verbose=False):
+    '''check_packages will take a list of contenders (likely images and packages combined)
+    and ensure that all are packages. If an image is found, it will be packaged to a temporary 
+    directory, and the image returned.
+    :param packages: a list of images/packages to check
+    :param tmpdir: an optional temporary directory, if not provided will be made
+    :param verbose: verbose argument supplied to Singularity object
+    '''
+    if tmpdir == None:
+        tmpdir = tempfile.mkdtemp()
+    if isinstance(packages,str):
+        packages = [packages]
+
+    # If it's an image and not a package, package it
+    is_packages = [is_package(pkg) for pkg in packages]
+    packaged = []
+    if sum(is_packages) != len(is_packages):
+        if S == None:
+            print("\n\nYOU MUST ENTER YOUR PASSWORD [ENTER] TO CONTINUE.")
+            S = Singularity(verbose=verbose)
+        for pkg in packages:
+            if not is_package(pkg):
+                packaged.append(package(pkg,output_folder=tmpdir,S=S))
+            else:
+                packaged.append(pkg)
+    else:
+        return packages
+    return packaged
 
 
 def load_package(package_path,get=None):

@@ -79,6 +79,7 @@ For the package command, you will need to put in your password to grant sudo pri
 
 For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
 
+
 #### Calculate similarity of packages
 
 I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
@@ -94,7 +95,20 @@ This will open up something that looks like this:
 
 ![img/files.png](img/files.png)
 
-An [interactive demo](https://singularityware.github.io/singularity-python/examples/container_tree) is also available, and see the [example](examples/container_tree) for updates. Note that if you specify an image file, it will need to be packaged, and the console will hang as it waits for you to type it in and press enter.
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/container_tree) is also available, and see the [example](examples/container_tree) for updates. Note that if you specify an image file, it will need to be packaged, and the console will hang as it waits for you to type in your password and press enter.
+
+
+#### View the difference between two containers
+
+What's the difference, in terms of files and folders, between those two containers? shub provides a command line function for rendering a view to (immediately) show what is left when you subtract one image from another:
+
+      shub --difftree --images cirros-2016-01-04.img.zip,busybox-2016-02-16.img.zip
+
+Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. For this argument you can specify an image or package. What you are specifying is --images `base`,`subtracted`, meaning that we will show the `base` with `subtracted` files and folders removed.
+
+![examples/difference_tree/difftree.png](examples/difference_tree/difftree.png)
+
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree) is also available.
 
 
 #### Generate a runscript template
@@ -116,8 +130,10 @@ The only supported language is currently python (specify "py" as in the example 
 
       optional arguments:
         -h, --help            show this help message and exit
-        --image IMAGE         full path to singularity image (for use with
-                              --package)
+        --image IMAGE         full path to singularity image (for use with --package
+                              and --tree)
+        --images IMAGES       full path to singularity images/packages,separated
+                              with commas (for use with --difftree)
         --docker2singularity DOCKER
                               name of Docker image to export to Singularity (does
                               not include runscript cmd)
@@ -130,10 +146,13 @@ The only supported language is currently python (specify "py" as in the example 
                               directory. Currently supported types are py (python).
         --package             package a singularity container for singularity hub
         --tree                view the guts of an image or package.
+        --difftree            view files and folders unique to an image or package,
+                              specify --images base.img,subtraction.img
 
 
-        usage: shub [-h] [--image IMAGE] [--docker2singularity DOCKER]
-                    [--outfolder OUTFOLDER] [--runscript RUNSCRIPT] [--package]
+      usage: shub [-h] [--image IMAGE] [--images IMAGES]
+                  [--docker2singularity DOCKER] [--outfolder OUTFOLDER]
+                  [--runscript RUNSCRIPT] [--package] [--tree] [--difftree]
 
 
 ### Functions Provided

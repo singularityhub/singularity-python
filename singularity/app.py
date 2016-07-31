@@ -1,7 +1,7 @@
+from singularity.views import tree, diff_tree
 from flask import Flask, render_template, request
 from flask_restful import Resource, Api
 from werkzeug import secure_filename
-from singularity.views import tree
 import webbrowser
 import tempfile
 import shutil
@@ -18,6 +18,7 @@ class SingularityServer(Flask):
         self.tmpdir = tempfile.mkdtemp()
         self.viz = None # Holds the visualization
         self.package = None
+        self.packages = None
 
 # SUPPORTING FUNCTIONS #############################################
 
@@ -34,6 +35,7 @@ app = SingularityServer(__name__)
 app.config['ALLOWED_EXTENSIONS'] = set(['png', 'jpg', 'jpeg','gif'])
 
 # INTERACTIVE CONTAINER EXPLORATION ################################
+
 @app.route('/container/tree')
 def container_tree():
     # The server will store the package name and result object for query
@@ -44,6 +46,17 @@ def container_tree():
                                                  files=app.viz['files'],
                                                  container_name=container_name)
     
+@app.route('/container/difftree')
+def difference_tree():
+    # The server will store the package name and result object for query
+    if app.viz == None:
+        app.viz = diff_tree(app.packages[0],app.packages[1])
+    container1_name = os.path.basename(app.packages[0]).split(".")[0]
+    container2_name = os.path.basename(app.packages[1]).split(".")[0]
+    title = "%s minus %s" %(container1_name,container2_name)
+    return render_template('container_tree.html',graph=app.viz['graph'],
+                                                 files=app.viz['files'],
+                                                 container_name=title)
 
 # START FUNCTIONS ##################################################
 
@@ -55,13 +68,22 @@ def start(port=8088):
     webbrowser.open("http://localhost:%s" %(port))
     app.run(host="0.0.0.0",debug=True,port=port)
     
-# Function to start server (not yet tested).
+# Function to make single package/image tree
 def make_tree(package,port=None):
     app.package = package
     if port==None:
         port=8088
     print "I'm in a nutshell! Who put me into this nutshell?"
     webbrowser.open("http://localhost:%s/container/tree" %(port))
+    app.run(host="0.0.0.0",debug=True,port=port)
+
+# Function to make difference tree to compare image against base
+def make_difference_tree(base_image,subtract,port=None):
+    app.packages = [base_image,subtract]
+    if port==None:
+        port=8088
+    print "I'm in a nutshell! Who put me into this nutshell?"
+    webbrowser.open("http://localhost:%s/container/difftree" %(port))
     app.run(host="0.0.0.0",debug=True,port=port)
 
 if __name__ == '__main__':

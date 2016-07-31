@@ -7,6 +7,7 @@ utils.py: part of singularity package
 
 import singularity.__init__ as hello
 import subprocess
+import collections
 import simplejson
 import tempfile
 import zipfile
@@ -178,3 +179,14 @@ def read_file(filename,mode="rb"):
     filey.close()
     return content
 
+def remove_unicode_dict(input_dict):
+    '''remove unicode keys and values from dict, encoding in utf8
+    '''
+    if isinstance(input_dict, basestring):
+        return str(input_dict)
+    elif isinstance(input_dict, collections.Mapping):
+        return dict(map(remove_unicode_dict, input_dict.iteritems()))
+    elif isinstance(input_dict, collections.Iterable):
+        return type(input_dict)(map(remove_unicode_dict, input_dict))
+    else:
+        return input_dict
