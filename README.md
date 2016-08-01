@@ -7,11 +7,9 @@ This is a python command line tool for working with [Singularity](singularitywar
 The Singularity-Python code is licensed under the MIT open source license, which is a highly permissive license that places few limits upon reuse. This ensures that the code will be usable by the greatest number of researchers, in both academia and industry. 
 
 
-
 ### Installation (current)
 
       pip install singularity
-
 
 
 ### Installation (dev)
