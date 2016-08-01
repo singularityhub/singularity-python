@@ -170,11 +170,14 @@ The only supported language is currently python (specify "py" as in the example 
         --tree                view the guts of an image or package.
         --difftree            view files and folders unique to an image or package,
                               specify --images base.img,subtraction.img
+        --simtree             view common files and folders between two images or
+                              package, specify with --images
+
 
 
       usage: shub [-h] [--image IMAGE] [--images IMAGES]
                   [--docker2singularity DOCKER] [--outfolder OUTFOLDER]
-                  [--runscript RUNSCRIPT] [--package] [--tree] [--difftree]
+                  [--runscript RUNSCRIPT] [--package] [--tree] [--difftree] [--simtree]
 
 
 ### Functions Provided
