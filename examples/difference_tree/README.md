@@ -8,7 +8,7 @@ Note that we are specifying `images` for the argument instead of `image`, and it
 
 ![difftree.png](difftree.png)
 
-An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree) is also available.
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree/) is also available.
 
 
 ### Questions

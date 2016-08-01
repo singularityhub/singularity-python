@@ -110,7 +110,7 @@ Note that we are specifying `images` for the argument instead of `image`, and it
 
 ![examples/difference_tree/difftree.png](examples/difference_tree/difftree.png)
 
-An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree) is also available.
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree/) is also available.
 
 
 ##### Container Similarity Tree
@@ -123,7 +123,7 @@ Note that we are specifying `images` for the argument instead of `image`, and it
 
 ![examples/similar_tree/simtree.png](examples/similar_tree/simtree.png)
 
-An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree) is also available.
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree/) is also available.
 
 
 ##### Questions

@@ -8,7 +8,7 @@ Note that we are specifying `images` for the argument instead of `image`, and it
 
 ![simtree.png](simtree.png)
 
-An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree) is also available.
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree/) is also available.
 
 ### Questions
 
