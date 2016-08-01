@@ -100,7 +100,7 @@ An [interactive demo](https://singularityware.github.io/singularity-python/examp
 I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
 
 
-###### Container Difference Tree
+##### Container Difference Tree
 
 What's the difference, in terms of files and folders, between those two containers? shub provides a command line function for rendering a view to (immediately) show what is left when you subtract one image from another:
 
@@ -113,7 +113,7 @@ Note that we are specifying `images` for the argument instead of `image`, and it
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree) is also available.
 
 
-###### Container Similarity Tree
+##### Container Similarity Tree
 
 What do two containers have in common, in terms of files and folders? shub provides a command line function for rendering a view to (immediately) show the similarity between to container images:
 
@@ -121,12 +121,12 @@ What do two containers have in common, in terms of files and folders? shub provi
 
 Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. For this argument you can specify an image or package.
 
-![examples/sim_tree/simtree.png](examples/sim_tree/simtree.png)
+![examples/similar_tree/simtree.png](examples/similar_tree/simtree.png)
 
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree) is also available.
 
 
-###### Questions
+##### Questions
 
 **Why do I see some of the same folders between the similarity and difference trees?**
 
