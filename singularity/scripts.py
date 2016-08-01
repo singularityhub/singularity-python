@@ -6,7 +6,7 @@ Runtime executable, "shub"
 
 '''
 
-from singularity.app import make_tree, make_difference_tree
+from singularity.app import make_tree, make_difference_tree, make_sim_tree
 from singularity.package import package, docker2singularity
 from singularity.runscript import get_runscript_template
 from singularity.utils import check_install
@@ -26,6 +26,7 @@ def main():
     parser.add_argument('--package', help="package a singularity container for singularity hub", dest='package', default=False, action='store_true')
     parser.add_argument('--tree', help="view the guts of an image or package.", dest='tree', default=False, action='store_true')
     parser.add_argument('--difftree', help="view files and folders unique to an image or package, specify --images base.img,subtraction.img", dest='difftree', default=False, action='store_true')
+    parser.add_argument('--simtree', help="view common files and folders between two images or package, specify with --images", dest='simtree', default=False, action='store_true')
     try:
         args = parser.parse_args()
     except:
@@ -79,6 +80,10 @@ def main():
            # Difference tree
            if args.difftree == True:
                make_difference_tree(images[0],images[1])
+
+           # Similar tree
+           elif args.simtree == True:
+               make_sim_tree(images[0],images[1])
 
        else:
           print("Please specify a singularity image with --image.")

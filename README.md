@@ -80,11 +80,6 @@ For the package command, you will need to put in your password to grant sudo pri
 For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
 
 
-#### Calculate similarity of packages
-
-I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
-
-
 #### View the inside of a container or package
 
 What's inside that container? Right now, the main way to answer this question is to do some equivalent of ssh. shub provides a command line function for rendering a view to (immediately) show the contents of an image (folders and files) in your web browser:
@@ -98,7 +93,14 @@ This will open up something that looks like this:
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/container_tree) is also available, and see the [example](examples/container_tree) for updates. Note that if you specify an image file, it will need to be packaged, and the console will hang as it waits for you to type in your password and press enter.
 
 
-#### View the difference between two containers
+#### Compare Containers
+
+##### Calculate similarity of packages
+
+I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
+
+
+###### Container Difference Tree
 
 What's the difference, in terms of files and folders, between those two containers? shub provides a command line function for rendering a view to (immediately) show what is left when you subtract one image from another:
 
@@ -109,6 +111,26 @@ Note that we are specifying `images` for the argument instead of `image`, and it
 ![examples/difference_tree/difftree.png](examples/difference_tree/difftree.png)
 
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree) is also available.
+
+
+###### Container Similarity Tree
+
+What do two containers have in common, in terms of files and folders? shub provides a command line function for rendering a view to (immediately) show the similarity between to container images:
+
+      shub --simtree --images cirros-2016-01-04.img.zip,busybox-2016-02-16.img.zip
+
+Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. For this argument you can specify an image or package.
+
+![examples/sim_tree/simtree.png](examples/sim_tree/simtree.png)
+
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree) is also available.
+
+
+###### Questions
+
+**Why do I see some of the same folders between the similarity and difference trees?**
+
+In order to parse lower levels of the tree, we have to include parents. So, for example, the folder `home` would obviously be shared by two images, however if there are subfolders that exist for one image but not the other, we must render `home` in the difference tree. Thus, you might see `home` appear in both visualizations that show the intersect and difference.
 
 
 #### Generate a runscript template

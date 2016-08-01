@@ -47,6 +47,30 @@ def diff_tree(base_image,subtracted_image,S=None):
     return tree
     
 
+def sim_tree(image1,image2,S=None):
+    '''sim_tree will render an html tree (graph) of the intersection (commonalities) between two images or packages
+    :param image1: full path to the image, or package
+    :param image2: full path to the image, or package
+    :param S: the Singularity object, only needed if image needs to be packaged.
+    '''
+
+    # Make sure that images are all packages
+    tmpdir = tempfile.mkdtemp()
+    image1,image2 = check_packages([image1,image2],S=S,tmpdir=tmpdir)
+
+    # Get differences between packages
+    shared_folders = compare_package(image1,image2,S=S)
+    shared_files = compare_package(image1,image2,include_files=True,include_folders=False,S=S)
+
+    # Make a list of files and folders that are intersected
+    folders = shared_folders["intersect"]
+    files = shared_files["intersect"]
+    tree = make_package_tree(folders=folders,
+                             files=files)
+    shutil.rmtree(tmpdir)
+    return tree
+
+
 def tree(image_path,S=None):
     '''tree will render an html tree (graph) of an image or package
     :param image_path: full path to the image, or package
