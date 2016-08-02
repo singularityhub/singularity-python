@@ -22,6 +22,7 @@ The Singularity-Python code is licensed under the MIT open source license, which
 Installation will place an executable, `shub` in your bin folder. 
 
 
+
 #### Test your installation
 
 After installation, you should be able to run `shub` on the command line, without any input args, to see if you have Singularity installed (and test the package):
@@ -44,6 +45,7 @@ will export the image `ubuntu:latest-2016-04-06.img` into your current working d
 
 
       shub --docker ubuntu:latest --outfolder /home/vanessa/Desktop
+
 
 
 #### Package your container

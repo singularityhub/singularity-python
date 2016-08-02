@@ -19,8 +19,8 @@ class SingularityServer(Flask):
         self.viz = None # Holds the visualization
         self.package = None
         self.packages = None
-
-
+        self.docker = False # boolean to designate docker or singularity
+        self.sudopw = None # needed for docker view
 
 
 # API VIEWS #########################################################
@@ -41,7 +41,10 @@ app.config['ALLOWED_EXTENSIONS'] = set(['png', 'jpg', 'jpeg','gif'])
 def container_tree():
     # The server will store the package name and result object for query
     if app.viz == None:
-        app.viz = tree(app.package)
+        if app.docker == False:
+            app.viz = tree(app.package)
+        else:
+            app.viz = tree(app.package,docker=True,sudopw=app.sudopw)
     container_name = os.path.basename(app.package).split(".")[0]
     return render_template('container_tree.html',graph=app.viz['graph'],
                                                  files=app.viz['files'],
@@ -74,13 +77,15 @@ def similar_tree():
 # START FUNCTIONS ##################################################
     
 # Function to make single package/image tree
-def make_tree(package,port=None):
+def make_tree(package,docker=False,port=None,sudopw=None):
     app.package = package
+    app.docker = docker
+    app.sudopw = sudopw
     if port==None:
         port=8088
     print "It goes without saying. I suspect now it's not going."
     webbrowser.open("http://localhost:%s/container/tree" %(port))
-    app.run(host="0.0.0.0",debug=True,port=port)
+    app.run(host="0.0.0.0",debug=False,port=port)
 
 # Function to make difference tree to compare image against base
 def make_difference_tree(base_image,subtract,port=None):
