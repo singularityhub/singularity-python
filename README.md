@@ -38,13 +38,13 @@ After installation, you should be able to run `shub` on the command line, withou
 This tool currently has command line and (functions) to convert a Docker image to Singularity. Currently, we don't add any sort of runscript from the CMD, as this needs to be better developed. To use on the command line:
 
 
-     shub --docker ubuntu:latest
+     shub --docker2singularity ubuntu:latest
 
  
 will export the image `ubuntu:latest-2016-04-06.img` into your current working directory. If you want to export to a different folder:
 
 
-      shub --docker ubuntu:latest --outfolder /home/vanessa/Desktop
+      shub --docker2singularity ubuntu:latest --outfolder /home/vanessa/Desktop
 
 
 
@@ -137,7 +137,7 @@ What do two containers have in common, in terms of files and folders? shub provi
       shub --simtree --images cirros-2016-01-04.img.zip,busybox-2016-02-16.img.zip
 
 Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. For this argument you can specify an image or package.
-
+--docker
 ![examples/similar_tree/simtree.png](examples/similar_tree/simtree.png)
 
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree/) is also available.
@@ -162,20 +162,19 @@ A `runscript` is a file that sits in the base of a singularity image (at `/`) an
 
 The only supported language is currently python (specify "py" as in the example above) and we will have more included as the software is developed. If you are a debutante for your favorite language(s) of choice, please contribute to the repo! Contribution means adding a runscript.{{ext}} to the [templates](singularity/templates) folder, and a function to the [runscript.py](singularity/runscript.py) module to parse it into a data structure to be included in the image package. More details coming soon, as the python verison of this (the first) is still under development.
 
-
+--docker
 ### shub --help
 
       package Singularity containers for singularity hub.
 
       optional arguments:
-        -h, --help            show this help message and exit
-        --image IMAGE         full path to singularity image (for use with --package
+        -h, --help            show this help message and exi      t
+        --image IMAGE         full path to singularity image (for use with --package      
                               and --tree)
         --images IMAGES       full path to singularity images/packages,separated
                               with commas (for use with --difftree)
-        --docker2singularity DOCKER
-                              name of Docker image to export to Singularity (does
-                              not include runscript cmd)
+        --docker DOCKER       name of Docker image for use with
+                              --docker2singularity, --tree, etc.
         --outfolder OUTFOLDER
                               full path to folder for output, if not specified, will
                               go to pwd
@@ -184,17 +183,18 @@ The only supported language is currently python (specify "py" as in the example 
                               the PWD, or include --outfolder to change output
                               directory. Currently supported types are py (python).
         --package             package a singularity container for singularity hub
-        --tree                view the guts of an image or package.
+        --tree                view the guts of an singularity image or package, or
+                              Docker image.
         --difftree            view files and folders unique to an image or package,
                               specify --images base.img,subtraction.img
         --simtree             view common files and folders between two images or
-                              package, specify with --images
-
-
-
-      usage: shub [-h] [--image IMAGE] [--images IMAGES]
-                  [--docker2singularity DOCKER] [--outfolder OUTFOLDER]
-                  [--runscript RUNSCRIPT] [--package] [--tree] [--difftree] [--simtree]
+                              package, specify with --images      
+        --docker2singularity DOCKERCONVERSION
+                              convert a docker image to singularity
+      usage: shub [-h] [--image IMAGE] [--images IMAGES] [--docker DOCKER]
+                  [--outfolder OUTFOLDER] [--runscript RUNSCRIPT] [--package]
+                  [--tree] [--difftree] [--simtree]
+                  [--docker2singularity DOCKERCONVERSION]
 
 
 ### Functions Provided

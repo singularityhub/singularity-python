@@ -6,13 +6,13 @@ You have several options for converting docker images to singularity.
 This tool currently has command line and (functions) to convert a Docker image to Singularity. Currently, we don't add any sort of runscript from the CMD, as this needs to be better developed. To use on the command line:
 
 
-      shub --docker ubuntu:latest
+      shub --docker2singularity ubuntu:latest
 
  
 will export the image `ubuntu:latest-2016-04-06.img` into your current working directory. If you want to export to a different folder:
 
 
-      shub --docker ubuntu:latest --outfolder /home/vanessa/Desktop
+      shub --docker2singularity ubuntu:latest --outfolder /home/vanessa/Desktop
 
 
 ## docker2singularity bash

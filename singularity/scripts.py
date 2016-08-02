@@ -28,7 +28,7 @@ def main():
     parser.add_argument('--tree', help="view the guts of an singularity image or package, or Docker image.", dest='tree', default=False, action='store_true')
     parser.add_argument('--difftree', help="view files and folders unique to an image or package, specify --images base.img,subtraction.img", dest='difftree', default=False, action='store_true')
     parser.add_argument('--simtree', help="view common files and folders between two images or package, specify with --images", dest='simtree', default=False, action='store_true')
-    parser.add_argument('--docker2singularity', help="convert a docker image to singularity, specify name with --docker", dest='dockerconversion', default=False, action='store_true')
+    parser.add_argument('--docker2singularity', help="convert a docker image to singularity", dest='dockerconversion', type=str, default=None)
     try:
         args = parser.parse_args()
     except:
@@ -49,9 +49,9 @@ def main():
 
 
     # If the user wants to export docker2singularity!
-    if args.dockerconversion == True:
+    if args.dockerconversion != None:
         docker2singularity(output_folder=output_folder,
-                           docker_image=args.docker)
+                           docker_image=args.dockerconversion)
 
 
     # We can only continue if singularity is installed
