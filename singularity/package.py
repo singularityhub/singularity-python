@@ -267,17 +267,3 @@ def is_package(contender_path,extension=".zip"):
     if ext == extension:
         return True
     return False
-
-def docker2singularity(docker_image,output_folder=None):
-    '''docker2singulrity is a wrapper for the Singularity.docker2singularity
-    client function. Does not currently include runscript (/singularity) in image,
-    but does export full docker image spec under /singularity.json
-    :param docker_image: the full docker repo/image,eg "ubuntu:latest"
-    :param output_folder: the output folder to create the image in. If not 
-    specified, will use pwd.
-    '''
-
-    S = Singularity()
-    docker_image = S.docker2singularity(docker_image=docker_image,
-                                        output_dir=output_folder)
-    return docker_image

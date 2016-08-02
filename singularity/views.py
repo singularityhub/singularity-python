@@ -7,6 +7,7 @@ views.py: part of singularity package
 
 from singularity.package import list_package, load_package, package, check_packages, compare_package
 from singularity.utils import zip_up, read_file, write_file, remove_unicode_dict
+from singularity.docker import get_docker_guts
 from singularity.cli import Singularity
 import SimpleHTTPServer
 import SocketServer
@@ -71,30 +72,37 @@ def sim_tree(image1,image2,S=None):
     return tree
 
 
-def tree(image_path,S=None):
+def tree(image_path,S=None,docker=False,sudopw=None):
     '''tree will render an html tree (graph) of an image or package
     :param image_path: full path to the image, or package
     :param S: the Singularity object, only needed if image needs to be packaged.
+    :param docker: if True, assumes input corresponds to docker image name (default False)
+    :param sudopw: should be passed to function if Docker required
     '''
 
     # Make a temporary directory for stuffs
     tmpdir = tempfile.mkdtemp()
 
-    # Make sure that images are all packages
-    tmpdir = tempfile.mkdtemp()
-    image_path = check_packages([image_path],S=S,tmpdir=tmpdir)[0]
+    # Singularity image/package input
+    if docker == False:
+        image_path = check_packages([image_path],S=S,tmpdir=tmpdir)[0]
+    
+        # When it's a package, look for folders.txt and files.txt
+        guts = list_package(image_path)
+        if "folders.txt" in guts and "files.txt" in guts:
+            retrieved = load_package(image_path,get=["folders.txt","files.txt"])
+        else:
+            print("Cannot find folders.txt and files.txt in package, cannot create visualization.")
+            shutil.rmtree(tmpdir)
 
-    # When it's a package, look for folders.txt and files.txt
-    guts = list_package(image_path)
-    if "folders.txt" in guts and "files.txt" in guts:
-        retrieved = load_package(image_path,get=["folders.txt","files.txt"])
-        tree = make_package_tree(folders=retrieved["folders.txt"],
-                                 files=retrieved['files.txt'])
-        return tree
+    # Docker image (name) input
     else:
-        print("Cannot find folders.txt and files.txt in package, cannot create visualization.")
+        retrieved = get_docker_guts(image_path,sudopw=sudopw)
 
-    shutil.rmtree(tmpdir)
+    # Make the tree and return it
+    tree = make_package_tree(folders=retrieved["folders.txt"],
+                             files=retrieved['files.txt'])
+    return tree
 
 
 def make_package_tree(folders,files,path_delim="/",parse_files=True):
