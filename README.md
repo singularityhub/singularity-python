@@ -86,7 +86,22 @@ For more details, and a walkthrough with sample data, please see [examples/packa
 
 What's inside that container? Right now, the main way to answer this question is to do some equivalent of ssh. shub provides a command line function for rendering a view to (immediately) show the contents of an image (folders and files) in your web browser:
 
+
+##### Docker Image
+
+shub will render the guts of any Docker image, even if it's not currently on your system:
+
+
+      shub --tree --docker ubuntu:latest
+
+
+Note that using Docker requires sudo, so you will first be asked to enter your password for all subsequent commands. This is running only on your local machine, so there should not be issue with passing in the password as a variable. Please file an issue if you see any security issues.
+
+
+##### Singularity Package or Image
+
       shub --tree --image ubuntu:latest-2016-04-06.img.zip
+
 
 This will open up something that looks like this:
 
@@ -99,7 +114,7 @@ An [interactive demo](https://singularityware.github.io/singularity-python/examp
 
 ##### Calculate similarity of packages
 
-I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity).
+I am currently developing methods and visualizations to calculate similarity of packages, meaning similarity of Singularity image based on the guts inside. For an example, see [examples/calculate_similarity](examples/calculate_similarity) and for an example of a full pipeline (to run in parallel on a cluster) see [here](https://github.com/vsoch/singularity-tools/tree/master/similarity). I have not yet developed these methods to extend to Docker images, but it should be trivial to do so (aka, stay tuned!)
 
 
 ##### Container Difference Tree
