@@ -6,10 +6,9 @@ Runtime executable, "shub"
 
 '''
 
+from singularity.api import build_spec
 from singularity.app import make_tree, make_difference_tree, make_sim_tree
-from singularity.runscript import get_runscript_template
 from singularity.utils import check_install, getsudo
-from singularity.docker import docker2singularity
 from singularity.package import package
 from glob import glob
 import argparse
@@ -18,17 +17,74 @@ import os
 
 def main():
     parser = argparse.ArgumentParser(
-    description="package Singularity containers for singularity hub.")
-    parser.add_argument("--image", dest='image', help="full path to singularity image (for use with --package and --tree)", type=str, default=None)
-    parser.add_argument("--images", dest='images', help="full path to singularity images/packages,separated with commas (for use with --difftree)", type=str, default=None)
-    parser.add_argument("--docker", dest='docker', help="name of Docker image for use with --docker2singularity, --tree, etc.", type=str, default=None)
-    parser.add_argument("--outfolder", dest='outfolder', help="full path to folder for output, if not specified, will go to pwd", type=str, default=None)
-    parser.add_argument("--runscript", dest='runscript', help="specify extension to generate a runscript template in the PWD, or include --outfolder to change output directory. Currently supported types are py (python).", type=str, default=None)
-    parser.add_argument('--package', help="package a singularity container for singularity hub", dest='package', default=False, action='store_true')
-    parser.add_argument('--tree', help="view the guts of an singularity image or package, or Docker image.", dest='tree', default=False, action='store_true')
-    parser.add_argument('--difftree', help="view files and folders unique to an image or package, specify --images base.img,subtraction.img", dest='difftree', default=False, action='store_true')
-    parser.add_argument('--simtree', help="view common files and folders between two images or package, specify with --images", dest='simtree', default=False, action='store_true')
-    parser.add_argument('--docker2singularity', help="convert a docker image to singularity", dest='dockerconversion', type=str, default=None)
+    description="Singularity Hub command line tool")
+
+    # Single image, must be string
+    parser.add_argument("--image", dest='image', 
+                        help="full path to singularity image (for use with --package and --tree)", 
+                        type=str, default=None)
+
+    # Build a singularity image from a spec file, push to singularity hub
+    parser.add_argument("--push", dest='push', 
+                        help="build a Singularity image from a spec (Singularity) file, push to Singularity hub", 
+                        action='store_true', default=False)
+
+    # The user must specify a collection id to push to the hub
+    parser.add_argument("--collection", dest='collection', 
+                        help="The collection ID to push to, where the user has permission to push.", 
+                        type=str, default=None)
+
+    # The user must specify a collection id to push to the hub
+    parser.add_argument("--name", dest='name', 
+                        help="The name of the image, must be all lowercase without spaces and special characters other than '-'", 
+                        type=str, default=None)
+
+    # The user must specify a collection id to push to the hub
+    parser.add_argument("--size", dest='size', 
+                        help="The size of the image to build. If None provided, will use 1024", 
+                        type=str, default=None)
+
+    # The user must specify a collection id to push to the hub
+    parser.add_argument("--collection", dest='collection', 
+                        help="build a Singularity image from a spec (Singularity) file, push to Singularity hub", 
+                        type=str, default=None)
+
+
+    # Multiple images, separated by commas
+    parser.add_argument("--images", dest='images', 
+                        help="full path to singularity images,separated with commas (for use with --difftree)", 
+                        type=str, default=None)
+ 
+    # Output folder, if needed
+    parser.add_argument("--outfolder", dest='outfolder', 
+                        help="full path to folder for output, if not specified, will go to pwd", 
+                        type=str, default=None)
+
+    # Input folder, if different from pwd
+    parser.add_argument("--infolder", dest='infolder', 
+                        help="full path to input directory (with Singularity file), if not specified, will use pwd", 
+                        type=str, default=None)
+
+    # Does the user want to package an image?
+    parser.add_argument('--package', dest="package", 
+                        help="package a singularity container for singularity hub", 
+                        default=False, action='store_true')
+
+    # View the guts of a Singularity image
+    parser.add_argument('--tree', dest='tree', 
+                        help="view the guts of an singularity image", 
+                        default=False, action='store_true')
+
+    # View the difference between two Singularity images
+    parser.add_argument('--difftree', dest='difftree', 
+                       help="view files and folders unique to an image or package, specify --images base.img,subtraction.img",
+                       default=False, action='store_true')
+    
+    # View similarities between two Singularity images
+    parser.add_argument('--simtree', dest='simtree', 
+                        help="view common files and folders between two images, specify with --images",
+                        default=False, action='store_true')
+
     try:
         args = parser.parse_args()
     except:
@@ -41,35 +97,28 @@ def main():
     else:
         output_folder = args.outfolder
 
-    # If the user wants a runscript template.
-    if args.runscript != None:
-        get_runscript_template(output_folder=output_folder,
-                               script_name="singularity",
-                               language=args.runscript)
-
-
-    # If the user wants to export docker2singularity!
-    if args.dockerconversion != None:
-        docker2singularity(output_folder=output_folder,
-                           docker_image=args.dockerconversion)
-
-
     # We can only continue if singularity is installed
     if check_install() == True:
 
-       # Do we have a docker or a singularity image?
-       if args.image !=None:
+       # If we are given an image, ensure full path
+       if args.image != None:
            image = os.path.abspath(args.image)
-       elif args.docker != None:
-           image = args.docker
+
+
+       ###############################################
+       # What does the user want to do?
+       ###############################################
+
+       # The user wants to build and push an image
+       if args.push == True:
+           push_spec(build=True,
+                     source_dir=args.infolder,
+                     build_dir=args.outfolder,
+                     size=args.size)
 
        # the user wants to make a tree
-       if args.tree == True and args.docker == None:
+       elif args.tree == True:
            make_tree(image)
-       elif args.tree == True and args.docker != None:
-           print("\nYOU MUST ENTER PASSWORD TO CONTINUE AND USE DOCKER:")
-           sudopw = getsudo() 
-           make_tree(image,docker=True,sudopw=sudopw)
 
        # The user wants to package the image
        elif args.package == True:
@@ -91,7 +140,7 @@ def main():
                make_sim_tree(images[0],images[1])
 
        else:
-          print("Please specify a singularity image with --image(s), or a docker image with --docker")
+          print("Please specify a singularity image with --image(s)")
 
 
 if __name__ == '__main__':

@@ -5,19 +5,30 @@ utils.py: part of singularity package
 
 '''
 
-import singularity.__init__ as hello
-import subprocess
 import collections
+import os
+import requests
+
+import shutil
 import simplejson
+import singularity.__init__ as hello
+import sys
+
+import subprocess
+
 import tempfile
 import zipfile
-import shutil
-import sys
-import os
+
 
 # Python less than version 3 must import OSError
 if sys.version_info[0] < 3:
     from exceptions import OSError
+
+
+######################################################################################
+# Local commands and requests
+# These functions primarily are for the core Singularity software
+######################################################################################
 
 
 def check_install(software="singularity"):
@@ -190,3 +201,11 @@ def remove_unicode_dict(input_dict):
         return type(input_dict)(map(remove_unicode_dict, input_dict))
     else:
         return input_dict
+
+
+######################################################################################
+# Remote (http) requests
+# These functions are for working with Singularity Hub (remote API)
+######################################################################################
+
+

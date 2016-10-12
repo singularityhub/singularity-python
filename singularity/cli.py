@@ -76,7 +76,7 @@ class Singularity:
             return help
 
 
-    def create(self,image_path,size=1024,filesystem="ext3"):
+    def create(self,image_path,size=None):
         '''create will create a a new image
         :param image_path: full path to image
         :param size: image sizein MiB, default is 1024MiB
@@ -89,19 +89,27 @@ class Singularity:
         CREATE OPTIONS:
             -s/--size   Specify a size for an operation in MiB, i.e. 1024*1024B
                         (default 1024MiB)
-            -f/--fs     Supported File systems: ext3/ext4 (ext[2/3]: default ext3)
 
         EXAMPLES:
 
             $ sudo singularity create /tmp/Debian.img
             $ sudo singularity create -s 4096 /tmp/Debian.img
         '''        
-        supported_fs = ["ext3","ext4","ext2"]
-        if filesystem not in supported_fs:
-            print("%s is not supported, options are %s" %(filesystem,",".join(supported_fs)))
+        if size == None:
+            size=1024
 
-        cmd = ['singularity','create','--size',str(size),'--fs',filesystem,image_path]
+        cmd = ['singularity','create','--size',str(size),image_path]
         self.run_command(cmd,sudo=True)
+
+
+    def bootstrap(self,image_path,spec_path):
+        '''create will bootstrap an image using a spec
+        :param image_path: full path to image
+        :param spec_path: full path to the spec file (Singularity)
+        '''        
+
+        cmd = ['singularity','bootstrap',image_path,spec_path]
+        return self.run_command(cmd,sudo=True)
 
 
     def execute(self,image_path,command,writable=False,contain=False):
@@ -211,137 +219,6 @@ class Singularity:
 
         # Otherwise, return output of pipe    
         return self.run_command(cmd,sudo=sudo)
-
-
-    def docker2singularity(self,docker_image,output_dir=None):
-        '''docker2singularity will convert a docker image to singularity
-        :param docker_image: the name of the docker image, doesn't have to be on local machine (eg, ubuntu:latest) 
-        '''
-        if check_install('docker') == True:
-
-            sudo = True
-            cmd = ['docker','run','-d',docker_image,'tail','-f','/dev/null']
-            runningid = self.run_command(cmd,sudo=sudo)
-            # sha256:d59bdb51bb5c4fb7b2c8d90ae445e0720c169c553bcf553f67cb9dd208a4ec15
-        
-            # Take the first 12 characters to get id of container
-            container_id=runningid[0:12]
-
-            # Network address, if needed
-            cmd = ['docker','inspect','--format="{{.NetworkSettings.IPAddress}}"',container_id]
-            network_addr = self.run_command(cmd,sudo=sudo)
-
-            # Get image name
-            cmd = ['docker','inspect','--format="{{.Config.Image}}"',container_id]
-            image_name = self.run_command(cmd,sudo=sudo)
-
-            # Get creation date
-            cmd = ['docker','inspect','--format="{{.Created}}"',docker_image]
-            creation_date = self.run_command(cmd,sudo=sudo)[0:10]
- 
-            # Estimate image size
-            cmd = ['docker','inspect','--format="{{.Size}}"',docker_image] 
-            size = int(self.run_command(cmd,sudo=sudo))
-            # convert size in MB (it seems too small for singularity containers ...?). Add 1MB and round up (minimum).
-            size=int(round(size/1000000.0)+1.0)
-            # adding half of the container size seems to work (do not know why exactly...?)
-            # I think it would be Ok by adding 1/3 of the size.
-            size=size+size/2
-
-            # Create the image
-            tmpdir = tempfile.mkdtemp()
-            new_container_name = "%s-%s.img" %(image_name,creation_date)
-            json_file = "%s/singularity.json" %(tmpdir)
-            runscript = "%s/singularity" %(tmpdir)
-            if output_dir != None:
-                new_container_name = "%s/%s" %(output_dir,new_container_name)
-            self.create(image_path=new_container_name,size=size)
-
-            # export running docker container 
-            cmd = ['docker','export',container_id,'|','sudo','singularity','import',new_container_name]
-            self.run_command(cmd,sudo=sudo,suppress=True)
-
-            # Add stuff about the container to it
-            cmd = ['docker','inspect', container_id]
-            json_data = json.loads(self.run_command(cmd,sudo=sudo))
-            write_json(json_data,json_file)           
-
-            #TODO: we might be able to extract boutique / make package here
-
-            # Add singularity.json to container
-            cmd = ['singularity','copy',new_container_name,json_file,'/']
-            self.run_command(cmd,sudo=sudo)
-            invalid_commands = ["","null","none"]
-
-            # Bootstrap the image to set up scripts for environemnt setup
-            self.run_command(['singularity','bootstrap',new_container_name],sudo=sudo)
-            self.run_command(['chmod','a+rw','-R',tmpdir],sudo=sudo)
-
-            # Runscript
-            command = self.run_command(['docker','inspect','--format="{{json .Config.Cmd}}"',docker_image],sudo=sudo)
-
-            if command not in invalid_commands:
-                command = "/bin/sh -c %s" %(command)
-
-            # Remove quotes, commas, and braces
-            command = re.sub('"|[[]|[]]',"",command)
-
-            # Get the entrypoint
-            entrypoint = self.run_command(['docker','inspect','--format="{{json .Config.Entrypoint}}"',docker_image],sudo=sudo)
-
-            if entrypoint not in invalid_commands:
-                entrypoint = "/bin/sh -c %s" %(entrypoint)
-
-            # Remove quotes, commas, and braces
-            entrypoint = re.sub('"|[[]|[]]',"",entrypoint)
-
-            runscript = "%s/singularity" %(tmpdir)
-            runscript_file = open(runscript,'w')
-            runscript_file.writelines('#!/bin/sh\n')
-            if entrypoint not in invalid_commands:
-                runscript_file.writelines('%s $@' %(entrypoint))
-            else:
-                if command not in invalid_commands:
-                    runscript_file.writelines('%s $@' %(command))
-
-            runscript_file.close()
-
-            self.run_command(['chmod','+x',runscript],sudo=sudo)
-            self.run_command(['singularity','copy',new_container_name,runscript,'/'],sudo=sudo)
-  
-            # Set up the environment
-            docker_environment = "%s/docker_environment" %(tmpdir)
-            environment = self.run_command(['docker','run','--rm','--entrypoint="/usr/bin/env"',docker_image],sudo=sudo).split('\n')
-            
-            # don't include HOME and HOSTNAME - they mess with local config
-            environment = [x for x in environment if not re.search("^HOME",x) and not re.search("^HOSTNAME",x)]
-            write_file(docker_environment,"\n".join(environment))
- 
-            # Write to container
-            self.run_command(["chmod","u+x",docker_environment],sudo=sudo)
-            self.run_command(['singularity','copy',new_container_name,docker_environment,'/'],sudo=sudo)
-
-            self.run_command(['singularity','exec','--writable',new_container_name,'/bin/sh -c ',docker_environment,'/'],sudo=sudo)
-
-            cmd = """singularity exec --writable %s /bin/sh -c "echo '. /docker_environment' >> /environment"
-                  """ %(new_container_name)
-            self.run_command([cmd.replace('\n','')],sudo=sudo,suppress=True)
-            shutil.rmtree(tmpdir)
-
-            # Permissions - make sure any user can execute everything in container
-            cmd = """singularity exec --writable --contain %s /bin/sh -c "find /* -maxdepth 0 -not -path '/dev*' -not -path '/proc*' -not -path '/sys*' -exec chmod a+r -R '{}' \;"
-                  """ %(new_container_name)
-            self.run_command([cmd.replace('\n','')],sudo=sudo,suppress=True)
-
-            cmd = """singularity exec --writable --contain %s /bin/sh -c "find / -executable -perm -u+x,o-x -not -path '/dev*' -not -path '/proc*' -not -path '/sys*' -exec chmod a+x '{}' \;"
-                  """ %(new_container_name)
-            self.run_command([cmd.replace('\n','')],sudo=sudo,suppress=True)
-
-            print("Stopping container... please wait!")
-            self.run_command(['docker','stop',container_id],sudo=sudo)
-            return new_container_name
-        else:
-            return None
 
 
     def importcmd(self,image_path,input_file,import_type="tar",command=None):

@@ -5,7 +5,6 @@ package.py: part of singularity package
 
 '''
 
-from singularity.runscript import get_runscript_parameters
 from singularity.utils import zip_up, read_file
 from singularity.cli import Singularity
 import tempfile
@@ -17,7 +16,38 @@ import json
 import os
 
 
-def package(image_path,output_folder=None,runscript=True,software=True,remove_image=False,verbose=False,S=None):
+def build_from_spec(spec,build_dir=None,size=None):
+    '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
+    :param spec: the spec file, called "Singuarity"
+    :param build_dir: the directory to build in. If not defined, will use tmpdir.
+    '''
+    if build_dir == None:
+        build_dir = tempfile.mkdtemp()
+    
+    # Copy the spec to a temporary directory
+    spec_path = "%s/Singularity" %build_dir
+    shutil.copyfile(spec,spec_path)
+    image_path = "%s/Singularity.img" %(build_dir)
+
+    # Run create image and bootstrap with Singularity command line tool.
+    cli = Singularity() # This command will ask the user for sudo
+    print("\nCreating and boostrapping image...")
+    cli.create(image_path,size=size)
+    result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
+    print(result)
+  
+    # Finally, package the image.
+    #TODO: here we need some kind of test for the image... is it valid?
+    print("\nPacking image...")
+    zipfile = package(image_path=image_path,
+                      output_folder=build_dir,
+                      spec_path=spec_path,
+                      verbose=True,
+                      S=cli)
+    return zipfile
+
+
+def package(image_path,spec_path=None,output_folder=None,runscript=True,software=True,remove_image=False,verbose=False,S=None):
     '''package will take an image and generate a zip (including the image
     to a user specified output_folder.
     :param image_path: full path to singularity image file
@@ -42,6 +72,11 @@ def package(image_path,output_folder=None,runscript=True,software=True,remove_im
        to_package = {"files":[image_path]}
     to_package['NAME'] = image_name
 
+    # If the specfile is provided, it should also be packaged
+    if spec_path != None:
+        singularity_spec = "".join(read_file(spec_path))
+        to_package['Singularity'] = singularity_spec
+
     # Package the image with an md5 sum as VERSION
     version = get_image_hash(image_path)
     to_package["VERSION"] = version
@@ -54,14 +89,6 @@ def package(image_path,output_folder=None,runscript=True,software=True,remove_im
             runscript = runscript_file.read()
             to_package["runscript"] = runscript
             print("Found runscript!")
-
-            # Try to extract input args, only python supported, will return None otherwise
-            params_json = get_runscript_parameters(runscript=runscript,
-                                                   name=image_name,
-                                                   version=version)
-            if params_json != None:
-                print('Extracted runscript params!')
-                to_package['%s.json' %(image_name)] = params_json
 
         except KeyError:
             print("No runscript found in image!")

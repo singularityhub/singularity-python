@@ -2,6 +2,7 @@ numpy
 flask
 flask-restful
 gitpython
+requests
 selenium
 simplejson
 numexpr

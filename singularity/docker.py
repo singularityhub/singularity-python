@@ -10,8 +10,11 @@ from singularity.package import get_image_hash
 from singularity.cli import Singularity
 import tempfile
 import tarfile
+import requests
 import shutil
 import os
+
+dockerhub = ""
 
 def docker2singularity(docker_image,output_folder=None):
     '''docker2singulrity is a wrapper for the Singularity.docker2singularity
