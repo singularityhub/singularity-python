@@ -7,7 +7,7 @@ setup(
     name="singularity",
 
     # Version number:
-    version="0.24",
+    version="0.25",
 
     # Application author details:
     author="Vanessa Sochat",
@@ -27,7 +27,7 @@ setup(
     description="Command line tool for working with singularity-hub and packaging singularity containers.",
     keywords='singularity containers hub reproducibility package science',
 
-    install_requires = ['numpy','Flask','gitpython','flask-restful','selenium','numexpr','pygments','requests'],
+    install_requires = ['numpy','Flask','gitpython','flask-restful','selenium','pygments','requests'],
 
     entry_points = {
         'console_scripts': [

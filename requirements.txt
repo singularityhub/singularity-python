@@ -5,5 +5,4 @@ gitpython
 requests
 selenium
 simplejson
-numexpr
 pygments
