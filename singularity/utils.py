@@ -24,6 +24,11 @@ import zipfile
 if sys.version_info[0] < 3:
     from exceptions import OSError
 
+# raw_input renamed to input in python 3
+try:
+    input = raw_input
+except NameError:
+    pass
 
 ######################################################################################
 # Local commands and requests
@@ -65,7 +70,7 @@ def get_script(script_name):
         return None
 
 def getsudo():
-    sudopw = raw_input('[sudo] password for %s: ' %(os.environ['USER']))
+    sudopw = input('[sudo] password for %s: ' %(os.environ['USER']))
     return sudopw
 
 
@@ -116,7 +121,7 @@ def zip_up(file_list,zip_name,output_folder=None):
     zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED, allowZip64=True)
 
     # Write files to zip, depending on type
-    for filename,content in file_list.iteritems():
+    for filename,content in file_list.items():
 
         print("Adding %s to package..." %(filename))
 
@@ -156,7 +161,7 @@ def zip_up(file_list,zip_name,output_folder=None):
     return output_zip
 
 
-def write_file(filename,content,mode="wb"):
+def write_file(filename,content,mode="w"):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
     '''
@@ -181,7 +186,7 @@ def write_json(json_obj,filename,mode="w",print_pretty=True):
     return filename
 
 
-def read_file(filename,mode="rb"):
+def read_file(filename,mode="r"):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
     '''
@@ -201,6 +206,16 @@ def remove_unicode_dict(input_dict):
         return type(input_dict)(map(remove_unicode_dict, input_dict))
     else:
         return input_dict
+
+
+def format_container_name(name,special_characters=None):
+    '''format_container_name will take a name supplied by the user,
+    remove all special characters (except for those defined by "special-characters"
+    and return the new image name.
+    '''
+    if special_characters == None:
+        special_characters = []
+    return ''.join(e.lower() for e in name if e.isalnum() or e in special_characters)
 
 
 ######################################################################################

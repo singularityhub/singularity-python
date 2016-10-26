@@ -5,7 +5,7 @@ package.py: part of singularity package
 
 '''
 
-from singularity.utils import zip_up, read_file
+from singularity.utils import zip_up, read_file, format_container_name
 from singularity.cli import Singularity
 import tempfile
 import tarfile
@@ -16,10 +16,12 @@ import json
 import os
 
 
-def build_from_spec(spec,build_dir=None,size=None):
+def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec: the spec file, called "Singuarity"
+    :parma name: the name to call the image, will go under a collection for some library/name 
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
+    :param size: the size of the image
     '''
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
@@ -30,7 +32,10 @@ def build_from_spec(spec,build_dir=None,size=None):
     image_path = "%s/Singularity.img" %(build_dir)
 
     # Run create image and bootstrap with Singularity command line tool.
-    cli = Singularity() # This command will ask the user for sudo
+    if sudopw != None:
+        cli = Singularity(sudopw=sudopw)
+    else:
+        cli = Singularity() # This command will ask the user for sudo
     print("\nCreating and boostrapping image...")
     cli.create(image_path,size=size)
     result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
@@ -40,6 +45,7 @@ def build_from_spec(spec,build_dir=None,size=None):
     #TODO: here we need some kind of test for the image... is it valid?
     print("\nPacking image...")
     zipfile = package(image_path=image_path,
+                      name=name,
                       output_folder=build_dir,
                       spec_path=spec_path,
                       verbose=True,
@@ -47,10 +53,12 @@ def build_from_spec(spec,build_dir=None,size=None):
     return zipfile
 
 
-def package(image_path,spec_path=None,output_folder=None,runscript=True,software=True,remove_image=False,verbose=False,S=None):
+def package(image_path,name=None,spec_path=None,output_folder=None,runscript=True,
+                       software=True,remove_image=False,verbose=False,S=None):
     '''package will take an image and generate a zip (including the image
     to a user specified output_folder.
     :param image_path: full path to singularity image file
+    :param name: the name for the image to be included with the collection
     :param runscript: if True, will extract runscript to include in package as runscript
     :param software: if True, will extract files.txt and folders.txt to package
     :param remove_image: if True, will not include original image in package (default,False)
@@ -67,10 +75,12 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,software
 
     # Include the image in the package?
     if remove_image:
-       to_package = dict()
+        to_package = dict()
     else:
-       to_package = {"files":[image_path]}
-    to_package['NAME'] = image_name
+        to_package = {"files":[image_path]}
+    if name != None:
+        image_name = name
+    to_package['NAME'] = format_container_name(image_name)
 
     # If the specfile is provided, it should also be packaged
     if spec_path != None:

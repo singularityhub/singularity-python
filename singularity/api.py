@@ -48,37 +48,60 @@ def authenticate(domain=None,token_folder=None):
             sys.exit(1)
     return token
 
-def api_put(url,filepath,headers):
-    '''api_put will send a filepath to singularity hub with a particular set of headers
+
+def get_headers(token=None):
+    '''get_headers will return a simple default header for a json
+    post. This function will be adopted as needed.
+    :param token: an optional token to add for auth
+    '''
+    headers = dict()
+    if token!=None:
+        headers["Authentication"] = "Token %s" %(token)
+    headers["Content-Type"] = "application/json"
+    return headers
+
+
+def api_put(url,headers,token=None,data=None):
+    '''api_post will send a read file (spec) to Singularity Hub with a particular set of headers
+    :param url: the url to send file to
+    :param filepath: the complete path to the file
+    :param headers: a dictionary with headers for the request
+    :param putdata: additional data to add to the request
+    '''
+    if headers == None:
+        headers = get_headers(token=token)
+    if data == None:
+        response = requests.put(url,         
+                                headers=headers)
+    else:
+        response = requests.put(url,         
+                                headers=headers,
+                                data=data)
+    
+    return response        
+
+
+
+def api_put(url,filename,headers,token=None):
+    '''api_post will send a read file (spec) to Singularity Hub with a particular set of headers
     :param url: the url to send file to
     :param filepath: the complete path to the file
     :param headers: a dictionary with headers for the request
     '''
-
-    # Option 1: stream via a memory mapped file?
-    #filey = open(filepath,'rb')
-    #mmapped_file = mmap.mmap(filey.fileno(), 0, access=mmap.ACCESS_READ)
-
-    # Do the request
-    #request = urllib2.Request(url, mmapped_file)
-    #for header_name,header_content in headers.items():
-    #    request.add_header(header_name,header_content)
-    #response = urllib2.urlopen(request)
-
-    # Close everything
-    #mmapped_file.close()
-    #filey.close()
-
-    # Option 2: standard requests
-    with open(filepath) as filey:
-        data = filey.read()
-        response = requests.put(url,                        
-                                headers=headers,
-                                data={'file': filepath})
-    # TODO: not yet written, need to do work on shub server
+    if headers == None:
+        headers = get_headers(token=token)
+    
+    with open(filename) as fh:
+        putdata = fh.read()
+        response = requests.put(url,
+                                data=putdata,                         
+                                auth=('token', token),
+                                headers = headers,
+                                params={'file': filepath})
+    
     return response        
-    
-    
+
+
 
 def push_spec(collection,name,build=True,source_dir=None,build_dir=None,size=None):
     '''push_spec will look for a Singularity file in the PWD. If it exists, the file
@@ -95,31 +118,25 @@ def push_spec(collection,name,build=True,source_dir=None,build_dir=None,size=Non
     singularityFile = "%s/Singularity" %(source_dir)
     if os.path.exists(singularityFile):
 
-        # Build the image from the spec, get back the temporary directory
-        image_package = build_from_spec(spec=singularityfile,
-                                        build_dir=build_dir,
-                                        size=size)
-
         # Prepare headers for request
         headers = dict()
-        filename = os.path.basename(image_package)
+        filename = os.path.basename(singularityFile)
         headers["Content-Disposition"] = "attachment; filename=%s" %(filename)
         headers["Authentication"] = "Token %s" %(token)
-        headers["Content-Type"] = "application/zip" 
+        headers["Content-Type"] = "text/plain" 
 
         #r = requests.post(url, files=files)
         #r.text
 
         #-F "file=@img.jpg;type=image/jpg"
-        #url = "%s/upload/%s/%s" %(api_base,collection,name)
+        url = "%s/upload/%s" %(api_base,collection)
 
         # Send image to singularity hub
-        api_put(url=url,
-                headers=headers,
-                filepath=image_package)
-        
-        # STOPPED HERE - need to do this!
-        
+        response = api_put(url=url,
+                           filename=singularityFile,
+                           headers=headers,
+                           token=token)
+        return response 
 
     else:
         print('''Error: No build file "Singularity" found in present working directory.
