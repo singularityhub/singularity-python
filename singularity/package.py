@@ -16,12 +16,13 @@ import json
 import os
 
 
-def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None):
+def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None,output_folder=None):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec: the spec file, called "Singuarity"
     :parma name: the name to call the image, will go under a collection for some library/name 
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
     :param size: the size of the image
+    :param output_folder: where to output the image package
     '''
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
@@ -46,10 +47,11 @@ def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None):
     print("\nPacking image...")
     zipfile = package(image_path=image_path,
                       name=name,
-                      output_folder=build_dir,
+                      output_folder=output_folder,
                       spec_path=spec_path,
                       verbose=True,
                       S=cli)
+
     return zipfile
 
 

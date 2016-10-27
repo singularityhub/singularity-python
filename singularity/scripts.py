@@ -57,7 +57,7 @@ def main():
  
     # Output folder, if needed
     parser.add_argument("--outfolder", dest='outfolder', 
-                        help="full path to folder for output, if not specified, will go to pwd", 
+                        help="full path to folder for output, stays in temp (or pwd) if not specified", 
                         type=str, default=None)
 
     # Input folder, if different from pwd
