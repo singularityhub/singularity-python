@@ -19,8 +19,7 @@ import sys
 import re
 import os
 
-api_base = "https://www.singularity-hub.org/api"
-
+api_base = "https://singularity-hub.org/api"
 
 def authenticate(domain=None,token_folder=None):
     '''authenticate will authenticate the user with Singularity Hub. This means

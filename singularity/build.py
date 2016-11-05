@@ -145,17 +145,22 @@ def set_reader_permissions(drive_service,file_ids):
     batch.execute()
 
 
-def get_folder(drive_service,folder_name=None,create=True):
+def get_folder(drive_service,folder_name=None,create=True,parent_folder=None):
     '''get_folder will return the folder with folder_name, and if create=True,
     will create it if not found. If folder is found or created, the metadata is
     returned, otherwise None is returned
     :param drive_service: the drive_service created from google_drive_connect
     :param folder_name: the name of the folder to search for, item ['title'] field
+    :param parent_folder: a parent folder to retrieve, will look at base if none specified.
     '''
     if folder_name == None:
         folder_name = 'singularity-hub'
 
-    folders = drive_service.files().list(q='mimeType="application/vnd.google-apps.folder"').execute()
+    if parent_folder == None:
+        folders = drive_service.files().list(q='mimeType="application/vnd.google-apps.folder"').execute()
+    else:
+        folders = drive_service.files().list(q='mimeType="application/vnd.google-apps.folder"',
+                                             parents=parent_folder['id']).execute()
 
     for folder in folders['files']:
         if folder['name'] == folder_name:
@@ -209,9 +214,9 @@ def google_drive_setup(drive_service,image_path=None,base_folder=None):
 
         for folder in folders:
             # The last folder created, the destination for our files, will be returned
-            singularity_folder = create_folder(drive_service=drive_service,
-                                               folder_name=folder,
-                                               parent_folders=parent_folder)
+            singularity_folder = get_folder(drive_service=drive_service,
+                                            folder_name=folder,
+                                            parent_folders=parent_folder)
             parent_folder = singularity_folder['id']
 
     return singularity_folder    
