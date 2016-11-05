@@ -335,6 +335,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
                 log_file = create_file(drive_service,
                                        folder_id=upload_folder['id'],
                                        file_path=logfile)
+                log_file['name'] = 'log'
                 files.append(log_file)
                 download_links = download_links + get_download_links(build_files=log_file)
          
