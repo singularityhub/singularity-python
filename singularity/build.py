@@ -12,13 +12,16 @@ from singularity.utils import get_installdir, read_file, write_file, download_re
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+
 from glob import glob
 import inspect
 import imp
 import json
+import logging
+
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
-from glob import glob
+
 import os
 import re
 import requests
@@ -29,9 +32,10 @@ import tempfile
 import uuid
 import zipfile
 
-
 api_base = "http://www.singularity-hub.org/api"
 
+# Log everything to stdout
+logging.basicConfig(stream=sys.stdout)
 
 def google_drive_connect(credential):
 
@@ -41,7 +45,7 @@ def google_drive_connect(credential):
 
     # If the user has a credential object, check if it's good
     if credential.invalid is True:
-        # This probably won't work, needs to be redone on shub server
+        logging.warning('Storage credential not valid, refreshing.')
         credential.refresh()
 
     # Authorize with http
@@ -91,9 +95,13 @@ def create_file(drive_service,folder_id,file_path,file_name=None,verbose=True):
         'parents': [ folder_id ]
     }
 
+    logging.info('Creating file %s in folder %s with mimetype %s', file_name,
+                                                                   folder_id,
+                                                                   mimetype)
     media = MediaFileUpload(file_path,
                         mimetype=mimetype,
                         resumable=True)
+
     return drive_service.files().create(body=file_metadata,
                                         media_body=media,
                                         fields='id').execute()
@@ -101,9 +109,9 @@ def create_file(drive_service,folder_id,file_path,file_name=None,verbose=True):
 
 def permissions_callback(request_id, response, exception):
     if exception:
-        print(exception)
+        logging.error(exception)
     else:
-        print("Permission Id: %s" % response.get('id'))
+        logging.info("Permission Id: %s",response.get('id'))
 
 
 def set_reader_permissions(drive_service,file_ids):
@@ -145,11 +153,14 @@ def get_folder(drive_service,folder_name=None,create=True):
 
     for folder in folders['files']:
         if folder['name'] == folder_name:
+            logging.info("Found folder %s in storage",folder_name)
             return folder
 
+    logging.info("Did not find %s in storage.",folder_name)
     folder = None
 
     if create == True:
+        logging.info("Creating folder %s.",folder_name)
         folder = create_folder(drive_service,folder_name)
 
     return folder
@@ -167,20 +178,24 @@ def get_download_links(build_files):
     return links
 
 
-def google_drive_setup(drive_service,image_path=None):
+def google_drive_setup(drive_service,image_path=None,base_folder=None):
     '''google_drive_setup will connect to a Google drive, check for the singularity 
     folder, and if it doesn't exist, create it, along with other collection and image
     metadata. The final upload folder for the image and other stuffs is returned
     :param image_path: should be the path to the image, from within the singularity-hub folder
     (eg, www.github.com/vsoch/singularity-images). If not defined, a folder with the commit id
     will be created in the base of the singularity-hub google drive folder
+    :param base_folder: the parent (base) folder to write to, default is singularity-hub
     '''
-    singularity_folder = get_folder(drive_service,folder_name='singularity-hub')
+    if base_folder == None:
+        base_folder = 'singularity-hub'
+    singularity_folder = get_folder(drive_service,folder_name=base_folder)
+    logging.info("Base folder set to %s",base_folder)        
 
     # If the user wants a more custom path
     if image_path != None:
-
         folders = [x.strip(" ") for x in image_path.split("/")]
+        logging.info("Storage path set to %s","=>".join(folders))        
         parent_folder = singularity_folder['id']
 
         for folder in folders:
@@ -211,27 +226,38 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
+    # Default spec file is Singularity
+    if spec_file == None:
+        spec_file = "Singularity"
     
+    # If no build directory is specified, make a temporary one
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
+        logging.warning('Build directory not set, using %s',build_dir)
+    else:
+        logging.info('Build directory set to %s',build_dir)
 
     # Get variables from the environment
     if commit == None:
         commit = get_build_metadata(key='commit')
-    if repo_url == None:
-        repo_url = get_build_metadata(key='repo_url')
-    if repo_id == None:
-        repo_url = get_build_metadata(key='repo_id')
-    if credential == None:
-        credential = get_build_metadata(key='credential',
-                                        return_text=False)
-    if build_url == None:
-        response_url = get_build_metadata(key='response_url')
+    logging.info('Build directory set to %s',build_dir)
+   
+    # cycle through each one, check for metadata from build api
+    metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
+                {'key': 'repo_id', 'value', repo_id, 'return_text': True },
+                {'key': 'credential', 'value', credential, 'return_text': True },
+                {'key': 'response_url', 'value', reponse_url, 'return_text': True },
+                {'key': 'token', 'value', token, 'return_text': False }]
 
-    # Token is a secret to send back to server to accept response
-    if token == None:  
-        token = get_build_metadata(key='token',
-                                   return_text=False)
+
+    # Obtain values from build
+    for item in metadata:
+        if item['value'] == None:
+            logging.warning('%s not found in function call.',item['key'])        
+            item['value'] = get_build_metadata(key=item['key'],
+                                               return_text=item['return_text'])
+        logging.info('%s is set to %s',item['key'],item['value'])        
+
 
     # Download the repo and image
     repo = download_repo(repo_url=repo_url,
@@ -239,14 +265,17 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
 
     os.chdir(build_dir)
     if commit != None:
+        logging.info('Checking out commit %s',commit)
         os.system('git checkout %s .' %(commit))
 
     # From here on out commit is used as a unique id, if we don't have one, randomly make one
-    if commit == None:
+    else commit == None:
         commit = uuid.uuid4().__str__()
+        logging.warning("commit still not found in build, setting unique id to %s",commit)
+
 
     if os.path.exists(spec_file):
-
+        logging.info("Found spec file %s in repository",spec_file)
         image_package = build_from_spec(spec=spec_file,
                                         name=commit,
                                         size=None,
@@ -255,6 +284,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
 
         # If doesn't error, run google_drive_setup and upload image
         if os.path.exists(image_package):
+            logging.info("Package %s successfully built",image_package)
             dest_dir = "%s/build" %(build_dir)
             os.mkdir(dest_dir)
             with zipfile.ZipFile(image_package) as zf:
@@ -263,6 +293,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
             # The path to the images on google drive will be the github url/commit folder
             image_path = "%s/%s" %(re.sub('^http.+//www[.]','',repo_url),commit)
             build_files = glob("%s/*" %(dest_dir))
+            logging.info("Sending build files %s to storage",'\n'.join(build_files))
             drive_service = google_drive_connect(credential)
             upload_folder = google_drive_setup(drive_service=drive_service,
                                                image_path=image_path)    
@@ -296,6 +327,12 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
                 response = api_put(url=response_url,
                                    data=response,
                                    token=token)
+    
+    else:
+        # Tell the user what is actually there
+        present_files = glob("*")
+        logging.error("Build file %s not found in repository",spec_file)
+        logging.info("Found files are %s","\n".join(present_files))
 
 
 #####################################################################################
@@ -316,6 +353,9 @@ def get_build_metadata(key,return_text=True):
         if return_text == True:
             return api_get(url=url,headers=headers).text
         return api_get(url=url,headers=headers).json()
+    else:
+        logging.error("Error retrieving metadata %s, returned response %s", key,
+                                                                            response.status_code)
     return None
 
 
@@ -361,6 +401,6 @@ def sniff_extension(file_path,verbose=True):
         mime_type = mime_types['txt']
 
     if verbose==True:
-        print("%s --> %s" %(file_path,mime_type))
+        logging.info("%s --> %s", file_path, mime_type)
 
     return mime_type
