@@ -19,7 +19,7 @@ import sys
 import re
 import os
 
-api_base = "http://127.0.0.1/api"
+api_base = "https://www.singularity-hub.org/api"
 
 
 def authenticate(domain=None,token_folder=None):
@@ -79,7 +79,7 @@ def api_get(url,headers,token=None,data=None):
     return response
 
 
-def api_put(url,headers,token=None,data=None):
+def api_put(url,headers=None,token=None,data=None):
     '''api_put will send a read file (spec) to Singularity Hub with a particular set of headers
     :param url: the url to send file to
     :param headers: the headers to get

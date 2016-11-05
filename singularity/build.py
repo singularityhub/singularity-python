@@ -14,6 +14,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 from glob import glob
+import httplib2
 import inspect
 import imp
 import json
@@ -35,11 +36,14 @@ import zipfile
 api_base = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
-logging.basicConfig(stream=sys.stdout)
+logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
 
 def google_drive_connect(credential):
 
     # If it's a dict, assume json and load into credential
+    if isinstance(credential,str):
+        credential = json.loads(credential)
+
     if isinstance(credential,dict):
         credential = client.Credentials.new_from_json(json.dumps(credential))
 
@@ -102,9 +106,11 @@ def create_file(drive_service,folder_id,file_path,file_name=None,verbose=True):
                         mimetype=mimetype,
                         resumable=True)
 
-    return drive_service.files().create(body=file_metadata,
+    new_file = drive_service.files().create(body=file_metadata,
                                         media_body=media,
                                         fields='id').execute()
+    new_file['name'] = file_name
+    return new_file
 
 
 def permissions_callback(request_id, response, exception):
@@ -169,7 +175,10 @@ def get_folder(drive_service,folder_name=None,create=True):
 def get_download_links(build_files):
     '''get_files will use a drive_service to return a list of build file objects
     :param build_files: a list of build_files, each a dictionary with an id for the file
+    :returns links: a list of dictionaries with included file links
     '''
+    if not isinstance(build_files,list):
+        build_files = [build_files]
     links = []
     for build_file in build_files:
         link = "https://drive.google.com/uc?export=download&id=%s" %(build_file['id'])
@@ -206,10 +215,11 @@ def google_drive_setup(drive_service,image_path=None,base_folder=None):
             parent_folder = singularity_folder['id']
 
     return singularity_folder    
-    
 
-def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
-              repo_id=None,commit=None,credential=None,verbose=True,response_url=None):
+
+def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
+              repo_id=None,commit=None,credential=None,verbose=True,response_url=None,
+              logfile=None):
     '''run_build will generate the Singularity build from a spec_file from a repo_url. 
     If no arguments are required, the metadata api is queried for the values.
     :param build_dir: directory to do the build in. If not specified,
@@ -218,9 +228,11 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
     :param repo_url: the url to download the repo from
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
     :param commit: the commit to checkout
+    :param size: the size of the image to build. If none set, builds default 1024.
     :param credential: the credential to send the image to.
     :param verbose: print out extra details as we go (default True)    
     :param token: a token to send back to the server to authenticate adding the build
+    :param logfile: path to a logfile to read and include path in response to server. 
     :param response_url: the build url to send the response back to. Should also come
     from metadata. If not specified, no response is sent
     :: note: this function is currently configured to work with Google Compute
@@ -237,48 +249,40 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
     else:
         logging.info('Build directory set to %s',build_dir)
 
-    # Get variables from the environment
-    if commit == None:
-        commit = get_build_metadata(key='commit')
-    logging.info('Build directory set to %s',build_dir)
-   
-    # cycle through each one, check for metadata from build api
+    # Get variables from the instance metadata API
     metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
-                {'key': 'repo_id', 'value', repo_id, 'return_text': True },
-                {'key': 'credential', 'value', credential, 'return_text': True },
-                {'key': 'response_url', 'value', reponse_url, 'return_text': True },
-                {'key': 'token', 'value', token, 'return_text': False }]
-
+                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
+                {'key': 'credential', 'value': credential, 'return_text': True },
+                {'key': 'response_url', 'value': response_url, 'return_text': True },
+                {'key': 'token', 'value': token, 'return_text': False },
+                {'key': 'commit', 'value': commit, 'return_text': True },
+                {'key': 'spec_file', 'value': spec_file, 'return_text': True },
+                {'key': 'size', 'value': size, 'return_text': True },
+                {'key': 'logfile', 'value': logfile, 'return_text': True }]
 
     # Obtain values from build
-    for item in metadata:
-        if item['value'] == None:
-            logging.warning('%s not found in function call.',item['key'])        
-            item['value'] = get_build_metadata(key=item['key'],
-                                               return_text=item['return_text'])
-        logging.info('%s is set to %s',item['key'],item['value'])        
-
+    params = get_build_params(metadata)
 
     # Download the repo and image
-    repo = download_repo(repo_url=repo_url,
+    repo = download_repo(repo_url=params['repo_url'],
                          destination=build_dir)
 
     os.chdir(build_dir)
-    if commit != None:
-        logging.info('Checking out commit %s',commit)
-        os.system('git checkout %s .' %(commit))
+    if params['commit'] != None:
+        logging.info('Checking out commit %s',params['commit'])
+        os.system('git checkout %s .' %(params['commit']))
 
     # From here on out commit is used as a unique id, if we don't have one, randomly make one
-    else commit == None:
-        commit = uuid.uuid4().__str__()
-        logging.warning("commit still not found in build, setting unique id to %s",commit)
+    else:
+        params['commit'] = uuid.uuid4().__str__()
+        logging.warning("commit still not found in build, setting unique id to %s",params['commit'])
 
 
-    if os.path.exists(spec_file):
-        logging.info("Found spec file %s in repository",spec_file)
-        image_package = build_from_spec(spec=spec_file,
-                                        name=commit,
-                                        size=None,
+    if os.path.exists(params['spec_file']):
+        logging.info("Found spec file %s in repository",params['spec_file'])
+        image_package = build_from_spec(spec=params['spec_file'],
+                                        name=params['commit'],
+                                        size=params['size'],
                                         sudopw='', # with root should not need sudo
                                         output_folder=build_dir)
 
@@ -291,10 +295,10 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
                 zf.extractall(dest_dir)
 
             # The path to the images on google drive will be the github url/commit folder
-            image_path = "%s/%s" %(re.sub('^http.+//www[.]','',repo_url),commit)
+            image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
             build_files = glob("%s/*" %(dest_dir))
             logging.info("Sending build files %s to storage",'\n'.join(build_files))
-            drive_service = google_drive_connect(credential)
+            drive_service = google_drive_connect(params['credential'])
             upload_folder = google_drive_setup(drive_service=drive_service,
                                                image_path=image_path)    
 
@@ -304,7 +308,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
                 drive_file = create_file(drive_service,
                                          folder_id=upload_folder['id'],
                                          file_path=build_file)
-                drive_file['name'] = os.path.basename(build_file)
                 files.append(drive_file)
 
             # Set readable permissions
@@ -312,26 +315,34 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
             
             # Get metadata to return to singularity-hub
             download_links = get_download_links(build_files=files)
+
+            # If the user has specified a log file, include with data/response
+            if logfile != None:
+                log_file = create_file(drive_service,
+                                       folder_id=upload_folder['id'],
+                                       file_path=logfile)
+                files.append(log_file)
+                download_links = download_links + get_download_links(build_files=log_file)
          
             # Finally, package everything to send back to shub
-            response = {"files":download_links,
-                        "repo_url":repo_url,
-                        "commit":commit,
-                        "repo_id":repo_id}
+            response = {"files": download_links,
+                        "repo_url": params['repo_url'],
+                        "commit": params['commit'],
+                        "repo_id": params['repo_id']}
 
             if token != None:
-                response['token'] = token
+                response['token'] = params['token']
 
             # Send it back!
-            if response_url != None:
-                response = api_put(url=response_url,
+            if params['response_url'] != None:
+                response = api_put(url=params['response_url'],
                                    data=response,
-                                   token=token)
+                                   token=params['token'])
     
     else:
         # Tell the user what is actually there
         present_files = glob("*")
-        logging.error("Build file %s not found in repository",spec_file)
+        logging.error("Build file %s not found in repository",params['spec_file'])
         logging.info("Found files are %s","\n".join(present_files))
 
 
@@ -340,7 +351,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
 #####################################################################################
 
 
-def get_build_metadata(key,return_text=True):
+def get_build_metadata(key):
     '''get_build_metadata will return metadata about an instance from within it.
     :param key: the key to look upu
     :param return_text: return text (appropriate for one value, or if needs custom parsing. Otherwise, will return json
@@ -348,15 +359,39 @@ def get_build_metadata(key,return_text=True):
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
     response = api_get(url=url,headers=headers)
+
     # Successful query returns the result
     if response.status_code == 200:
-        if return_text == True:
-            return api_get(url=url,headers=headers).text
-        return api_get(url=url,headers=headers).json()
+        if key != "credential":
+            logging.info('Metadata response is %s',response.text)
+        return response.text
     else:
         logging.error("Error retrieving metadata %s, returned response %s", key,
                                                                             response.status_code)
     return None
+
+
+def get_build_params(metadata):
+    '''get_build_params uses get_build_metadata to retrieve corresponding meta data values for a build
+    :param metadata: a list, each item a dictionary of metadata, in format:
+    metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
+                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
+                {'key': 'credential', 'value': credential, 'return_text': True },
+                {'key': 'response_url', 'value': response_url, 'return_text': True },
+                {'key': 'token', 'value': token, 'return_text': False },
+                {'key': 'commit', 'value': commit, 'return_text': True }]
+
+    '''
+    params = dict()
+    for item in metadata:
+        if item['value'] == None:
+            logging.warning('%s not found in function call.',item['key'])        
+            response = get_build_metadata(key=item['key'])
+            item['value'] = response
+            params[item['key']] = item['value']
+        if item['key'] != 'credential':
+            logging.info('%s is set to %s',item['key'],item['value'])        
+    return params
 
 
 def sniff_extension(file_path,verbose=True):

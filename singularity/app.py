@@ -83,7 +83,7 @@ def make_tree(package,docker=False,port=None,sudopw=None):
     app.sudopw = sudopw
     if port==None:
         port=8088
-    print "It goes without saying. I suspect now it's not going."
+    print("It goes without saying. I suspect now it's not going.")
     webbrowser.open("http://localhost:%s/container/tree" %(port))
     app.run(host="0.0.0.0",debug=False,port=port)
 
@@ -92,7 +92,7 @@ def make_difference_tree(base_image,subtract,port=None):
     app.packages = [base_image,subtract]
     if port==None:
         port=8088
-    print "I'm in a nutshell! Who put me into this nutshell?"
+    print("I'm in a nutshell! Who put me into this nutshell?")
     webbrowser.open("http://localhost:%s/container/difftree" %(port))
     app.run(host="0.0.0.0",debug=True,port=port)
 
@@ -101,7 +101,7 @@ def make_sim_tree(image1,image2,port=None):
     app.packages = [image1,image2]
     if port==None:
         port=8088
-    print "The recipe for insight can be reduced to a box of cereal and a Sunday afternoon."
+    print("The recipe for insight can be reduced to a box of cereal and a Sunday afternoon.")
     webbrowser.open("http://localhost:%s/container/simtree" %(port))
     app.run(host="0.0.0.0",debug=True,port=port)
 

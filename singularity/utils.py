@@ -148,6 +148,10 @@ def zip_up(file_list,zip_name,output_folder=None):
             zf.write(filey,filename)
             os.remove(filey)
         # Otherwise, just write the content into a new archive
+        elif isinstance(content,bytes):
+            filey = write_file("%s/%s" %(tmpdir,filename),content.decode('utf-8'))
+            zf.write(filey,filename)
+            os.remove(filey)
         else: 
             zf.write(content,filename)
 
