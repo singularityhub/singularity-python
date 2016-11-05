@@ -12,6 +12,7 @@ from singularity.utils import get_installdir, read_file, write_file, download_re
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from glob import glob
 import inspect
 import imp
 import json
@@ -253,7 +254,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,
                                         output_folder=build_dir)
 
         # If doesn't error, run google_drive_setup and upload image
-        if os.path.exists(zipfile):
+        if os.path.exists(image_package):
             dest_dir = "%s/build" %(build_dir)
             os.mkdir(dest_dir)
             with zipfile.ZipFile(image_package) as zf:
