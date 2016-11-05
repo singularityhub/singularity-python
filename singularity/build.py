@@ -330,14 +330,14 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
                         "commit": params['commit'],
                         "repo_id": params['repo_id']}
 
-            if token != None:
+            if params['token'] != None:
                 response['token'] = params['token']
 
             # Send it back!
             if params['response_url'] != None:
                 response = api_put(url=params['response_url'],
                                    data=response,
-                                   token=params['token'])
+                                   token=params['token']) # will generate header with token
     
     else:
         # Tell the user what is actually there
