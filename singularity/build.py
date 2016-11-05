@@ -88,6 +88,13 @@ def create_file(drive_service,folder_id,file_path,file_name=None,verbose=True):
     :param file_name: the name for the file. If not specified, will use current file name
     :param parent_folders: one or more parent folder names, either a string or list 
     :param verbose: print out the file type assigned to the file_path
+
+    :: note: as this currently is, files with different names in the same folder will be treated 
+    as different. For builds this should only happen when the user requests a rebuild on the same
+    commit, in which case both versions of the files will endure, but the updated version will be
+    recorded as latest. I think this is good functionality for reproducibility, although it's a bit
+    redundant.
+
     '''
     if file_name == None:
         file_name = os.path.basename(file_path)
@@ -153,27 +160,30 @@ def get_folder(drive_service,folder_name=None,create=True,parent_folder=None):
     :param folder_name: the name of the folder to search for, item ['title'] field
     :param parent_folder: a parent folder to retrieve, will look at base if none specified.
     '''
+    # Default folder_name (for base) is singularity-hub
     if folder_name == None:
         folder_name = 'singularity-hub'
 
+    # If we don't specify a parent folder, a different folder with an identical name is created
     if parent_folder == None:
         folders = drive_service.files().list(q='mimeType="application/vnd.google-apps.folder"').execute()
     else:
-        folders = drive_service.files().list(q='mimeType="application/vnd.google-apps.folder"',
-                                             parents=parent_folder['id']).execute()
+        query = 'mimeType="application/vnd.google-apps.folder" and "%s" in parents' %(parent_folder)
+        folders = drive_service.files().list(q=query).execute()
 
+    # Look for the folder in the results
     for folder in folders['files']:
         if folder['name'] == folder_name:
             logging.info("Found folder %s in storage",folder_name)
             return folder
 
     logging.info("Did not find %s in storage.",folder_name)
-    folder = None
 
+    # If folder is not found, create it, else return None
+    folder = None
     if create == True:
         logging.info("Creating folder %s.",folder_name)
         folder = create_folder(drive_service,folder_name)
-
     return folder
 
 
@@ -212,11 +222,11 @@ def google_drive_setup(drive_service,image_path=None,base_folder=None):
         logging.info("Storage path set to %s","=>".join(folders))        
         parent_folder = singularity_folder['id']
 
+        # The last folder created, the destination for our files, will be returned
         for folder in folders:
-            # The last folder created, the destination for our files, will be returned
             singularity_folder = get_folder(drive_service=drive_service,
                                             folder_name=folder,
-                                            parent_folders=parent_folder)
+                                            parent_folder=parent_folder)
             parent_folder = singularity_folder['id']
 
     return singularity_folder    
