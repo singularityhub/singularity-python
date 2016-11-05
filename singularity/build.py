@@ -238,10 +238,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
-    # Default spec file is Singularity
-    if spec_file == None:
-        spec_file = "Singularity"
-    
     # If no build directory is specified, make a temporary one
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
@@ -256,9 +252,12 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
                 {'key': 'response_url', 'value': response_url, 'return_text': True },
                 {'key': 'token', 'value': token, 'return_text': False },
                 {'key': 'commit', 'value': commit, 'return_text': True },
-                {'key': 'spec_file', 'value': spec_file, 'return_text': True },
                 {'key': 'size', 'value': size, 'return_text': True },
                 {'key': 'logfile', 'value': logfile, 'return_text': True }]
+
+    # Default spec file is Singularity
+    if spec_file == None:
+        spec_file = "Singularity"
 
     # Obtain values from build
     params = get_build_params(metadata)
@@ -278,9 +277,9 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
         logging.warning("commit still not found in build, setting unique id to %s",params['commit'])
 
 
-    if os.path.exists(params['spec_file']):
-        logging.info("Found spec file %s in repository",params['spec_file'])
-        image_package = build_from_spec(spec=params['spec_file'],
+    if os.path.exists(spec_file):
+        logging.info("Found spec file %s in repository",spec_file)
+        image_package = build_from_spec(spec=spec_file,
                                         name=params['commit'],
                                         size=params['size'],
                                         sudopw='', # with root should not need sudo
@@ -342,7 +341,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     else:
         # Tell the user what is actually there
         present_files = glob("*")
-        logging.error("Build file %s not found in repository",params['spec_file'])
+        logging.error("Build file %s not found in repository",spec_file)
         logging.info("Found files are %s","\n".join(present_files))
 
 
