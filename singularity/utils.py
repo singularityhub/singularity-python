@@ -6,6 +6,7 @@ utils.py: part of singularity package
 '''
 
 import collections
+from git import Repo
 import os
 import requests
 
@@ -30,9 +31,9 @@ try:
 except NameError:
     pass
 
+
 ######################################################################################
 # Local commands and requests
-# These functions primarily are for the core Singularity software
 ######################################################################################
 
 
@@ -195,6 +196,7 @@ def read_file(filename,mode="r"):
     filey.close()
     return content
 
+
 def remove_unicode_dict(input_dict):
     '''remove unicode keys and values from dict, encoding in utf8
     '''
@@ -218,9 +220,10 @@ def format_container_name(name,special_characters=None):
     return ''.join(e.lower() for e in name if e.isalnum() or e in special_characters)
 
 
-######################################################################################
-# Remote (http) requests
-# These functions are for working with Singularity Hub (remote API)
-######################################################################################
-
+def download_repo(repo_url,destination,commit=None):
+    '''download_repo
+    :param repo_url: the url of the repo to clone from
+    :param destination: the full path to the destination for the repo
+    '''
+    return Repo.clone_from(repo_url, destination)
 

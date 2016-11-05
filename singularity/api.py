@@ -61,12 +61,30 @@ def get_headers(token=None):
     return headers
 
 
-def api_put(url,headers,token=None,data=None):
-    '''api_post will send a read file (spec) to Singularity Hub with a particular set of headers
+def api_get(url,headers,token=None,data=None):
+    '''api_get will use requests to get a particular url
     :param url: the url to send file to
-    :param filepath: the complete path to the file
     :param headers: a dictionary with headers for the request
     :param putdata: additional data to add to the request
+    '''
+    if headers == None:
+        headers = get_headers(token=token)
+    if data == None:
+        response = requests.get(url,         
+                                headers=headers)
+    else:
+        response = requests.get(url,         
+                                headers=headers,
+                                data=data)
+    return response
+
+
+def api_put(url,headers,token=None,data=None):
+    '''api_put will send a read file (spec) to Singularity Hub with a particular set of headers
+    :param url: the url to send file to
+    :param headers: the headers to get
+    :param headers: a dictionary with headers for the request
+    :param data: additional data to add to the request
     '''
     if headers == None:
         headers = get_headers(token=token)
@@ -78,67 +96,4 @@ def api_put(url,headers,token=None,data=None):
                                 headers=headers,
                                 data=data)
     
-    return response        
-
-
-
-def api_put(url,filename,headers,token=None):
-    '''api_post will send a read file (spec) to Singularity Hub with a particular set of headers
-    :param url: the url to send file to
-    :param filepath: the complete path to the file
-    :param headers: a dictionary with headers for the request
-    '''
-    if headers == None:
-        headers = get_headers(token=token)
-    
-    with open(filename) as fh:
-        putdata = fh.read()
-        response = requests.put(url,
-                                data=putdata,                         
-                                auth=('token', token),
-                                headers = headers,
-                                params={'file': filepath})
-    
-    return response        
-
-
-
-def push_spec(collection,name,build=True,source_dir=None,build_dir=None,size=None):
-    '''push_spec will look for a Singularity file in the PWD. If it exists, the file
-    is built, the user is authenticated with Singularity Hub, and the image is uploaded.
-    :param build: build the image (default is True), currently not in use, as image MUST be built
-    :param build_dir: the image base directory where the Singularity build file is located.
-    :param size: the size of the image to build. If none specified, function will default to 1024
-    :param collection: should be the unique ID of the collection
-    :param name: the name of the image to push. By default will go into collection as username/imagename
-    '''
-    token = authenticate()
-    if source_dir == None:
-        source_dir = os.getcwd()
-    singularityFile = "%s/Singularity" %(source_dir)
-    if os.path.exists(singularityFile):
-
-        # Prepare headers for request
-        headers = dict()
-        filename = os.path.basename(singularityFile)
-        headers["Content-Disposition"] = "attachment; filename=%s" %(filename)
-        headers["Authentication"] = "Token %s" %(token)
-        headers["Content-Type"] = "text/plain" 
-
-        #r = requests.post(url, files=files)
-        #r.text
-
-        #-F "file=@img.jpg;type=image/jpg"
-        url = "%s/upload/%s" %(api_base,collection)
-
-        # Send image to singularity hub
-        response = api_put(url=url,
-                           filename=singularityFile,
-                           headers=headers,
-                           token=token)
-        return response 
-
-    else:
-        print('''Error: No build file "Singularity" found in present working directory.
-                 Please create or properly name the file, and run command again.''')   
- 
+    return response

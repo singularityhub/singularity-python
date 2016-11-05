@@ -16,7 +16,7 @@ import json
 import os
 
 
-def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None,output_folder=None):
+def build_from_spec(spec=None,name=None,build_dir=None,size=None,sudopw=None,output_folder=None):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec: the spec file, called "Singuarity"
     :parma name: the name to call the image, will go under a collection for some library/name 
@@ -24,14 +24,17 @@ def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None,output_f
     :param size: the size of the image
     :param output_folder: where to output the image package
     '''
+    if spec == None:
+        spec = "Singularity"
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
-    
     # Copy the spec to a temporary directory
-    spec_path = "%s/Singularity" %build_dir
+    spec_path = "%s/%s" %(build_dir,spec)
     shutil.copyfile(spec,spec_path)
-    image_path = "%s/Singularity.img" %(build_dir)
-
+    # If name isn't provided, call it Singularity
+    if name == None:
+        name = "Singularity"
+    image_path = "%s/%s.img" %(build_dir,name)
     # Run create image and bootstrap with Singularity command line tool.
     if sudopw != None:
         cli = Singularity(sudopw=sudopw)
@@ -41,9 +44,7 @@ def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None,output_f
     cli.create(image_path,size=size)
     result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
     print(result)
-  
     # Finally, package the image.
-    #TODO: here we need some kind of test for the image... is it valid?
     print("\nPacking image...")
     zipfile = package(image_path=image_path,
                       name=name,
@@ -51,7 +52,6 @@ def build_from_spec(spec,name=None,build_dir=None,size=None,sudopw=None,output_f
                       spec_path=spec_path,
                       verbose=True,
                       S=cli)
-
     return zipfile
 
 

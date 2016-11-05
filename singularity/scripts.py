@@ -44,12 +44,6 @@ def main():
                         help="The size of the image to build. If None provided, will use 1024", 
                         type=str, default=None)
 
-    # The user must specify a collection id to push to the hub
-    parser.add_argument("--collection", dest='collection', 
-                        help="build a Singularity image from a spec (Singularity) file, push to Singularity hub", 
-                        type=str, default=None)
-
-
     # Multiple images, separated by commas
     parser.add_argument("--images", dest='images', 
                         help="full path to singularity images,separated with commas (for use with --difftree)", 
