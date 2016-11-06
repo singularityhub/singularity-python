@@ -242,7 +242,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     :param spec_file: the spec_file name to use, assumed to be in git repo
     :param repo_url: the url to download the repo from
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
-    :param commit: the commit to checkout
+    :param commit: the commit to checkout. If none provided, will use most recent.
     :param size: the size of the image to build. If none set, builds default 1024.
     :param credential: the credential to send the image to.
     :param verbose: print out extra details as we go (default True)    
@@ -291,10 +291,10 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
         logging.info('Checking out commit %s',params['commit'])
         os.system('git checkout %s .' %(params['commit']))
 
-    # From here on out commit is used as a unique id, if we don't have one, randomly make one
+    # From here on out commit is used as a unique id, if we don't have one, we use current
     else:
-        params['commit'] = uuid.uuid4().__str__()
-        logging.warning("commit still not found in build, setting unique id to %s",params['commit'])
+        params['commit'] = repo.commit().__str__()
+        logging.warning("commit not specified, setting to current %s", params['commit'])
 
 
     if os.path.exists(spec_file):
