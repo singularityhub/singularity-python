@@ -253,6 +253,11 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
+    # If we are building the image, this will not be set
+    go = get_build_metadata(key='dobuild')
+    if go == None:
+        sys.exit(0)
+
     # If no build directory is specified, make a temporary one
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
