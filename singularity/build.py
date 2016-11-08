@@ -5,13 +5,14 @@ build.py: functions for singularity hub builders
 
 '''
 
-from singularity.api import api_get, api_put
+from singularity.api import api_get, api_put, api_post
 from singularity.boutiques import get_boutiques_json
 from singularity.package import build_from_spec
 from singularity.utils import get_installdir, read_file, write_file, download_repo
 
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from oauth2client.client import GoogleCredentials
+from googleapiclient import http
 
 from glob import glob
 import httplib2
@@ -33,208 +34,66 @@ import tempfile
 import uuid
 import zipfile
 
-api_base = "http://www.singularity-hub.org/api"
+shub_api = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
 logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
 
-def google_drive_connect(credential):
+##########################################################################################
+# GOOGLE STORAGE API #####################################################################
+##########################################################################################
 
-    # If it's a dict, assume json and load into credential
-    if isinstance(credential,str):
-        credential = json.loads(credential)
-
-    if isinstance(credential,dict):
-        credential = client.Credentials.new_from_json(json.dumps(credential))
-
-    # If the user has a credential object, check if it's good
-    if credential.invalid is True:
-        logging.warning('Storage credential not valid, refreshing.')
-        credential.refresh()
-
-    # Authorize with http
-    http_auth = credential.authorize(httplib2.Http())
-    drive_service = build('drive', 'v3', http=http_auth)
-    return drive_service
+def get_storage_service():
+    credentials = GoogleCredentials.get_application_default()
+    return build('storage', 'v1', credentials=credentials)
+    
+def get_bucket(storage_service,bucket_name):
+    req = storage_service.buckets().get(bucket=bucket_name)
+    return req.execute()
 
 
-def create_folder(drive_service,folder_name,parent_folders=None):
-    '''create_folder will create a folder (folder_name) in optional parent_folder
-    if no parent_folder is specified, will be placed at base of drive
-    :param drive_service: drive service created by google_drive_connect
-    :param folder_name: the name of the folder to create
-    :param parent_folders: one or more parent folder names, either a string or list 
-    '''
-    file_metadata = {
-        'name' : folder_name,
-        'mimeType' : 'application/vnd.google-apps.folder'
-    }
-    # Do we have one or more parent folders?
-    if parent_folders != None:
-        if not isinstance(parent_folders,list):
-            parent_folders = [parent_folders]
-        file_metadata ['parents'] = parent_folders    
-    folder = drive_service.files().create(body=file_metadata,
-                                          fields='id').execute()
-    return folder
-
-
-def create_file(drive_service,folder_id,file_path,file_name=None,verbose=True):
-    '''create_folder will create a folder (folder_name) in optional parent_folder
-    if no parent_folder is specified, will be placed at base of drive
-    :param drive_service: drive service created by google_drive_connect
-    :param folder_id: the id of the folder to upload to
-    :param file_path: the path of the file to add
-    :param file_name: the name for the file. If not specified, will use current file name
-    :param parent_folders: one or more parent folder names, either a string or list 
-    :param verbose: print out the file type assigned to the file_path
-
-    :: note: as this currently is, files with different names in the same folder will be treated 
-    as different. For builds this should only happen when the user requests a rebuild on the same
-    commit, in which case both versions of the files will endure, but the updated version will be
-    recorded as latest. I think this is good functionality for reproducibility, although it's a bit
-    redundant.
-
-    '''
-    if file_name == None:
-        file_name = os.path.basename(file_path)
-
-    mimetype = sniff_extension(file_path,verbose=verbose)
-
-    file_metadata = {
-        'name' : file_name,
-        'parents': [ folder_id ]
-    }
-
-    logging.info('Creating file %s in folder %s with mimetype %s', file_name,
-                                                                   folder_id,
-                                                                   mimetype)
-    media = MediaFileUpload(file_path,
-                        mimetype=mimetype,
-                        resumable=True)
-
-    new_file = drive_service.files().create(body=file_metadata,
-                                        media_body=media,
-                                        fields='id').execute()
-    new_file['name'] = file_name
-    return new_file
-
-
-def permissions_callback(request_id, response, exception):
-    if exception:
-        logging.error(exception)
-    else:
-        logging.info("Permission Id: %s",response.get('id'))
-
-
-def set_reader_permissions(drive_service,file_ids):
-    '''set_permission will set a permission level (default is reader) for one
-    or more files. If anything other than "reader" is used for permission, 
-    email must be provided
-    :param drive_service: the drive service created with google_drive_connect
-    :param file_ids: one or more file_ids, should be string or list
-    '''
-
-    new_permission = { 'type': "anyone",
-                       'role': "reader",
-                       'withLink': True }
-
-    if isinstance(file_ids,list) == False:
-        file_ids = [file_ids]
-
-    batch = drive_service.new_batch_http_request(callback=permissions_callback)
-
-    for file_id in file_ids:
-        batch.add(drive_service.permissions().create(
-                  fileId=file_id['id'],
-                  body=new_permission))
-
-    batch.execute()
-
-
-def get_folder(drive_service,folder_name=None,create=True,parent_folder=None):
+def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
     will create it if not found. If folder is found or created, the metadata is
     returned, otherwise None is returned
-    :param drive_service: the drive_service created from google_drive_connect
-    :param folder_name: the name of the folder to search for, item ['title'] field
-    :param parent_folder: a parent folder to retrieve, will look at base if none specified.
+    :param storage_service: the drive_service created from get_storage_service
+    :param bucket: the bucket object from get_bucket
+    :param file_name: the name of the file to upload
+    :param bucket_path: the path to upload to
     '''
-    # Default folder_name (for base) is singularity-hub
-    if folder_name == None:
-        folder_name = 'singularity-hub'
+    # Set up path on bucket
+    upload_path = "%s/%s" %(bucket['id'],bucket_path)
+    if upload_path[-1] != '/':
+        upload_path = "%s/" %(upload_path)
+    upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
+    body = {'name': upload_path }
 
-    # If we don't specify a parent folder, a different folder with an identical name is created
-    if parent_folder == None:
-        folders = drive_service.files().list(q='mimeType="application/vnd.google-apps.folder"').execute()
-    else:
-        query = 'mimeType="application/vnd.google-apps.folder" and "%s" in parents' %(parent_folder)
-        folders = drive_service.files().list(q=query).execute()
-
-    # Look for the folder in the results
-    for folder in folders['files']:
-        if folder['name'] == folder_name:
-            logging.info("Found folder %s in storage",folder_name)
-            return folder
-
-    logging.info("Did not find %s in storage.",folder_name)
-
-    # If folder is not found, create it, else return None
-    folder = None
-    if create == True:
-        logging.info("Creating folder %s.",folder_name)
-        folder = create_folder(drive_service,folder_name)
-    return folder
+    # Create media object with correct mimetype
+    mimetype = sniff_extension(file_name,verbose=verbose)
+    media = http.MediaFileUpload(file_name,
+                                 mimetype=mimetype,
+                                 resumable=True)
+    request = storage_service.objects().insert(bucket=bucket['id'], 
+                                               body=body,
+                                               predefinedAcl="publicRead",
+                                               media_body=media)
+    return request.execute()
 
 
-def get_download_links(build_files):
-    '''get_files will use a drive_service to return a list of build file objects
-    :param build_files: a list of build_files, each a dictionary with an id for the file
-    :returns links: a list of dictionaries with included file links
-    '''
-    if not isinstance(build_files,list):
-        build_files = [build_files]
-    links = []
-    for build_file in build_files:
-        link = "https://drive.google.com/uc?export=download&id=%s" %(build_file['id'])
-        build_file['link'] = link
-        links.append(build_file)
-    return links
+def list_bucket(bucket):
+    # Create a request to objects.list to retrieve a list of objects.        
+    request = storage_service.objects().list(bucket=bucket['id'], 
+                                             fields='nextPageToken,items(name,size,contentType)')
+    # Go through the request and look for the folder
+    objects = []
+    while request:
+        response = request.execute()
+        objects = objects + response['items']
+    return objects
 
 
-def google_drive_setup(drive_service,image_path=None,base_folder=None):
-    '''google_drive_setup will connect to a Google drive, check for the singularity 
-    folder, and if it doesn't exist, create it, along with other collection and image
-    metadata. The final upload folder for the image and other stuffs is returned
-    :param image_path: should be the path to the image, from within the singularity-hub folder
-    (eg, www.github.com/vsoch/singularity-images). If not defined, a folder with the commit id
-    will be created in the base of the singularity-hub google drive folder
-    :param base_folder: the parent (base) folder to write to, default is singularity-hub
-    '''
-    if base_folder == None:
-        base_folder = 'singularity-hub'
-    singularity_folder = get_folder(drive_service,folder_name=base_folder)
-    logging.info("Base folder set to %s",base_folder)        
-
-    # If the user wants a more custom path
-    if image_path != None:
-        folders = [x.strip(" ") for x in image_path.split("/")]
-        logging.info("Storage path set to %s","=>".join(folders))        
-        parent_folder = singularity_folder['id']
-
-        # The last folder created, the destination for our files, will be returned
-        for folder in folders:
-            singularity_folder = get_folder(drive_service=drive_service,
-                                            folder_name=folder,
-                                            parent_folder=parent_folder)
-            parent_folder = singularity_folder['id']
-
-    return singularity_folder    
-
-
-def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
-              repo_id=None,commit=None,credential=None,verbose=True,response_url=None,
-              logfile=None):
+def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
+              repo_id=None,commit=None,verbose=True,response_url=None,logfile=None):
     '''run_build will generate the Singularity build from a spec_file from a repo_url. 
     If no arguments are required, the metadata api is queried for the values.
     :param build_dir: directory to do the build in. If not specified,
@@ -244,7 +103,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
     :param commit: the commit to checkout. If none provided, will use most recent.
     :param size: the size of the image to build. If none set, builds default 1024.
-    :param credential: the credential to send the image to.
+    :param bucket_name: the name of the bucket to send files to
     :param verbose: print out extra details as we go (default True)    
     :param token: a token to send back to the server to authenticate adding the build
     :param logfile: path to a logfile to read and include path in response to server. 
@@ -268,8 +127,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     # Get variables from the instance metadata API
     metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
                 {'key': 'repo_id', 'value': repo_id, 'return_text': True },
-                {'key': 'credential', 'value': credential, 'return_text': True },
                 {'key': 'response_url', 'value': response_url, 'return_text': True },
+                {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
                 {'key': 'token', 'value': token, 'return_text': False },
                 {'key': 'commit', 'value': commit, 'return_text': True },
                 {'key': 'size', 'value': size, 'return_text': True },
@@ -278,6 +137,9 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
     # Default spec file is Singularity
     if spec_file == None:
         spec_file = "Singularity"
+
+    if bucket_name == None:
+        bucket_name = "singularity-hub"
 
     # Obtain values from build
     params = get_build_params(metadata)
@@ -317,35 +179,31 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,
             image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
             build_files = glob("%s/*" %(dest_dir))
             logging.info("Sending build files %s to storage",'\n'.join(build_files))
-            drive_service = google_drive_connect(params['credential'])
-            upload_folder = google_drive_setup(drive_service=drive_service,
-                                               image_path=image_path)    
 
-            # For each file, upload to drive
+            # Start the storage service, retrieve the bucket
+            storage_service = get_storage_service()
+            bucket = get_bucket(storage_service,bucker_name)
+
+            # For each file, upload to storage
             files = []
             for build_file in build_files:
-                drive_file = create_file(drive_service,
-                                         folder_id=upload_folder['id'],
-                                         file_path=build_file)
-                files.append(drive_file)
+                storage_file = upload_file(storage_service,
+                                           bucket=bucket,
+                                           bucket_path=image_path,
+                                           file_name=build_file)  
+                files.append(storage_file)
 
-            # Set readable permissions
-            set_reader_permissions(drive_service,files)
-            
-            # Get metadata to return to singularity-hub
-            download_links = get_download_links(build_files=files)
 
             # If the user has specified a log file, include with data/response
             if logfile != None:
-                log_file = create_file(drive_service,
-                                       folder_id=upload_folder['id'],
-                                       file_path=logfile)
-                log_file['name'] = 'log'
+                log_file = upload_file(storage_service,
+                                       bucket=bucket,
+                                       bucket_path=image_path,
+                                       file_name=logfile)
                 files.append(log_file)
-                download_links = download_links + get_download_links(build_files=log_file)
-         
+                
             # Finally, package everything to send back to shub
-            response = {"files": download_links,
+            response = {"files": files,
                         "repo_url": params['repo_url'],
                         "commit": params['commit'],
                         "repo_id": params['repo_id']}

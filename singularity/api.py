@@ -60,7 +60,7 @@ def get_headers(token=None):
     return headers
 
 
-def api_get(url,headers,token=None,data=None):
+def api_get(url,headers=None,token=None,data=None):
     '''api_get will use requests to get a particular url
     :param url: the url to send file to
     :param headers: a dictionary with headers for the request
@@ -95,4 +95,20 @@ def api_put(url,headers=None,token=None,data=None):
                                 headers=headers,
                                 data=data)
     
+    return response
+
+
+def api_post(url,headers):
+    '''api_get will use requests to get a particular url
+    :param url: the url to send file to
+    :param headers: a dictionary with headers for the request
+    :param putdata: additional data to add to the request
+    '''
+    if data == None:
+        response = requests.post(url,         
+                                 headers=headers)
+    else:
+        response = requests.post(url,         
+                                 headers=headers,
+                                 data=data)
     return response
