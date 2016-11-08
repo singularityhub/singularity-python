@@ -93,7 +93,7 @@ def list_bucket(bucket):
 
 
 def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
-              repo_id=None,commit=None,verbose=True,response_url=None,logfile=None):
+              repo_id=None,commit=None,verbose=True,response_url=None,logfile=None,secret=None):
     '''run_build will generate the Singularity build from a spec_file from a repo_url. 
     If no arguments are required, the metadata api is queried for the values.
     :param build_dir: directory to do the build in. If not specified,
@@ -105,7 +105,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     :param size: the size of the image to build. If none set, builds default 1024.
     :param bucket_name: the name of the bucket to send files to
     :param verbose: print out extra details as we go (default True)    
-    :param token: a token to send back to the server to authenticate adding the build
+    :param token: a token to send back to the server to authenticate the collection
+    :param secret: a secret to match to the correct container
     :param logfile: path to a logfile to read and include path in response to server. 
     :param response_url: the build url to send the response back to. Should also come
     from metadata. If not specified, no response is sent
@@ -131,6 +132,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
                 {'key': 'token', 'value': token, 'return_text': False },
                 {'key': 'commit', 'value': commit, 'return_text': True },
+                {'key': 'secret', 'value': secret, 'return_text': True },
                 {'key': 'size', 'value': size, 'return_text': True },
                 {'key': 'logfile', 'value': logfile, 'return_text': True }]
 
@@ -203,25 +205,28 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 files.append(log_file)
                 
             # Finally, package everything to send back to shub
-            response = {"files": files,
+            response = {"files": json.dumps(files),
                         "repo_url": params['repo_url'],
                         "commit": params['commit'],
-                        "repo_id": params['repo_id']}
+                        "repo_id": params['repo_id'],
+                        "secret": params['secret']}
 
             if params['token'] != None:
                 response['token'] = params['token']
 
             # Send it back!
             if params['response_url'] != None:
-                response = api_put(url=params['response_url'],
-                                   data=response,
-                                   token=params['token']) # will generate header with token
+                finish = requests.post(params['response_url'],data=response)
     
     else:
         # Tell the user what is actually there
         present_files = glob("*")
         logging.error("Build file %s not found in repository",spec_file)
         logging.info("Found files are %s","\n".join(present_files))
+
+
+    # Clean up
+    shutil.rmtree(build_dir)
 
 
 #####################################################################################
