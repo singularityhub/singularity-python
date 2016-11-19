@@ -108,6 +108,26 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
 ## FILE OPERATIONS #########################################################
 ############################################################################
 
+def zip_dir(zip_dir, zip_name, output_folder=None):
+    '''zip_dir will zip up and entire zip directory
+    :param folder_path: the folder to zip up
+    :param zip_name: the name of the zip to return
+    :output_folder:
+    '''
+    tmpdir = tempfile.mkdtemp()
+    output_zip = "%s/%s" %(tmpdir,zip_name)
+    zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED, allowZip64=True)
+    for root, dirs, files in os.walk(zip_dir):
+        for file in files:
+            zf.write(os.path.join(root, file))
+    zf.close()
+    if output_folder != None:
+        shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
+        shutil.rmtree(tmpdir)
+        output_zip = "%s/%s"%(output_folder,zip_name)
+    return output_zip
+
+
 def zip_up(file_list,zip_name,output_folder=None):
     '''zip_up will zip up some list of files into a package (.zip)
     :param file_list: a list of files to include in the zip.

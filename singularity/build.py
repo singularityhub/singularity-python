@@ -7,7 +7,7 @@ build.py: functions for singularity hub builders
 
 from singularity.api import api_get, api_put, api_post
 from singularity.boutiques import get_boutiques_json
-from singularity.package import build_from_spec
+from singularity.package import build_from_spec, package
 from singularity.utils import get_installdir, read_file, write_file, download_repo
 
 from googleapiclient.discovery import build
@@ -163,13 +163,22 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
     if os.path.exists(spec_file):
         logging.info("Found spec file %s in repository",spec_file)
-        image_package = build_from_spec(spec=spec_file,
-                                        name=params['commit'],
-                                        size=params['size'],
-                                        sudopw='', # with root should not need sudo
-                                        output_folder=build_dir)
 
-        # If doesn't error, run google_drive_setup and upload image
+        image = build_from_spec(spec=spec_file, # default will package the image
+                                size=params['size'],
+                                sudopw='', # with root should not need sudo
+                                output_folder=build_dir,
+                                build_dir=build_dir)
+
+        # Package the image
+        image_package = package(image_path=image,
+                                spec_path=spec_file,
+                                output_folder=build_dir,
+                                sudopw='',
+                                remove_image=True,
+                                verbose=True)
+
+        # Upload image to Google Storage
         if os.path.exists(image_package):
             logging.info("Package %s successfully built",image_package)
             dest_dir = "%s/build" %(build_dir)
@@ -187,6 +196,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
             bucket = get_bucket(storage_service,bucket_name)
 
             # For each file, upload to storage
+            # TODO: here we need to skip image / layerize
             files = []
             for build_file in build_files:
                 storage_file = upload_file(storage_service,
@@ -195,6 +205,13 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                                            file_name=build_file)  
                 files.append(storage_file)
 
+
+            # Upload the package as well
+            package_file = upload_file(storage_service,
+                                       bucket=bucket,
+                                       bucket_path=image_path,
+                                       file_name=image_package)
+            files.append(package_file)
 
             # If the user has specified a log file, include with data/response
             if logfile != None:

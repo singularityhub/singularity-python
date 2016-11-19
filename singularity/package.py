@@ -16,13 +16,14 @@ import json
 import os
 
 
-def build_from_spec(spec=None,name=None,build_dir=None,size=None,sudopw=None,output_folder=None):
+def build_from_spec(spec=None,build_dir=None,size=None,sudopw=None,
+                    output_folder=None,build_folder=False):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec: the spec file, called "Singuarity"
-    :parma name: the name to call the image, will go under a collection for some library/name 
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
     :param size: the size of the image
     :param output_folder: where to output the image package
+    :param build_folder: "build" the image into a folder instead. Default False
     '''
     if spec == None:
         spec = "Singularity"
@@ -30,69 +31,64 @@ def build_from_spec(spec=None,name=None,build_dir=None,size=None,sudopw=None,out
         build_dir = tempfile.mkdtemp()
     # Copy the spec to a temporary directory
     spec_path = "%s/%s" %(build_dir,spec)
-    shutil.copyfile(spec,spec_path)
+    if not os.path.exists(spec_path):
+        shutil.copyfile(spec,spec_path)
     # If name isn't provided, call it Singularity
-    if name == None:
-        name = "Singularity"
-    image_path = "%s/%s.img" %(build_dir,name)
+    image_path = "%s/image" %(build_dir)
     # Run create image and bootstrap with Singularity command line tool.
     if sudopw != None:
         cli = Singularity(sudopw=sudopw)
     else:
         cli = Singularity() # This command will ask the user for sudo
     print("\nCreating and boostrapping image...")
-    cli.create(image_path,size=size)
+    # Does the user want to "build" into a folder or image?
+    if build_folder == True:
+        os.mkdir(image_path)
+    else:
+        cli.create(image_path,size=size)
     result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
     print(result)
-    # Finally, package the image.
-    print("\nPacking image...")
-    zipfile = package(image_path=image_path,
-                      name=name,
-                      output_folder=output_folder,
-                      spec_path=spec_path,
-                      verbose=True,
-                      S=cli)
-    return zipfile
+    # Rename the image
+    version = get_image_hash(image_path)
+    final_path = "%s/%s" %(build_dir,version)
+    os.rename(image_path,final_path)
+    return final_path
 
 
-def package(image_path,name=None,spec_path=None,output_folder=None,runscript=True,
-                       software=True,remove_image=False,verbose=False,S=None):
+def package(image_path,spec_path=None,output_folder=None,runscript=True,
+            software=True,remove_image=False,verbose=False,S=None,sudopw=None):
     '''package will take an image and generate a zip (including the image
     to a user specified output_folder.
     :param image_path: full path to singularity image file
-    :param name: the name for the image to be included with the collection
     :param runscript: if True, will extract runscript to include in package as runscript
     :param software: if True, will extract files.txt and folders.txt to package
     :param remove_image: if True, will not include original image in package (default,False)
     :param verbose: be verbose when using singularity --export (default,False)
     :param S: the Singularity object (optional) will be created if not required.
     '''    
+    # Run create image and bootstrap with Singularity command line tool.
     if S == None:
-        S = Singularity(verbose=verbose)
+        if sudopw != None:
+            S = Singularity(sudopw=sudopw,verbose=verbose)
+        else:
+            S = Singularity(verbose=verbose) # This command will ask the user for sudo
     tmptar = S.export(image_path=image_path,pipe=False)
     tar = tarfile.open(tmptar)
     members = tar.getmembers()
     image_name = os.path.basename(image_path)
     zip_name = "%s.zip" %(image_name.replace(" ","_"))
-
     # Include the image in the package?
     if remove_image:
         to_package = dict()
     else:
         to_package = {"files":[image_path]}
-    if name != None:
-        image_name = name
-    to_package['NAME'] = format_container_name(image_name)
-
     # If the specfile is provided, it should also be packaged
     if spec_path != None:
         singularity_spec = "".join(read_file(spec_path))
         to_package['Singularity'] = singularity_spec
-
     # Package the image with an md5 sum as VERSION
     version = get_image_hash(image_path)
     to_package["VERSION"] = version
-
     # Look for runscript
     if runscript == True:
         try:
@@ -101,21 +97,17 @@ def package(image_path,name=None,spec_path=None,output_folder=None,runscript=Tru
             runscript = runscript_file.read()
             to_package["runscript"] = runscript
             print("Found runscript!")
-
         except KeyError:
             print("No runscript found in image!")
-        
     if software == True:
         print("Adding software list to package!")
         files = [x.path for x in members if x.isfile()]
         folders = [x.path for x in members if x.isdir()]
         to_package["files.txt"] = files
         to_package["folders.txt"] = folders
-
     # Do zip up here - let's start with basic structures
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     print("Package created at %s" %(zipfile))
-
     # return package to user
     return zipfile
 
