@@ -24,6 +24,7 @@ import logging
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
 
+import io
 import os
 import re
 import requests
@@ -38,6 +39,8 @@ shub_api = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
 logging.basicConfig(stream=sys.stdout,level=logging.DEBUG)
+# if we want logging to variable or other, TBD
+#from singularity.logman import bot
 
 ##########################################################################################
 # GOOGLE STORAGE API #####################################################################
@@ -170,7 +173,11 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                                 output_folder=build_dir,
                                 build_dir=build_dir)
 
-        # Package the image
+        # Compress image
+        compressed_image = "%s.tar.gz" %image
+        os.system('sudo singularity export %s | gzip -9 > %s' %(image,compressed_image))
+        
+        # Package the image metadata (files, folders, etc)
         image_package = package(image_path=image,
                                 spec_path=spec_file,
                                 output_folder=build_dir,
@@ -178,7 +185,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                                 remove_image=True,
                                 verbose=True)
 
-        # Upload image to Google Storage
+        # Upload image package files to Google Storage
         if os.path.exists(image_package):
             logging.info("Package %s successfully built",image_package)
             dest_dir = "%s/build" %(build_dir)
@@ -189,6 +196,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
             # The path to the images on google drive will be the github url/commit folder
             image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
             build_files = glob("%s/*" %(dest_dir))
+            build_files.append(compressed_image)
             logging.info("Sending build files %s to storage",'\n'.join(build_files))
 
             # Start the storage service, retrieve the bucket
@@ -196,7 +204,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
             bucket = get_bucket(storage_service,bucket_name)
 
             # For each file, upload to storage
-            # TODO: here we need to skip image / layerize
             files = []
             for build_file in build_files:
                 storage_file = upload_file(storage_service,
@@ -204,7 +211,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                                            bucket_path=image_path,
                                            file_name=build_file)  
                 files.append(storage_file)
-
 
             # Upload the package as well
             package_file = upload_file(storage_service,

@@ -48,11 +48,13 @@ def build_from_spec(spec=None,build_dir=None,size=None,sudopw=None,
         cli.create(image_path,size=size)
     result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
     print(result)
-    # Rename the image
-    version = get_image_hash(image_path)
-    final_path = "%s/%s" %(build_dir,version)
-    os.rename(image_path,final_path)
-    return final_path
+    # If image, rename based on hash
+    if build_folder == False:
+        version = get_image_hash(image_path)
+        final_path = "%s/%s" %(build_dir,version)
+        os.rename(image_path,final_path)
+        image_path = final_path
+    return image_path
 
 
 def package(image_path,spec_path=None,output_folder=None,runscript=True,
@@ -118,7 +120,8 @@ def list_package(package_path):
     '''
     zf = zipfile.ZipFile(package_path, 'r')
     return zf.namelist()
-    
+
+
 
 def calculate_similarity(pkg1,pkg2,include_files=False,include_folders=True):
     '''calculate_similarity will calculate similarity of images in packages based on
@@ -279,7 +282,6 @@ def get_image_hash(image_path):
     if the image matches the spec file
     :param image_path: full path to the singularity image
     '''
-    print("Generating unique version of image (md5 hash)")
     hash_md5 = hashlib.md5()
     with open(image_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
