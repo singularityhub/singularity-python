@@ -174,8 +174,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                                 build_dir=build_dir)
 
         # Compress image
-        compressed_image = "%s.tar.gz" %image
-        os.system('sudo singularity export %s | gzip -9 > %s' %(image,compressed_image))
+        compressed_image = "%s.img.gz" %image
+        os.system('gzip -c -9 %s > %s' %(image,compressed_image))
         
         # Package the image metadata (files, folders, etc)
         image_package = package(image_path=image,
