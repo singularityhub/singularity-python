@@ -29,7 +29,7 @@ class TestBuildTemplate(unittest.TestCase):
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
-        self.spec = "%s/testing/data/Singularity" %(self.pwd)
+        self.spec = "%s/tests/data/Singularity" %(self.pwd)
         print("\n---START----------------------------------------")
         
     def tearDown(self):
