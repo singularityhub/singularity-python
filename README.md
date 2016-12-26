@@ -151,6 +151,10 @@ and the same applies for specification of Docker images, as in the previous exam
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree/) is also available.
 
 
+### Build your container
+More information coming soon.
+
+
 ### Functions Provided
 You can also use the library as a module, and import singularity-python functions into your application.
 
