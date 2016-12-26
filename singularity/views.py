@@ -5,108 +5,170 @@ views.py: part of singularity package
 
 '''
 
-from singularity.package import list_package, load_package, package, check_packages, compare_package
-from singularity.utils import zip_up, read_file, write_file, remove_unicode_dict
-from singularity.docker import get_docker_guts
-from singularity.cli import Singularity
-import SimpleHTTPServer
-import SocketServer
-import webbrowser
-import tempfile
-import zipfile
-import shutil
 import json
 import os
 import re
+import requests
+from singularity.logman import bot
+
+from singularity.package import (
+    load_package,
+    package
+)
+
+import shutil
+import tempfile
+import zipfile
 
 
-###################################################################################################
-# PACKAGE TREES ###################################################################################
-###################################################################################################
+###################################################################################
+# COMPARISON FUNCTIONS ############################################################
+###################################################################################
 
-def diff_tree(base_image,subtracted_image,S=None):
-    '''difference_tree will render an html tree (graph) of the differences between an image or package
-    :param base_image: full path to the image, or package, as base for comparison
-    :param subtracted_image: full path to the image, or package, to subtract
-    :param S: the Singularity object, only needed if image needs to be packaged.
+def compare_containers(container1,container2,by="files.txt"):
+    '''compare_containers will generate a data structure with common and unique files to
+    two images. If environmental variable SINGULARITY_HUB is set, will use container
+    database objects.
+    :param container1: first container for comparison
+    :param container2: second container for comparison
+    :param shub: If true, will 
+    :param by: what to compare, one or more of 'files.txt' or 'folders.txt'
+    default compares just files
     '''
+    if not isinstance(by,list):
+        by = [by]
 
-    # Make sure that images are all packages
-    tmpdir = tempfile.mkdtemp()
-    base,subtracted = check_packages([base_image,subtracted_image],S=S,tmpdir=tmpdir)
+    # Get files and folders for each
+    container1_guts = get_container_contents(container1,
+                                             gets=by,
+                                             split_delim="\n")
+    container2_guts = get_container_contents(container2,
+                                             gets=by,
+                                             split_delim="\n")
 
-    # Get differences between packages
-    different_folders = compare_package(base,subtracted,S=S)
-    different_files = compare_package(base,subtracted,include_files=True,include_folders=False,S=S)
+    # Do the comparison for each metric
+    comparisons = dict()
+    for b in by:
+        intersect = [x for x in container1_guts[b] if x in container2_guts[b]]
+        unique1 = [x for x in container1_guts[b] if x not in container2_guts[b]]
+        unique2 = [x for x in container2_guts[b] if x not in container1_guts[b]]
 
-    # Make a list of files and folders that are unique to base (subtracted is removed)
-    folders = different_folders["unique_%s" %(os.path.basename(base))]
-    files = different_files["unique_%s" %(os.path.basename(base))]
-    tree = make_package_tree(folders=folders,
-                             files=files)
-    shutil.rmtree(tmpdir)
-    return tree
+        # Return data structure
+        comparison = {"intersect":intersect,
+                      "unique1": unique1,
+                      "unique2": unique2}
+        bot.logger.info("Intersect has length %s",len(intersect))
+        bot.logger.info("Unique to %s: %s",container1,len(unique1))
+        bot.logger.info("Unique to %s: %s",container2,len(unique2))
+        comparisons[b] = comparison 
+
+    return comparisons
     
 
-def sim_tree(image1,image2,S=None):
-    '''sim_tree will render an html tree (graph) of the intersection (commonalities) between two images or packages
-    :param image1: full path to the image, or package
-    :param image2: full path to the image, or package
-    :param S: the Singularity object, only needed if image needs to be packaged.
+def container_similarity(container1,container2):
+    '''container_sim will return a data structure to render an html tree (graph) of the intersection (commonalities) between two images or packages
+    :param container1: the first container object
+    :param container2: the second container object
     '''
-
-    # Make sure that images are all packages
-    tmpdir = tempfile.mkdtemp()
-    image1,image2 = check_packages([image1,image2],S=S,tmpdir=tmpdir)
-
-    # Get differences between packages
-    shared_folders = compare_package(image1,image2,S=S)
-    shared_files = compare_package(image1,image2,include_files=True,include_folders=False,S=S)
-
-    # Make a list of files and folders that are intersected
-    folders = shared_folders["intersect"]
-    files = shared_files["intersect"]
-    tree = make_package_tree(folders=folders,
-                             files=files)
-    shutil.rmtree(tmpdir)
+    comparison = compare_containers(container1,container2,
+                                    by=['files.txt','folders.txt'])
+    files = comparison["files.txt"]['intersect']
+    folders = comparison['folders.txt']['intersect']
+    tree = make_container_tree(folders=folders,
+                               files=files)
     return tree
 
 
-def tree(image_path,S=None,docker=False,sudopw=None):
-    '''tree will render an html tree (graph) of an image or package
-    :param image_path: full path to the image, or package
-    :param S: the Singularity object, only needed if image needs to be packaged.
-    :param docker: if True, assumes input corresponds to docker image name (default False)
-    :param sudopw: should be passed to function if Docker required
+def calculate_similarity(container1,container2,by="files.txt"):
+    '''calculate_similarity will calculate similarity of two containers by files content, default will calculate
+    2.0*len(intersect) / total package1 + total package2
+    :param container1: container 1
+    :param container2: container 2
+    :param by: the one or more metrics (eg files.txt) list to use to compare
+     valid are currently files.txt or folders.txt
     '''
+    if not isinstance(by,list):
+        by = [by]
 
-    # Make a temporary directory for stuffs
-    tmpdir = tempfile.mkdtemp()
+    comparison = compare_containers(container1,container2,by=by)
+    scores = dict()
 
-    # Singularity image/package input
-    if docker == False:
-        image_path = check_packages([image_path],S=S,tmpdir=tmpdir)[0]
-    
-        # When it's a package, look for folders.txt and files.txt
-        guts = list_package(image_path)
-        if "folders.txt" in guts and "files.txt" in guts:
-            retrieved = load_package(image_path,get=["folders.txt","files.txt"])
+    for b in by:
+        total_unique = len(comparison[b]['unique1']) + len(comparison[b]['unique2'])
+
+        # If neither has equal files, denominator is 0, similarity is 1
+        if total_unique == 0:
+            scores[b] = 1.0     
         else:
-            print("Cannot find folders.txt and files.txt in package, cannot create visualization.")
-            shutil.rmtree(tmpdir)
+            scores[b] = 2.0*len(comparison[b]["intersect"]) / total_unique
+    return scores
 
-    # Docker image (name) input
-    else:
-        retrieved = get_docker_guts(image_path,sudopw=sudopw)
+
+def get_container_contents(container,gets=None,split_delim=None):
+    '''get_container_contents will return a list of folders and or files
+    for a container. The environmental variable SINGULARITY_HUB being set
+    means that container objects are referenced instead of packages
+    :param container: the container to get content for
+    :param gets: a list of file names to return, without parent folders
+    :param split_delim: if defined, will split text by split delimiter
+    '''
+    # Default returns are the list of files and folders
+    if gets == None:
+        gets = ['files.txt','folders.txt']
+    if not isinstance(gets,list):
+        gets = [gets]
+
+    # We will look for everything in guts, then return it
+    guts = dict()
+
+    SINGULARITY_HUB = os.environ.get('SINGULARITY_HUB',"False")
+
+    # Visualization deployed local or elsewhere
+    if SINGULARITY_HUB == "False":
+        bot.logger.debug("Not running from Singularity Hub.")
+        tmpdir = tempfile.mkdtemp()
+        image_package = package(image_path=container,
+                                output_folder=tmpdir,
+                                runscript=False,
+                                software=True,
+                                remove_image=True)
+     
+        guts = load_package(image_package,get=gets)
+        shutil.rmtree(tmpdir)
+        return guts
+
+    # Visualization deployed by singularity hub
+    else:   
+        bot.logger.debug("Running from Singularity Hub.")
+        for sfile in container.files:
+            for gut_key in gets:        
+                if os.path.basename(sfile['name']) == gut_key:
+                    if split_delim == None:
+                        guts[gut_key] = requests.get(sfile['mediaLink']).text
+                    else:
+                        guts[gut_key] = requests.get(sfile['mediaLink']).text.split(split_delim)
+
+    return guts
+
+
+###################################################################################
+# COMPARISON TREES
+###################################################################################
+
+def container_tree(container):
+    '''tree will render an html tree (graph) of a container
+    '''
+
+    guts = get_container_contents(container,split_delim="\n")
 
     # Make the tree and return it
-    tree = make_package_tree(folders=retrieved["folders.txt"],
-                             files=retrieved['files.txt'])
+    tree = make_container_tree(folders = guts["folders.txt"],
+                               files = guts['files.txt'])
     return tree
 
 
-def make_package_tree(folders,files,path_delim="/",parse_files=True):
-    '''make_package_tree will convert a list of folders and files into a json structure that represents a graph.
+def make_container_tree(folders,files,path_delim="/",parse_files=True):
+    '''make_container_tree will convert a list of folders and files into a json structure that represents a graph.
     :param folders: a list of folders in the image
     :param files: a list of files in the folder
     :param parse_files: return 'files' lookup in result, to associate ID of node with files (default True)
@@ -138,29 +200,28 @@ def make_package_tree(folders,files,path_delim="/",parse_files=True):
                         parent_path = path_delim.join(path_components[0:p])
                         parent_id = lookup[parent_path]                   
                     node["parent"] = parent_id
-                    nodes[node['id']] = node
-              
+                    nodes[node['id']] = node   
+           
     # Now make the graph, we simply append children to their parents
     seen = []
-    iters = range(max_depth+1) # 0,1,2,3...
+    iters = list(range(max_depth+1)) # 0,1,2,3...
     iters.reverse()            # ...3,2,1,0
     iters.pop()                # remove 0
     for level in iters:
-        children = {x:y for x,y in nodes.iteritems() if y['level'] == level}
-        seen = seen + [y['id'] for x,y in children.iteritems()]
-        nodes = {x:y for x,y in nodes.iteritems() if y['id'] not in seen}
-        for node_id,child_node in children.iteritems():
+        children = {x:y for x,y in nodes.items() if y['level'] == level}
+        seen = seen + [y['id'] for x,y in children.items()]
+        nodes = {x:y for x,y in nodes.items() if y['id'] not in seen}
+        for node_id,child_node in children.items():
             if node_id == 0: #base node
                 graph[node_id] = child_node
             else:
                 parent_id = child_node['parent']
                 nodes[parent_id]["children"].append(child_node)
- 
+
     # Now add the parents to graph, with name as main lookup
     graph = []
-    for parent,parent_info in nodes.iteritems():
+    for parent,parent_info in nodes.items():
         graph.append(parent_info)
-
     graph = {"name":"base","children":graph}
     result = {"graph":graph,"lookup":lookup,"depth":max_depth+1}
 
@@ -183,32 +244,4 @@ def make_package_tree(folders,files,path_delim="/",parse_files=True):
                     file_lookup[0] = [filename]
         result['files'] = file_lookup
 
-    result = remove_unicode_dict(result)
     return result
-
-
-###################################################################################################
-# WEBSERVER FUNCTIONS #############################################################################
-###################################################################################################
-
-# These are currently not in use, but might be useful (later) for non-flask serving.
-
-def webserver(base_folder,port=None,description=None):
-    '''webserver will generate a temporary webserver in some base_folder
-    :param base_folder: the folder base to use
-    :param description: description of the visualization, for the user
-    '''
-    if description == None:
-        description = "visualization"
-
-    try:
-        if port == None:
-            port = choice(range(8000,9999),1)[0]
-        Handler = SimpleHTTPServer.SimpleHTTPRequestHandler
-        httpd = SocketServer.TCPServer(("", port), Handler)
-        print("View shub %s at localhost:%s" %(port,description))
-        webbrowser.open("http://localhost:%s" %(port))
-        httpd.serve_forever()
-    except:
-        print("Stopping web server...")
-        httpd.server_close()

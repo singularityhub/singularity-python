@@ -8,11 +8,13 @@ utils.py: part of singularity package
 import collections
 from git import Repo
 import os
+import re
 import requests
 
 import shutil
 import simplejson
 import singularity.__init__ as hello
+from singularity.logman import bot
 import sys
 
 import subprocess
@@ -45,7 +47,7 @@ def check_install(software="singularity"):
     cmd = [software,'--version']
     version = run_command(cmd,error_message="Cannot find singularity. Is it installed?")
     if version != None:
-        print("Found %s version %s" %(software.upper(),version))
+        bot.logger.info("Found %s version %s",software.upper(),version)
         return True
     else:
         return False
@@ -67,12 +69,14 @@ def get_script(script_name):
     if os.path.exists(script_path):
         return script_path
     else:
-        print("Script %s is not included in singularity-python!")
+        bot.logger.error("Script %s is not included in singularity-python!", script_path)
         return None
 
 def getsudo():
     sudopw = input('[sudo] password for %s: ' %(os.environ['USER']))
+    os.environ['pancakes'] = sudopw
     return sudopw
+
 
 
 def run_command(cmd,error_message=None,sudopw=None,suppress=False):
@@ -83,6 +87,9 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
     :param execute: if True, will add `` around command (default is False)
     :param sudopw: if specified (not None) command will be run asking for sudo
     '''
+    if sudopw == None:
+        sudopw = os.environ.get('pancakes',None)
+
     if sudopw != None:
         cmd = ' '.join(["echo", sudopw,"|","sudo","-S"] + cmd)
         if suppress == False:
@@ -96,9 +103,9 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
             output, err = process.communicate()
         except OSError as error: 
             if error.errno == os.errno.ENOENT:
-                print(error_message)
+                bot.logger.error(error_message)
             else:
-                print(err)
+                bot.logger.error(err)
             return None
     
     return output
@@ -144,7 +151,7 @@ def zip_up(file_list,zip_name,output_folder=None):
     # Write files to zip, depending on type
     for filename,content in file_list.items():
 
-        print("Adding %s to package..." %(filename))
+        bot.logger.debug("Adding %s to package...", filename)
 
         # If it's the files list, move files into the archive
         if filename.lower() == "files":

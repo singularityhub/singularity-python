@@ -36,6 +36,5 @@ tmptar = S.export(image_path=image_path)
 # create an empty image
 S.create(image_path='test.img')
 
-# import a docker image - no need to specify the file, the image name works
-# still under development
-docker_image = S.docker2singularity("ubuntu:latest")
+# import a docker image
+S.importcmd(image_path,input_source='docker://ubuntu:latest')

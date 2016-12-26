@@ -5,9 +5,15 @@ api.py: module for working with singularity hub api
 
 '''
 
-from singularity.boutiques import get_boutiques_json
+from singularity.logman import bot
 from singularity.package import build_from_spec
-from singularity.utils import get_installdir, read_file, write_file
+
+from singularity.utils import (
+    get_installdir, 
+    read_file, 
+    write_file
+)
+
 import subprocess
 import tempfile
 import zipfile
@@ -57,6 +63,7 @@ def get_headers(token=None):
     if token!=None:
         headers["Authentication"] = "Token %s" %(token)
     headers["Content-Type"] = "application/json"
+    bot.logger.debug("Headers found: %s",headers)
     return headers
 
 
@@ -66,6 +73,8 @@ def api_get(url,headers=None,token=None,data=None):
     :param headers: a dictionary with headers for the request
     :param putdata: additional data to add to the request
     '''
+    bot.logger.debug("GET ",url)
+
     if headers == None:
         headers = get_headers(token=token)
     if data == None:
@@ -85,6 +94,8 @@ def api_put(url,headers=None,token=None,data=None):
     :param headers: a dictionary with headers for the request
     :param data: additional data to add to the request
     '''
+    bot.logger.debug("PUT ",url)
+
     if headers == None:
         headers = get_headers(token=token)
     if data == None:
@@ -104,6 +115,8 @@ def api_post(url,headers=None,data=None,token=None):
     :param headers: a dictionary with headers for the request
     :param data: additional data to add to the request
     '''
+    bot.logger.debug("POST ",url)
+
     if headers == None:
         headers = get_headers(token=token)
     if data == None:

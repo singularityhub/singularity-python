@@ -7,7 +7,16 @@ Last updated: Singularity version 2.1
 
 '''
 
-from singularity.utils import getsudo, run_command, check_install, write_json, write_file
+from singularity.utils import (
+    getsudo, 
+    run_command, 
+    check_install, 
+    write_json, 
+    write_file
+)
+
+from singularity.logman import bot
+
 from glob import glob
 import subprocess
 import tempfile
@@ -22,6 +31,11 @@ class Singularity:
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
+
+       # Try getting from environment
+       if self.sudopw == None:
+           self.sudopw = os.environ.get('pancakes',None)
+
        if sudo == True and self.sudopw == None:
            self.sudopw = getsudo()
            self.verbose = verbose
@@ -152,25 +166,24 @@ class Singularity:
 
 
 
-    def importcmd(self,image_path,input_file,import_type="tar",command=None):
+    def importcmd(self,image_path,input_source,import_type=None,command=None):
         '''import will import (stdin) to the image
         :param image_path: path to image to import to. 
-        :param input_file: tar file only current supported
-        :param import_type: only supported is "tar." For docker use S.docker2singularity, the
-          command line util is not used, but instead an internal script by this author (@vsoch)
-          that has better functionality.
+        :param input_source: input source or file
+        :param import_type: if not specified, imports whatever function is given
         :param command: replace "tar" command
         '''
         sudo = True
         if import_type == "tar":
-            cmd = ['singularity','import','--file',input_file]
+            cmd = ['singularity','import','--file',input_source]
             if command != None:
                 cmd = cmd + ["--command",command]
             cmd.append(image_path)
             return self.run_command(cmd,sudo=sudo)
         else:
-            print('''Currently, only import type 'tar' is supported. 
-                     Use singularity command line tool for more advanced functionality.''')
+            cmd = ['singularity','import',image_path,input_source]
+            return self.run_command(cmd,sudo=sudo)
+
         return None
 
 
@@ -232,3 +245,45 @@ class Singularity:
             cmd.append('--contain')       
 
         return cmd
+
+
+######################################################################################################
+# HELPER FUNCTIONS
+######################################################################################################
+
+def get_image(image,return_existed=False,sudopw=None,size=None):
+    '''get_image will return the file, if it exists, or if it's docker or
+    shub, will use the Singularity command line tool to generate a temporary image
+    :param image: the image file or path (eg, docker://)
+    :param return_existed: if True, will return image_path,existed to tell if
+    an image is temporary (if existed==False)
+    :param sudopw: needed to create an image, if docker:// provided
+    '''
+    existed = True
+
+    # Is the image a docker image?
+    if re.search('^docker://',image):
+        existed = False
+        if sudopw == None:
+            sudopw = os.environ.get('pancakes',None)
+
+        if sudopw != None:
+            cli = Singularity(sudopw=sudopw)
+        else:
+            cli = Singularity() # This command will ask the user for sudo
+
+        tmpdir = tempfile.mkdtemp()
+        image_name = "%s.img" %image.replace("docker://","") 
+        bot.logger.info("Found docker image %s, creating and importing...",image_name)
+        image_path = "%s/%s" %(tmpdir,image_name)
+        cli.create(image_path,size=size)
+        cli.importcmd(image_path=image_path,
+                      input_source=image)
+        image = image_path
+
+    if os.path.exists(image):
+        image = os.path.abspath(image)
+        if return_existed == True:
+            return image,existed
+        return image
+    return None

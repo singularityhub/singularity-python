@@ -1,27 +1,17 @@
-import io
-import os
 import logging
+import os
+import sys
 
 class Logman:
 
-    def __init__(self,MESSAGELEVEL=None):
+    def __init__(self,stream=True,MESSAGELEVEL=None):
         self.level = get_logging_level(MESSAGELEVEL)
-        logging.basicConfig(level=self.level)
+        if stream == True:
+            logging.basicConfig(stream=sys.stdout,level=self.level)
+        else:
+            logging.basicConfig(level=self.level)
         self.logger = logging.getLogger('shub_builder')
         self.formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        self.capture = io.StringIO()
-
-    def start(self):
-        self.ch = logging.StreamHandler(self.capture)
-        self.ch.setLevel(self.level)
-        self.ch.setFormatter(self.formatter)
-        self.logger.addHandler(self.ch)
-
-    def stop(self):
-        ### Pull the contents back into a string and close the stream
-        self.contents = self.capture.getvalue()
-        self.capture.close()
-        return self.contents
 
 
 def get_logging_level(MESSAGELEVEL=None):
@@ -33,7 +23,8 @@ def get_logging_level(MESSAGELEVEL=None):
     if MESSAGELEVEL == None:
         MESSAGELEVEL = os.environ.get("MESSAGELEVEL","DEBUG")
 
-    print("Environment message level found to be %s" %MESSAGELEVEL)
+    if MESSAGELEVEL in ["DEBUG","INFO"]:
+        print("Environment message level found to be %s" %MESSAGELEVEL)
 
     if MESSAGELEVEL == "FATAL":
         return logging.FATAL
@@ -56,4 +47,3 @@ def get_logging_level(MESSAGELEVEL=None):
     return logging.DEBUG
 
 bot = Logman()
-bot.start()

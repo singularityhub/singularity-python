@@ -7,7 +7,7 @@ setup(
     name="singularity",
 
     # Version number:
-    version="0.33",
+    version="0.34",
 
     # Application author details:
     author="Vanessa Sochat",
@@ -21,7 +21,7 @@ setup(
     zip_safe=False,
 
     # Details
-    url="http://www.github.com/singularityware",
+    url="http://www.github.com/singularityware/singularity-python",
 
     license="LICENSE",
     description="Command line tool for working with singularity-hub and packaging singularity containers.",

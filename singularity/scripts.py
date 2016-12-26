@@ -6,16 +6,12 @@ Runtime executable, "shub"
 
 '''
 
-from singularity.api import build_spec
-from singularity.app import make_tree, make_difference_tree, make_sim_tree
-from singularity.utils import check_install, getsudo
-from singularity.package import package
 from glob import glob
 import argparse
 import sys
 import os
 
-def main():
+def get_parser():
     parser = argparse.ArgumentParser(
     description="Singularity Hub command line tool")
 
@@ -24,39 +20,19 @@ def main():
                         help="full path to singularity image (for use with --package and --tree)", 
                         type=str, default=None)
 
-    # Build a singularity image from a spec file, push to singularity hub
-    parser.add_argument("--push", dest='push', 
-                        help="build a Singularity image from a spec (Singularity) file, push to Singularity hub", 
-                        action='store_true', default=False)
-
-    # The user must specify a collection id to push to the hub
-    parser.add_argument("--collection", dest='collection', 
-                        help="The collection ID to push to, where the user has permission to push.", 
-                        type=str, default=None)
-
-    # The user must specify a collection id to push to the hub
-    parser.add_argument("--name", dest='name', 
-                        help="The name of the image, must be all lowercase without spaces and special characters other than '-'", 
-                        type=str, default=None)
-
-    # The user must specify a collection id to push to the hub
-    parser.add_argument("--size", dest='size', 
-                        help="The size of the image to build. If None provided, will use 1024", 
-                        type=str, default=None)
-
-    # Multiple images, separated by commas
+    # Two images, for similarity function
     parser.add_argument("--images", dest='images', 
-                        help="full path to singularity images,separated with commas (for use with --difftree)", 
+                        help="images, separated by commas (for use with --simtree)", 
                         type=str, default=None)
- 
+
+    # Does the user want to have verbose logging?
+    parser.add_argument('--debug', dest="debug", 
+                        help="use verbose logging to debug.", 
+                        default=False, action='store_true')
+
     # Output folder, if needed
     parser.add_argument("--outfolder", dest='outfolder', 
-                        help="full path to folder for output, stays in temp (or pwd) if not specified", 
-                        type=str, default=None)
-
-    # Input folder, if different from pwd
-    parser.add_argument("--infolder", dest='infolder', 
-                        help="full path to input directory (with Singularity file), if not specified, will use pwd", 
+                        help="full path to folder for output, stays in tmp (or pwd) if not specified", 
                         type=str, default=None)
 
     # Does the user want to package an image?
@@ -66,24 +42,47 @@ def main():
 
     # View the guts of a Singularity image
     parser.add_argument('--tree', dest='tree', 
-                        help="view the guts of an singularity image", 
+                        help="view the guts of an singularity image (use --image)", 
                         default=False, action='store_true')
 
-    # View the difference between two Singularity images
-    parser.add_argument('--difftree', dest='difftree', 
-                       help="view files and folders unique to an image or package, specify --images base.img,subtraction.img",
-                       default=False, action='store_true')
-    
-    # View similarities between two Singularity images
+    # Compare two images (a similarity tree)
     parser.add_argument('--simtree', dest='simtree', 
-                        help="view common files and folders between two images, specify with --images",
+                        help="view common guts between two images (use --images)", 
                         default=False, action='store_true')
+
+    # Compare two images (get numerical comparison)
+    parser.add_argument('--simcalc', dest='simcalc', 
+                        help="calculate similarity (number) between images based on file contents.", 
+                        default=False, action='store_true')
+
+    # Size, if needed
+    parser.add_argument("--size", dest='size', 
+                        help="If using Docker or shub image, you can change size (default is 1024)", 
+                        type=int, default=1024)
+
+    return parser
+
+
+def main():
+
+    parser = get_parser()
 
     try:
         args = parser.parse_args()
     except:
-        parser.print_help()
         sys.exit(0)
+
+    # Not running in Singularity Hub environment
+    os.environ['SINGULARITY_HUB'] = "False"
+
+    # if environment logging variable not set, make silent
+    if args.debug == False:
+        os.environ['MESSAGELEVEL'] = "CRITICAL"
+
+    # Initialize the message bot, with level above
+    from singularity.logman import bot
+    from singularity.utils import check_install
+    from singularity.cli import get_image
 
     # Output folder will be pwd if not specified
     if args.outfolder == None:
@@ -96,45 +95,75 @@ def main():
 
        # If we are given an image, ensure full path
        if args.image != None:
-           image = os.path.abspath(args.image)
 
+           image,existed = get_image(args.image,
+                                     return_existed=True,
+                                     size=args.size)
 
-       ###############################################
-       # What does the user want to do?
-       ###############################################
+           if image == None:
+               bot.logger.error("Cannot find image. Exiting.")
+               sys.exit(1)
 
-       # The user wants to build and push an image
-       if args.push == True:
-           push_spec(build=True,
-                     source_dir=args.infolder,
-                     build_dir=args.outfolder,
-                     size=args.size)
+           # the user wants to make a tree
+           if args.tree == True:
+               from singularity.app import make_tree
+               make_tree(image)
+               clean_up(image,existed)
 
-       # the user wants to make a tree
-       elif args.tree == True:
-           make_tree(image)
+           # The user wants to package the image
+           elif args.package == True:
+               from singularity.package import package
+               package(image_path=image,
+                       output_folder=output_folder,
+                       runscript=True,
+                       software=True)
+           else:
+               print("Not sure what to do?")
+               parser.print_help()
 
-       # The user wants to package the image
-       elif args.package == True:
-           package(image_path=image,
-                   output_folder=output_folder,
-                   runscript=True,
-                   software=True)
+       # If we are given two image, we probably want a similar tree
+       elif args.images != None:
 
-       # MULTIPLE IMAGE FUNCTIONS
-       elif args.images != None: 
-           images = [os.path.abspath(x) for x in args.images.split(',')]
-        
-           # Difference tree
-           if args.difftree == True:
-               make_difference_tree(images[0],images[1])
+           image1,image2 = args.images.split(',')
+           bot.logger.debug("Image1: %s",image1)
+           bot.logger.debug("Image2: %s",image2)
+           image1,existed1 = get_image(image1,
+                                       return_existed=True,
+                                       size=args.size)
+           image2,existed2 = get_image(image2,
+                                       return_existed=True,
+                                       size=args.size)
 
-           # Similar tree
-           elif args.simtree == True:
-               make_sim_tree(images[0],images[1])
+           if image1 == None or image2 == None:
+               bot.logger.error("Cannot find image. Exiting.")
+               sys.exit(1)
 
+           # the user wants to make a tree
+           if args.simtree == True:
+               from singularity.app import make_sim_tree
+               make_sim_tree(image1,image2)
+
+           if args.simcalc == True:
+               from singularity.views import calculate_similarity
+               score = calculate_similarity(image1,image2,by="files.txt")
+               print(score["files.txt"])
+
+           clean_up(image1,existed1)
+           clean_up(image2,existed2)
+    
        else:
-          print("Please specify a singularity image with --image(s)")
+          print("Please specify one or more containers with --image(s)")
+
+
+def clean_up(image,existed):
+    '''clean up will remove an image file if existed is False (meaning it was
+    created as temporary for the script
+    '''
+    from singularity.logman import bot
+    if existed == False:
+        if os.path.exists(image):
+            bot.logger.info("%s created was temporary, removing",image)
+            os.remove(image)
 
 
 if __name__ == '__main__':
