@@ -1,23 +1,20 @@
 language: python
 
-addons:
-  apt:
-    packages:
-      - python-pip
-      - python3-pip
-
 sudo: true
 
 os: linux
 
-before_install:
-  - sudo pip install pylint
+language: python
+python:
+  - "2.7"
+  - "3.5"
+
+install:
+  - pip install pylint
   - cd $TRAVIS_BUILD_DIR/
-  - pip install setuptools
-  - pip3 install setuptools
   - cd $TRAVIS_BUILD_DIR && pip install -r requirements.txt
   - cd $TRAVIS_BUILD_DIR && pip3 install -r requirements.txt
-#  - pylint --version
+  - pylint --version
 #  - cd $TRAVIS_BUILD_DIR/libexec/python && pylint $PWD --errors-only --ignore tests  --disable=E0401,E0611
 
 script:
