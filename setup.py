@@ -18,7 +18,6 @@ setup(
  
     # Data files
     include_package_data=True,
-    package_data = {'singularity.build':['scripts/*.sh',]},
 
     zip_safe=False,
 

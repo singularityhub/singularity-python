@@ -11,8 +11,7 @@ from numpy.testing import (
     assert_equal
 )
 
-import singularity.build as build
-
+from singularity.built.utils import get_build_template
 from singularity.utils import (
     get_installdir, 
     read_file
@@ -42,12 +41,12 @@ class TestBuildTemplate(unittest.TestCase):
 
         # Check content of packages
         print("Case 1: Test reading of build template")
-        template = build.utils.get_build_template('singularity-build-latest.sh')        
+        template = get_build_template('singularity-build-latest.sh')        
         self.assertTrue(isinstance(template,str))
         self.assertTrue(len(template)>15)
 
         print("Case 2: Non existing script returns None")
-        template = build.utils.get_build_template('singularity-build-pizza.sh')        
+        template = get_build_template('singularity-build-pizza.sh')        
         self.assertEqual(template,None)
  
 
