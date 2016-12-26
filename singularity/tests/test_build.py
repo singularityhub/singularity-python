@@ -11,7 +11,7 @@ from numpy.testing import (
     assert_equal
 )
 
-from singularity.built.utils import get_build_template
+from singularity.build.utils import get_build_template
 from singularity.utils import (
     get_installdir, 
     read_file
