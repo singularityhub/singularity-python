@@ -1,5 +1,7 @@
 # Singularity Python
 
+[![Build Status](https://travis-ci.org/singularityware/singularity-python.svg?branch=master)](https://travis-ci.org/singularityware/singularity-python)
+
 This is a python command line tool for working with [Singularity](singularityware.github.io) containers, specifically providing functions to visualize, package, and containers. Currently, most functions use Singularity on the commnd line, and require sudo, and this is expected to change when the software is updated to obtain image folders and files without an export that uses `Singularity export`.
 
 The Singularity-Python code is licensed under the MIT open source license, which is a highly permissive license that places few limits upon reuse. This ensures that the code will be usable by the greatest number of researchers, in both academia and industry. 
