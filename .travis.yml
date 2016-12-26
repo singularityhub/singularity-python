@@ -19,6 +19,4 @@ install:
   - pylint --version
 
 script:
-  - cd $TRAVIS_BUILD_DIR/singularity/tests && python -m unittest test_build.py
-  - cd $TRAVIS_BUILD_DIR/singularity/tests && python -m unittest test_package.py
-  - cd $TRAVIS_BUILD_DIR/singularity/tests && pylint $PWD --errors-only --ignore tests  --disable=E0401,E0611
+  - bash $TRAVIS_BUILD_DIR/singularity/tests/run_tests.sh $TRAVIS_BUILD_DIR/singularity/tests /tmp
