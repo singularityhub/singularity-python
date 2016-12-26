@@ -18,4 +18,5 @@ install:
 #  - cd $TRAVIS_BUILD_DIR/libexec/python && pylint $PWD --errors-only --ignore tests  --disable=E0401,E0611
 
 script:
-  - bash $TRAVIS_BUILD_DIR/singularity/testing/run_tests.sh $TRAVIS_BUILD_DIR/singularity/testing /tmp
+  - cd $TRAVIS_BUILD_DIR && python -m unittest singularity/testing/test_build.py
+  - cd $TRAVIS_BUILD_DIR && python -m unittest singularity/testing/test_package.py
