@@ -85,16 +85,9 @@ def get_runscript_parameters(runscript,name,version,description=None):
 
     if language == 'python':
         params = get_parameters_python(runscript)
+        # TODO: here we would write something like boutiqes spec
 
-    # Finally, make a boutiques json object with the parameters
-    if params != None:
-        json_spec = get_boutiques_json(name=name,
-                                       version=version,
-                                       inputs=params,
-                                       command=name,
-                                       description=description)
-
-    return json_spec
+    return params
 
 
 def get_parameters_python(runscript):

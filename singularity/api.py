@@ -73,7 +73,7 @@ def api_get(url,headers=None,token=None,data=None):
     :param headers: a dictionary with headers for the request
     :param putdata: additional data to add to the request
     '''
-    bot.logger.debug("GET ",url)
+    bot.logger.debug("GET %s",url)
 
     if headers == None:
         headers = get_headers(token=token)
@@ -94,7 +94,7 @@ def api_put(url,headers=None,token=None,data=None):
     :param headers: a dictionary with headers for the request
     :param data: additional data to add to the request
     '''
-    bot.logger.debug("PUT ",url)
+    bot.logger.debug("PUT %s",url)
 
     if headers == None:
         headers = get_headers(token=token)
@@ -115,7 +115,7 @@ def api_post(url,headers=None,data=None,token=None):
     :param headers: a dictionary with headers for the request
     :param data: additional data to add to the request
     '''
-    bot.logger.debug("POST ",url)
+    bot.logger.debug("POST %s",url)
 
     if headers == None:
         headers = get_headers(token=token)

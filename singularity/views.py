@@ -204,6 +204,7 @@ def make_container_tree(folders,files,path_delim="/",parse_files=True):
            
     # Now make the graph, we simply append children to their parents
     seen = []
+    graph = []
     iters = list(range(max_depth+1)) # 0,1,2,3...
     iters.reverse()            # ...3,2,1,0
     iters.pop()                # remove 0
@@ -219,7 +220,6 @@ def make_container_tree(folders,files,path_delim="/",parse_files=True):
                 nodes[parent_id]["children"].append(child_node)
 
     # Now add the parents to graph, with name as main lookup
-    graph = []
     for parent,parent_info in nodes.items():
         graph.append(parent_info)
     graph = {"name":"base","children":graph}

@@ -15,9 +15,10 @@ setup(
 
     # Packages
     packages=find_packages(),
-
+ 
     # Data files
     include_package_data=True,
+
     zip_safe=False,
 
     # Details

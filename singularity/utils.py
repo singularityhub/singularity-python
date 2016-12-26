@@ -231,9 +231,9 @@ def read_file(filename,mode="r"):
 def remove_unicode_dict(input_dict):
     '''remove unicode keys and values from dict, encoding in utf8
     '''
-    if isinstance(input_dict, basestring):
-        return str(input_dict)
-    elif isinstance(input_dict, collections.Mapping):
+    #if isinstance(input_dict, basestring):
+    #    return str(input_dict)
+    if isinstance(input_dict, collections.Mapping):
         return dict(map(remove_unicode_dict, input_dict.iteritems()))
     elif isinstance(input_dict, collections.Iterable):
         return type(input_dict)(map(remove_unicode_dict, input_dict))

@@ -1,13 +1,27 @@
 #!/usr/bin/env python
 
 '''
-build.py: functions for singularity hub builders
+build/google.py: build functions for singularity hub google compute engine
 
 '''
 
-from singularity.api import api_get, api_put, api_post
-from singularity.package import build_from_spec, package
-from singularity.utils import get_installdir, read_file, write_file, download_repo
+from singularity.api import (
+    api_get, 
+    api_put, 
+    api_post
+)
+
+from singularity.package import (
+    build_from_spec, 
+    package
+)
+
+from singularity.utils import (
+    get_installdir, 
+    read_file, 
+    write_file, 
+    download_repo
+)
 
 from googleapiclient.discovery import build
 from oauth2client.client import GoogleCredentials
@@ -79,7 +93,7 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     return request.execute()
 
 
-def list_bucket(bucket):
+def list_bucket(bucket,storage_service):
     # Create a request to objects.list to retrieve a list of objects.        
     request = storage_service.objects().list(bucket=bucket['id'], 
                                              fields='nextPageToken,items(name,size,contentType)')
