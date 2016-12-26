@@ -1,0 +1,10 @@
+BootStrap: docker
+From: ubuntu:latest
+
+%runscript
+
+    exec echo "Hello World!" "$@"
+
+%post
+
+    echo "Post install is happening."

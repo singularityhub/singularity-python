@@ -29,7 +29,6 @@ class TestPackage(unittest.TestCase):
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
-        self.def_file = "%s/testing/data/defian.def" %(self.pwd)
         self.image1 = "%s/testing/data/busybox-2016-02-16.img" %(self.pwd)
         self.image2 = "%s/testing/data/cirros-2016-01-04.img" %(self.pwd)
         # We can't test creating the packages, because requires sudo :/

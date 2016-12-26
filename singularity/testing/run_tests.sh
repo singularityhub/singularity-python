@@ -11,4 +11,4 @@ if [ "$#" -ne 2 ]; then
 fi
 
 cd $TEST_RUN_FOLDER
-nosetests --verbosity=3 --with-doctest --with-coverage --nocapture --cover-package=singularity $TESTDIR/test_package.py
+nosetests --verbosity=3 --with-doctest --with-coverage --nocapture --cover-package=singularity $TESTDIR/test_package.py $TESTDIR/test_build.py
