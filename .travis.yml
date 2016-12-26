@@ -14,8 +14,9 @@ install:
   - cd $TRAVIS_BUILD_DIR/
   - cd $TRAVIS_BUILD_DIR && pip install -r requirements.txt
   - cd $TRAVIS_BUILD_DIR && pip3 install -r requirements.txt
+  - python setup.py sdist
+  - python setup.py install
   - pylint --version
-#  - cd $TRAVIS_BUILD_DIR/libexec/python && pylint $PWD --errors-only --ignore tests  --disable=E0401,E0611
 
 script:
   - cd $TRAVIS_BUILD_DIR/singularity/tests && python -m unittest test_build.py
