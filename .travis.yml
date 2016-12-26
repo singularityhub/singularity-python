@@ -19,4 +19,5 @@ install:
   - pylint --version
 
 script:
-  - bash $TRAVIS_BUILD_DIR/singularity/tests/run_tests.sh $TRAVIS_BUILD_DIR/singularity/tests /tmp
+  - python -m unittest discover -s $TRAVIS_BUILD_DIR/singularity/tests/ -p '[t|T]est*.py'
+  #bash $TRAVIS_BUILD_DIR/singularity/tests/run_tests.sh $TRAVIS_BUILD_DIR/singularity/tests /tmp
