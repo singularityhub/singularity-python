@@ -50,6 +50,11 @@ def get_parser():
                         help="view common guts between two images (use --images)", 
                         default=False, action='store_true')
 
+    # Compare two images (a similarity tree)
+    parser.add_argument('--subtract', dest='subtract', 
+                        help="subtract one container image from the second to make a difference tree (use --images first,subtract)", 
+                        default=False, action='store_true')
+
     # Compare two images (get numerical comparison)
     parser.add_argument('--simcalc', dest='simcalc', 
                         help="calculate similarity (number) between images based on file contents.", 
@@ -110,6 +115,7 @@ def main():
                make_tree(image)
                clean_up(image,existed)
 
+
            # The user wants to package the image
            elif args.package == True:
                from singularity.package import package
@@ -138,10 +144,16 @@ def main():
                bot.logger.error("Cannot find image. Exiting.")
                sys.exit(1)
 
-           # the user wants to make a tree
+           # the user wants to make a similarity tree
            if args.simtree == True:
                from singularity.app import make_sim_tree
                make_sim_tree(image1,image2)
+
+           # the user wants to make a difference tree
+           if args.subtract == True:
+               from singularity.app import make_diff_tree
+               make_diff_tree(image1,image2)
+
 
            if args.simcalc == True:
                from singularity.views import calculate_similarity

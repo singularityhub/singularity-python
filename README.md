@@ -30,10 +30,10 @@ After installation, you should be able to run `shub` on the command line, withou
 	Please specify one or more containers with --image(s)
 
 
-      $ shub --help
+      $  shub --help
 	usage: shub [-h] [--image IMAGE] [--images IMAGES] [--debug]
 		    [--outfolder OUTFOLDER] [--package] [--tree] [--simtree]
-		    [--simcalc] [--size SIZE]
+		    [--subtract] [--simcalc] [--size SIZE]
 
 	Singularity Hub command line tool
 
@@ -49,6 +49,8 @@ After installation, you should be able to run `shub` on the command line, withou
 	  --package             package a singularity container for singularity hub
 	  --tree                view the guts of an singularity image (use --image)
 	  --simtree             view common guts between two images (use --images)
+	  --subtract            subtract one container image from the second to make
+                                a difference tree (use --images first,subtract)
 	  --simcalc             calculate similarity (number) between images based on
 		                file contents.
 	  --size SIZE           If using Docker or shub image, you can change size
@@ -114,9 +116,11 @@ This will open up something that looks like this:
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/container_tree) is also available, and see the [example](examples/container_tree) for updates.
 
 
-### Compare Containers
+### Visualize Containers
 
 #### Container Similarity Tree
+
+![examples/similar_tree/simtree.png](examples/similar_tree/simtree.png)
 
 What do two containers have in common, in terms of files and folders? shub provides a command line function for rendering a view to (immediately) show the similarity between to container images:
 
@@ -139,6 +143,35 @@ Or two Docker images:
 If you need output for any of the following, you can add the `--debug` argument. Note that when generating docker comparisons, the back end is obtaining the layers, creating the images, importing and packaging, so the result is not instantanous.
 
 
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree/) is also available.
+
+
+#### Container Difference Tree
+What files and folders differ between two containers? What does it look like if I subtract one image from the second? `shub` provides a command line tool to generate a visualization to do exactly this.
+
+
+      shub --subtract --images docker://ubuntu:latest.docker://centos:latest
+
+As with `simtree`, this function supports both docker and singularity images as inputs.
+
+![examples/difference_tree/difftree.png](examples/difference_tree/difftree.png)
+
+An [interactive demo](https://singularityware.github.io/singularity-python/examples/difference_tree/) is also available.
+
+
+### Compare Containers
+The same functions above can be used to show the exact similarities (intersect) and differences (files and/or folders unique to two images) between two images. You can get a data structure with this information as follows:
+
+
+      from shub.views import compare_containers
+  
+      image1 = 'ubuntu.img'
+      image2 = 'centos.img'
+      by = "files.txt" # can also be "folders.txt", or a list with both
+
+      comparison = compare_containers(image1,image2,by=by)
+
+
 
 #### Calculate similarity of images
 
@@ -146,11 +179,8 @@ We can calculate similarity of images based on the file content inside. For an e
 
       $ shub --images /home/vanessa/Desktop/ubuntu.img,/home/vanessa/Desktop/ubuntu.img --simcalc
       
-and the same applies for specification of Docker images, as in the previous example. Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. For this argument you can specify an image or package.
+and the same applies for specification of Docker images, as in the previous example. Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. 
 
-![examples/similar_tree/simtree.png](examples/similar_tree/simtree.png)
-
-An [interactive demo](https://singularityware.github.io/singularity-python/examples/similar_tree/) is also available.
 
 
 ### Build your container
@@ -158,7 +188,7 @@ More information coming soon.
 
 
 ### Functions Provided
-You can also use the library as a module, and import singularity-python functions into your application.
+You can also use the library as a module, and import singularity-python functions into your application. If you would like to see specific examples for something, [please ask](https://github.com/singularityware/singularity-python)!
 
 
 ## Help and Contribution
