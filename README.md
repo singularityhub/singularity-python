@@ -90,13 +90,11 @@ For the package command, you will need to put in your password to grant sudo pri
 For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
 
 
-### View the inside of a container or package
-
+### View the inside of a container
 What's inside that container? Right now, the main way to answer this question is to do some equivalent of ssh. shub provides a command line function for rendering a view to (immediately) show the contents of an image (folders and files) in your web browser. **Important** the browser will open, but you will need to use your password to use Singularity on the command line:
 
 
 #### Docker Image
-
 shub will render the guts of any Docker image, even if it's not currently on your system. You don't need 
 
 
@@ -105,14 +103,12 @@ shub will render the guts of any Docker image, even if it's not currently on you
 
 #### Singularity Package or Image
 
-
       shub --image ubuntu.img --tree
 
 
 This will open up something that looks like this:
 
 ![img/files.png](img/files.png)
-
 An [interactive demo](https://singularityware.github.io/singularity-python/examples/container_tree) is also available, and see the [example](examples/container_tree) for updates.
 
 
