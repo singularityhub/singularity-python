@@ -68,18 +68,21 @@ def compare_containers(container1,container2,by=None):
     
 
 
-def calculate_similarity(container1,container2,by="files.txt"):
+def calculate_similarity(container1,container2,by="files.txt",comparison=None):
     '''calculate_similarity will calculate similarity of two containers by files content, default will calculate
     2.0*len(intersect) / total package1 + total package2
     :param container1: container 1
     :param container2: container 2
     :param by: the one or more metrics (eg files.txt) list to use to compare
      valid are currently files.txt or folders.txt
+    :param comparison: the comparison result object for the tree. If provided,
+    will skip over function to obtain it.
     '''
     if not isinstance(by,list):
         by = [by]
 
-    comparison = compare_containers(container1,container2,by=by)
+    if comparison == None:
+        comparison = compare_containers(container1,container2,by=by)
     scores = dict()
 
     for b in by:
@@ -145,15 +148,18 @@ def get_container_contents(container,gets=None,split_delim=None):
 ###################################################################################
 
 
-def container_difference(container,container_subtract):
+def container_difference(container,container_subtract,comparison=None):
     '''container_difference will return a data structure to render an html 
     tree (graph) of the differences between two images or packages. The second
     container is subtracted from the first
     :param container: the primary container object (to subtract from)
     :param container_subtract: the second container object to remove
+    :param comparison: the comparison result object for the tree. If provided,
+    will skip over function to obtain it.
     '''
-    comparison = compare_containers(container,container_subtract,
-                                    by=['files.txt','folders.txt'])
+    if comparison == None:
+        comparison = compare_containers(container,container_subtract,
+                                        by=['files.txt','folders.txt'])
     files = comparison["files.txt"]['unique1']
     folders = comparison['folders.txt']['unique1']
     tree = make_container_tree(folders=folders,
@@ -162,14 +168,17 @@ def container_difference(container,container_subtract):
 
 
 
-def container_similarity(container1,container2):
+def container_similarity(container1,container2,comparison=None):
     '''container_sim will return a data structure to render an html tree 
     (graph) of the intersection (commonalities) between two images or packages
     :param container1: the first container object
     :param container2: the second container object
+    :param comparison: the comparison result object for the tree. If provided,
+    will skip over function to obtain it.
     '''
-    comparison = compare_containers(container1,container2,
-                                    by=['files.txt','folders.txt'])
+    if comparison == None:
+        comparison = compare_containers(container1,container2,
+                                        by=['files.txt','folders.txt'])
     files = comparison["files.txt"]['intersect']
     folders = comparison['folders.txt']['intersect']
     tree = make_container_tree(folders=folders,
