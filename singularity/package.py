@@ -8,6 +8,7 @@ package.py: part of singularity package
 from singularity.logman import bot
 
 from singularity.utils import (
+    calculate_folder_size,
     format_container_name,
     read_file, 
     zip_up

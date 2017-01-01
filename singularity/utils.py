@@ -229,6 +229,24 @@ def read_file(filename,mode="r"):
     return content
 
 
+############################################################################
+## OTHER MISC. #############################################################
+############################################################################
+
+
+def calculate_folder_size(folder_path):
+    '''calculate_folder size recursively walks a directory to calculate
+    a total size (in)
+    :param folder_path: the path to calculate size for
+    '''
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for filey in filenames:
+            fp = os.path.join(dirpath, filey)
+            total_size += os.path.getsize(fp)
+    return total_size
+
+
 def remove_unicode_dict(input_dict):
     '''remove unicode keys and values from dict, encoding in utf8
     '''
