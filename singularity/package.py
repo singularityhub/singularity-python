@@ -24,16 +24,16 @@ import json
 import os
 
 
-def estimate_image_size(spec=None,sudopw=None,padding=200):
+def estimate_image_size(spec_file=None,sudopw=None,padding=200):
     '''estimate_image_size will generate an image in a directory, and add
     some padding to it to estimate the size of the image file to generate
     :param sudopw: the sudopw for Singularity, root should provide ''
-    :param spec: the spec file, called "Singuarity"
+    :param spec_file: the spec file, called "Singuarity"
     :param padding: the padding (MB) to add to the image
     '''
     size_dir = tempfile.mkdtemp()
     tmp_dir = tempfile.mkdtemp()
-    image_folder = build_from_spec(spec=spec_file, # default will package the image
+    image_folder = build_from_spec(spec_file=spec_file, # default will package the image
                                    sudopw=sudopw, # with root should not need sudo
                                    output_folder=size_dir,
                                    build_dir=tmp_dir,
@@ -47,26 +47,26 @@ def estimate_image_size(spec=None,sudopw=None,padding=200):
     return padded_size
 
 
-def build_from_spec(spec=None,build_dir=None,size=None,sudopw=None,
+def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,
                     output_folder=None,build_folder=False):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
-    :param spec: the spec file, called "Singuarity"
+    :param spec_file: the spec file, called "Singuarity"
     :param sudopw: the sudopw for Singularity, root should provide ''
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
     :param size: the size of the image
     :param output_folder: where to output the image package
     :param build_folder: "build" the image into a folder instead. Default False
     '''
-    if spec == None:
-        spec = "Singularity"
+    if spec_file == None:
+        spec_file = "Singularity"
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
     bot.logger.debug("Building in directory %s",build_dir)
 
     # Copy the spec to a temporary directory
-    spec_path = "%s/%s" %(build_dir,spec)
+    spec_path = "%s/%s" %(build_dir,spec_file)
     if not os.path.exists(spec_path):
-        shutil.copyfile(spec,spec_path)
+        shutil.copyfile(spec_file,spec_path)
     # If name isn't provided, call it Singularity
     image_path = "%s/image" %(build_dir)
     # Run create image and bootstrap with Singularity command line tool.

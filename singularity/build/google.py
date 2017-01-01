@@ -157,7 +157,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'secret', 'value': secret, 'return_text': True },
                 {'key': 'size', 'value': size, 'return_text': True },
                 {'key': 'branch', 'value': branch, 'return_text': True },
-                {'key': 'container_id', 'value': None, 'return_text': True }]
+                {'key': 'container_id', 'value': None, 'return_text': True },
+                {'key': 'spec_file', 'value': spec_file, 'return_text': True }]
 
     # Default spec file is Singularity
     if spec_file == None:
@@ -194,10 +195,10 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         # If size is None, get from image + 200 padding
         if params['size'] == None:
             bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
-            params['size'] = estimate_image_size(spec=spec_file,
+            params['size'] = estimate_image_size(spec_file=spec_file,
                                                  sudopw='')
 
-        image = build_from_spec(spec=spec_file, # default will package the image
+        image = build_from_spec(spec_file=spec_file, # default will package the image
                                 size=params['size'],
                                 sudopw='', # with root should not need sudo
                                 output_folder=build_dir,
