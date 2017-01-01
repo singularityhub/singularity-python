@@ -157,7 +157,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'secret', 'value': secret, 'return_text': True },
                 {'key': 'size', 'value': size, 'return_text': True },
                 {'key': 'branch', 'value': branch, 'return_text': True },
-                {'key': 'container_id', 'value': None, 'return_text': True },
                 {'key': 'spec_file', 'value': spec_file, 'return_text': True }]
 
     # Default spec file is Singularity
@@ -255,8 +254,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                         "repo_url": params['repo_url'],
                         "commit": params['commit'],
                         "repo_id": params['repo_id'],
-                        "secret": params['secret'],
-                        "container_id": params['container_id']}
+                        "secret": params['secret']}
 
             # Did the user specify a specific log file?
             logfile = get_build_metadata(key='logfile')
@@ -285,8 +283,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     shutil.rmtree(build_dir)
 
 
-def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None,commit=None,verbose=True,repo_id=None,
-                 logging_response_url=None,secret=None,token=None):
+def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name=None,commit=None,
+                 logging_url=None,secret=None,token=None,verbose=True,repo_id=None):
     '''finish_build will finish the build by way of sending the log to the same bucket.
     :param build_dir: directory to do the build in. If not specified,
     will use temporary.   
@@ -298,7 +296,7 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
     :param singularity_version: the version of singularity installed
     :param verbose: print out extra details as we go (default True)    
     :param secret: a secret to match to the correct container
-    :param logging_response_url: the logging response url to send the response back to.
+    :param logging_url: the logging response url to send the response back to.
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
@@ -311,13 +309,14 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
         singularity_version = get_singularity_version(singularity_version)
 
     # Get variables from the instance metadata API
-    metadata = [{'key': 'logging_url', 'value': logging_response_url, 'return_text': True },
+    metadata = [{'key': 'logging_url', 'value': logging_url, 'return_text': True },
                 {'key': 'repo_url', 'value': repo_url, 'return_text': False },
                 {'key': 'repo_id', 'value': repo_id, 'return_text': True },
                 {'key': 'token', 'value': token, 'return_text': False },
                 {'key': 'commit', 'value': commit, 'return_text': True },
                 {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
-                {'key': 'secret', 'value': secret, 'return_text': True }]
+                {'key': 'secret', 'value': secret, 'return_text': True }, 
+                {'key': 'logfile', 'value': logfile, 'return_text': True }]
 
     if bucket_name == None:
         bucket_name = "singularity-hub"
@@ -334,15 +333,15 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
     log_file = upload_file(storage_service,
                            bucket=bucket,
                            bucket_path=image_path,
-                           file_name=logfile)
+                           file_name=params['logfile'])
                 
     # Finally, package everything to send back to shub
     response = {"log": json.dumps(log_file),
                 "repo_url": params['repo_url'],
                 "commit": params['commit'],
+                "logfile": params['logfile'],
                 "repo_id": params['repo_id'],
                 "secret": params['secret']}
-
 
     if params['token'] != None:
         response['token'] = params['token']
@@ -394,7 +393,7 @@ def get_build_params(metadata):
             bot.logger.warning('%s not found in function call.',item['key'])        
             response = get_build_metadata(key=item['key'])
             item['value'] = response
-            params[item['key']] = item['value']
+        params[item['key']] = item['value']
         if item['key'] != 'credential':
             bot.logger.info('%s is set to %s',item['key'],item['value'])        
     return params
