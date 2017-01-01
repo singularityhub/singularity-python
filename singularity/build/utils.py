@@ -14,7 +14,8 @@ from singularity.logman import bot
 
 from singularity.utils import (
     get_installdir,
-    read_file
+    read_file,
+    run_command
 )
 
 import sys
@@ -59,3 +60,19 @@ def get_build_template(template_name,params=None,to_file=None):
     else:
         bot.logger.warning("Template %s not found.",template_file)
         return None
+
+
+def get_singularity_version(singularity_version=None):
+    '''get_singularity_version will determine the singularity version for a build
+    first, an environmental variable is looked at, followed by using the system
+    version.
+    '''
+    if singularity_version == None:        
+        singularity_version = os.environ.get("SINGULARITY_VERSION",None)
+        
+    # Next get from system
+    if singularity_version == None:
+        cmd = ['singularity','--version']
+        singularity_version = run_command(cmd,error_message="Cannot determine Singularity version!").decode('utf-8').strip('\n')
+
+    return singularity_version

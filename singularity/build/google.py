@@ -11,8 +11,11 @@ from singularity.api import (
     api_post
 )
 
+from singularity.build.utils import get_singularity_version
+
 from singularity.package import (
     build_from_spec, 
+    estimate_image_size,
     package
 )
 
@@ -112,7 +115,7 @@ def list_bucket(bucket,storage_service):
 
 
 def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
-              repo_id=None,commit=None,verbose=True,response_url=None,secret=None):
+              repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None):
     '''run_build will generate the Singularity build from a spec_file from a repo_url. 
     If no arguments are required, the metadata api is queried for the values.
     :param build_dir: directory to do the build in. If not specified,
@@ -121,13 +124,14 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     :param repo_url: the url to download the repo from
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
     :param commit: the commit to checkout. If none provided, will use most recent.
-    :param size: the size of the image to build. If none set, builds default 1024.
+    :param size: the size of the image to build. If none set, builds folder size + 200MB padding
     :param bucket_name: the name of the bucket to send files to
     :param verbose: print out extra details as we go (default True)    
     :param token: a token to send back to the server to authenticate the collection
     :param secret: a secret to match to the correct container
     :param response_url: the build url to send the response back to. Should also come
     from metadata. If not specified, no response is sent
+    :param branch: the branch to checkout for the build.
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
@@ -151,7 +155,9 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'token', 'value': token, 'return_text': False },
                 {'key': 'commit', 'value': commit, 'return_text': True },
                 {'key': 'secret', 'value': secret, 'return_text': True },
-                {'key': 'size', 'value': size, 'return_text': True }]
+                {'key': 'size', 'value': size, 'return_text': True },
+                {'key': 'branch', 'value': branch, 'return_text': True },
+                {'key': 'container_id', 'value': None, 'return_text': True }]
 
     # Default spec file is Singularity
     if spec_file == None:
@@ -168,6 +174,10 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                          destination=build_dir)
 
     os.chdir(build_dir)
+    if params['branch'] != None:
+        bot.logger.info('Checking out branch %s',params['branch'])
+        os.system('git checkout %s' %(params['branch']))
+
     if params['commit'] != None:
         bot.logger.info('Checking out commit %s',params['commit'])
         os.system('git checkout %s .' %(params['commit']))
@@ -180,6 +190,12 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
     if os.path.exists(spec_file):
         bot.logger.info("Found spec file %s in repository",spec_file)
+
+        # If size is None, get from image + 200 padding
+        if params['size'] == None:
+            bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
+            params['size'] = estimate_image_size(spec=spec_file,
+                                                 sudopw='')
 
         image = build_from_spec(spec=spec_file, # default will package the image
                                 size=params['size'],
@@ -238,7 +254,17 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                         "repo_url": params['repo_url'],
                         "commit": params['commit'],
                         "repo_id": params['repo_id'],
-                        "secret": params['secret']}
+                        "secret": params['secret'],
+                        "container_id": params['container_id']}
+
+            # Did the user specify a specific log file?
+            logfile = get_build_metadata(key='logfile')
+            if logfile != None:
+                response['logfile'] = logfile
+
+            if params['branch'] != None:
+                response['branch'] = params['branch']
+
 
             if params['token'] != None:
                 response['token'] = params['token']
@@ -258,7 +284,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     shutil.rmtree(build_dir)
 
 
-def finish_build(logfile,repo_url=None,bucket_name=None,commit=None,verbose=True,repo_id=None,
+def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None,commit=None,verbose=True,repo_id=None,
                  logging_response_url=None,secret=None,token=None):
     '''finish_build will finish the build by way of sending the log to the same bucket.
     :param build_dir: directory to do the build in. If not specified,
@@ -268,6 +294,7 @@ def finish_build(logfile,repo_url=None,bucket_name=None,commit=None,verbose=True
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
     :param commit: the commit to checkout. If none provided, will use most recent.
     :param bucket_name: the name of the bucket to send files to
+    :param singularity_version: the version of singularity installed
     :param verbose: print out extra details as we go (default True)    
     :param secret: a secret to match to the correct container
     :param logging_response_url: the logging response url to send the response back to.
@@ -278,6 +305,9 @@ def finish_build(logfile,repo_url=None,bucket_name=None,commit=None,verbose=True
     go = get_build_metadata(key='dobuild')
     if go == None:
         sys.exit(0)
+
+    if singularity_version == None:
+        singularity_version = get_singularity_version(singularity_version)
 
     # Get variables from the instance metadata API
     metadata = [{'key': 'logging_url', 'value': logging_response_url, 'return_text': True },
