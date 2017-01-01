@@ -192,7 +192,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     if os.path.exists(spec_file):
         bot.logger.info("Found spec file %s in repository",spec_file)
 
-        # If size is None, get from image + 200 padding
+        # If size is None, get from image + 50 padding
         if params['size'] == None:
             bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
             params['size'] = estimate_image_size(spec_file=spec_file,
