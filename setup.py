@@ -7,7 +7,7 @@ setup(
     name="singularity",
 
     # Version number:
-    version="0.37",
+    version="0.39",
 
     # Application author details:
     author="Vanessa Sochat",
@@ -18,7 +18,6 @@ setup(
  
     # Data files
     include_package_data=True,
-
     zip_safe=False,
 
     # Details

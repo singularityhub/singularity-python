@@ -62,5 +62,6 @@ class TestPackage(unittest.TestCase):
         self.assertTrue(os.path.exists(image1_extraction))
         shutil.rmtree(os.path.dirname(image1_extraction))
 
+
 if __name__ == '__main__':
     unittest.main()

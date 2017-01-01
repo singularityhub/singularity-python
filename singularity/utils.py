@@ -39,13 +39,14 @@ except NameError:
 ######################################################################################
 
 
-def check_install(software="singularity"):
+def check_install(software=None):
     '''check_install will attempt to run the singularity command, and return an error
     if not installed. The command line utils will not run without this check.
     '''    
-  
+    if software == None:
+        software = "singularity"
     cmd = [software,'--version']
-    version = run_command(cmd,error_message="Cannot find singularity. Is it installed?")
+    version = run_command(cmd,error_message="Cannot find %s. Is it installed?" %software)
     if version != None:
         bot.logger.info("Found %s version %s",software.upper(),version)
         return True
@@ -226,6 +227,24 @@ def read_file(filename,mode="r"):
     content = filey.readlines()
     filey.close()
     return content
+
+
+############################################################################
+## OTHER MISC. #############################################################
+############################################################################
+
+
+def calculate_folder_size(folder_path):
+    '''calculate_folder size recursively walks a directory to calculate
+    a total size (in)
+    :param folder_path: the path to calculate size for
+    '''
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for filey in filenames:
+            fp = os.path.join(dirpath, filey)
+            total_size += os.path.getsize(fp)
+    return total_size
 
 
 def remove_unicode_dict(input_dict):

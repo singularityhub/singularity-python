@@ -8,6 +8,7 @@ package.py: part of singularity package
 from singularity.logman import bot
 
 from singularity.utils import (
+    calculate_folder_size,
     format_container_name,
     read_file, 
     zip_up
@@ -23,10 +24,34 @@ import json
 import os
 
 
+def estimate_image_size(spec=None,sudopw=None,padding=200):
+    '''estimate_image_size will generate an image in a directory, and add
+    some padding to it to estimate the size of the image file to generate
+    :param sudopw: the sudopw for Singularity, root should provide ''
+    :param spec: the spec file, called "Singuarity"
+    :param padding: the padding (MB) to add to the image
+    '''
+    size_dir = tempfile.mkdtemp()
+    tmp_dir = tempfile.mkdtemp()
+    image_folder = build_from_spec(spec=spec_file, # default will package the image
+                                   sudopw=sudopw, # with root should not need sudo
+                                   output_folder=size_dir,
+                                   build_dir=tmp_dir,
+                                   build_folder=True)
+    original_size = calculate_folder_size(image_folder)    
+    bot.logger.debug("Original image size calculated as %s",original_size)
+    padded_size = original_size + padding
+    bot.logger.debug("Size with padding will be %s",padded_size)
+    shutil.rmtree(size_dir)
+    os.system('sudo rm -rf %s' %tmp_dir)
+    return padded_size
+
+
 def build_from_spec(spec=None,build_dir=None,size=None,sudopw=None,
                     output_folder=None,build_folder=False):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec: the spec file, called "Singuarity"
+    :param sudopw: the sudopw for Singularity, root should provide ''
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
     :param size: the size of the image
     :param output_folder: where to output the image package
