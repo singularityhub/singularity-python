@@ -59,7 +59,13 @@ from singularity.logman import bot
 def get_storage_service():
     credentials = GoogleCredentials.get_application_default()
     return build('storage', 'v1', credentials=credentials)
+
+
+def get_compute_service():
+    credentials = GoogleCredentials.get_application_default()
+    return build('compute', 'v1', credentials=credentials)
     
+
 def get_bucket(storage_service,bucket_name):
     req = storage_service.buckets().get(bucket=bucket_name)
     return req.execute()

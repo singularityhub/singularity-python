@@ -39,13 +39,14 @@ except NameError:
 ######################################################################################
 
 
-def check_install(software="singularity"):
+def check_install(software=None):
     '''check_install will attempt to run the singularity command, and return an error
     if not installed. The command line utils will not run without this check.
     '''    
-  
+    if software == None:
+        software = "singularity"
     cmd = [software,'--version']
-    version = run_command(cmd,error_message="Cannot find singularity. Is it installed?")
+    version = run_command(cmd,error_message="Cannot find %s. Is it installed?" %software)
     if version != None:
         bot.logger.info("Found %s version %s",software.upper(),version)
         return True
