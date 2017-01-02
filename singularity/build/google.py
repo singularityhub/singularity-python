@@ -47,6 +47,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 import zipfile
 
@@ -157,17 +158,17 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'secret', 'value': secret, 'return_text': True },
                 {'key': 'size', 'value': size, 'return_text': True },
                 {'key': 'branch', 'value': branch, 'return_text': True },
-                {'key': 'container_id', 'value': None, 'return_text': True }]
-
-    # Default spec file is Singularity
-    if spec_file == None:
-        spec_file = "Singularity"
-
-    if bucket_name == None:
-        bucket_name = "singularity-hub"
+                {'key': 'spec_file', 'value': spec_file, 'return_text': True }]
 
     # Obtain values from build
     params = get_build_params(metadata)
+
+    # Default spec file is Singularity
+    if params['spec_file'] == None:
+        params['spec_file'] = "Singularity"
+
+    if params['bucket_name'] == None:
+        params['bucket_name'] = "singularity-hub"
 
     # Download the repo and image
     repo = download_repo(repo_url=params['repo_url'],
@@ -188,16 +189,16 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         bot.logger.warning("commit not specified, setting to current %s", params['commit'])
 
 
-    if os.path.exists(spec_file):
-        bot.logger.info("Found spec file %s in repository",spec_file)
+    if os.path.exists(params['spec_file']):
+        bot.logger.info("Found spec file %s in repository",params['spec_file'])
 
-        # If size is None, get from image + 200 padding
+        # If size is None, get from image + 50 padding
         if params['size'] == None:
             bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
-            params['size'] = estimate_image_size(spec=spec_file,
+            params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
                                                  sudopw='')
 
-        image = build_from_spec(spec=spec_file, # default will package the image
+        image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 size=params['size'],
                                 sudopw='', # with root should not need sudo
                                 output_folder=build_dir,
@@ -209,7 +210,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         
         # Package the image metadata (files, folders, etc)
         image_package = package(image_path=image,
-                                spec_path=spec_file,
+                                spec_path=params['spec_file'],
                                 output_folder=build_dir,
                                 sudopw='',
                                 remove_image=True,
@@ -254,8 +255,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                         "repo_url": params['repo_url'],
                         "commit": params['commit'],
                         "repo_id": params['repo_id'],
-                        "secret": params['secret'],
-                        "container_id": params['container_id']}
+                        "secret": params['secret']}
 
             # Did the user specify a specific log file?
             logfile = get_build_metadata(key='logfile')
@@ -276,7 +276,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     else:
         # Tell the user what is actually there
         present_files = glob("*")
-        bot.logger.error("Build file %s not found in repository",spec_file)
+        bot.logger.error("Build file %s not found in repository",params['spec_file'])
         bot.logger.info("Found files are %s","\n".join(present_files))
 
 
@@ -284,8 +284,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     shutil.rmtree(build_dir)
 
 
-def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None,commit=None,verbose=True,repo_id=None,
-                 logging_response_url=None,secret=None,token=None):
+def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name=None,commit=None,
+                 logging_url=None,secret=None,token=None,verbose=True,repo_id=None):
     '''finish_build will finish the build by way of sending the log to the same bucket.
     :param build_dir: directory to do the build in. If not specified,
     will use temporary.   
@@ -297,7 +297,7 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
     :param singularity_version: the version of singularity installed
     :param verbose: print out extra details as we go (default True)    
     :param secret: a secret to match to the correct container
-    :param logging_response_url: the logging response url to send the response back to.
+    :param logging_url: the logging response url to send the response back to.
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
@@ -310,13 +310,14 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
         singularity_version = get_singularity_version(singularity_version)
 
     # Get variables from the instance metadata API
-    metadata = [{'key': 'logging_url', 'value': logging_response_url, 'return_text': True },
+    metadata = [{'key': 'logging_url', 'value': logging_url, 'return_text': True },
                 {'key': 'repo_url', 'value': repo_url, 'return_text': False },
                 {'key': 'repo_id', 'value': repo_id, 'return_text': True },
                 {'key': 'token', 'value': token, 'return_text': False },
                 {'key': 'commit', 'value': commit, 'return_text': True },
                 {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
-                {'key': 'secret', 'value': secret, 'return_text': True }]
+                {'key': 'secret', 'value': secret, 'return_text': True }, 
+                {'key': 'logfile', 'value': logfile, 'return_text': True }]
 
     if bucket_name == None:
         bucket_name = "singularity-hub"
@@ -333,15 +334,15 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
     log_file = upload_file(storage_service,
                            bucket=bucket,
                            bucket_path=image_path,
-                           file_name=logfile)
+                           file_name=params['logfile'])
                 
     # Finally, package everything to send back to shub
     response = {"log": json.dumps(log_file),
                 "repo_url": params['repo_url'],
                 "commit": params['commit'],
+                "logfile": params['logfile'],
                 "repo_id": params['repo_id'],
                 "secret": params['secret']}
-
 
     if params['token'] != None:
         response['token'] = params['token']
@@ -349,7 +350,11 @@ def finish_build(logfile,singularity_version=None,repo_url=None,bucket_name=None
     # Send it back!
     if params['logging_url'] != None:
         finish = requests.post(params['logging_url'],data=response)
+   
+    # Delay a minute, to give buffer between bringing instance down
+    time.sleep(60)
     
+
 
 #####################################################################################
 # METADATA
@@ -393,7 +398,7 @@ def get_build_params(metadata):
             bot.logger.warning('%s not found in function call.',item['key'])        
             response = get_build_metadata(key=item['key'])
             item['value'] = response
-            params[item['key']] = item['value']
+        params[item['key']] = item['value']
         if item['key'] != 'credential':
             bot.logger.info('%s is set to %s',item['key'],item['value'])        
     return params
