@@ -1,7 +1,4 @@
-#!/bin/sh
-source $HOME/.profile
-source $HOME/.bashrc
-
+#!/bin/bash
 sudo apt-get update > /tmp/.install-log
 sudo apt-get -y install git \
                    build-essential \
@@ -11,6 +8,8 @@ sudo apt-get -y install git \
                    autoconf \
                    python3-pip >> /tmp/.install-log
 
+source $HOME/.profile
+source $HOME/.bashrc
 
 # Install Singularity from Github
 cd /tmp && git clone http://www.github.com/singularityware/singularity 
