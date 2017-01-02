@@ -1,23 +1,27 @@
 #!/bin/sh
-sudo apt-get update &&
-sudo apt-get -y install git \
-                        build-essential \
-                        libtool \
-                        autotools-dev \
-                        linux-headers-generic \
-                        automake \
-                        autoconf \
-                        python3-pip
+apt-get update > /tmp/.install-log
+apt-get -y install git \
+                   build-essential \
+                   libtool \
+                   autotools-dev \
+                   automake \
+                   autoconf \
+                   python3-pip >> /tmp/.install-log
+
+# so that adjusted PATH propagates into sudo
+sed -i -e 's/^Defaults\tsecure_path.*$//' /etc/sudoers
+export CXX=g++
+export CC=gcc
 
 # Install Singularity from Github
-cd /tmp && git clone http://www.github.com/singularityware/singularity &&
-   cd singularity && ./configure --prefix=/usr/local && make && sudo make install
+cd /tmp && git clone http://www.github.com/singularityware/singularity 
+cd singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && make install
 
 # Pip3 installs
-sudo pip3 install --upgrade pip &&
-sudo pip3 install --upgrade google-api-python-client &&
-sudo pip3 install --upgrade google &&
-sudo pip3 install oauth2client==3.0.0 gitpython singularity
+pip3 install --upgrade pip &&
+pip3 install --upgrade google-api-python-client &&
+pip3 install --upgrade google &&
+pip3 install oauth2client==3.0.0 gitpython singularity
 
 # Main running script
 python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1
