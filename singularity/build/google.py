@@ -283,6 +283,9 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     # Clean up
     shutil.rmtree(build_dir)
 
+    # Delay a minute, to give buffer between bringing instance down
+    time.sleep(60)
+
 
 def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name=None,commit=None,
                  logging_url=None,secret=None,token=None,verbose=True,repo_id=None):
@@ -339,7 +342,6 @@ def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name
     # Finally, package everything to send back to shub
     response = {"log": json.dumps(log_file),
                 "repo_url": params['repo_url'],
-                "commit": params['commit'],
                 "logfile": params['logfile'],
                 "repo_id": params['repo_id'],
                 "secret": params['secret']}
@@ -350,10 +352,7 @@ def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name
     # Send it back!
     if params['logging_url'] != None:
         finish = requests.post(params['logging_url'],data=response)
-   
-    # Delay a minute, to give buffer between bringing instance down
-    time.sleep(60)
-    
+       
 
 
 #####################################################################################
