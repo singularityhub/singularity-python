@@ -24,7 +24,7 @@ import json
 import os
 
 
-def estimate_image_size(spec_file=None,sudopw=None,padding=50):
+def estimate_image_size(spec_file,sudopw=None,padding=50):
     '''estimate_image_size will generate an image in a directory, and add
     some padding to it to estimate the size of the image file to generate
     :param sudopw: the sudopw for Singularity, root should provide ''

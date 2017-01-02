@@ -160,15 +160,15 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'branch', 'value': branch, 'return_text': True },
                 {'key': 'spec_file', 'value': spec_file, 'return_text': True }]
 
-    # Default spec file is Singularity
-    if spec_file == None:
-        spec_file = "Singularity"
-
-    if bucket_name == None:
-        bucket_name = "singularity-hub"
-
     # Obtain values from build
     params = get_build_params(metadata)
+
+    # Default spec file is Singularity
+    if params['spec_file'] == None:
+        params['spec_file'] = "Singularity"
+
+    if params['bucket_name'] == None:
+        params['bucket_name'] = "singularity-hub"
 
     # Download the repo and image
     repo = download_repo(repo_url=params['repo_url'],
@@ -189,16 +189,16 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         bot.logger.warning("commit not specified, setting to current %s", params['commit'])
 
 
-    if os.path.exists(spec_file):
-        bot.logger.info("Found spec file %s in repository",spec_file)
+    if os.path.exists(params['spec_file']):
+        bot.logger.info("Found spec file %s in repository",params['spec_file'])
 
         # If size is None, get from image + 50 padding
         if params['size'] == None:
             bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
-            params['size'] = estimate_image_size(spec_file=spec_file,
+            params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
                                                  sudopw='')
 
-        image = build_from_spec(spec_file=spec_file, # default will package the image
+        image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 size=params['size'],
                                 sudopw='', # with root should not need sudo
                                 output_folder=build_dir,
@@ -210,7 +210,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         
         # Package the image metadata (files, folders, etc)
         image_package = package(image_path=image,
-                                spec_path=spec_file,
+                                spec_path=params['spec_file'],
                                 output_folder=build_dir,
                                 sudopw='',
                                 remove_image=True,
@@ -276,7 +276,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     else:
         # Tell the user what is actually there
         present_files = glob("*")
-        bot.logger.error("Build file %s not found in repository",spec_file)
+        bot.logger.error("Build file %s not found in repository",params['spec_file'])
         bot.logger.info("Found files are %s","\n".join(present_files))
 
 
