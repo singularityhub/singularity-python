@@ -47,6 +47,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import uuid
 import zipfile
 
@@ -349,7 +350,11 @@ def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name
     # Send it back!
     if params['logging_url'] != None:
         finish = requests.post(params['logging_url'],data=response)
+   
+    # Delay a minute, to give buffer between bringing instance down
+    time.sleep(60)
     
+
 
 #####################################################################################
 # METADATA

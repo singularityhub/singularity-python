@@ -14,5 +14,5 @@ sudo pip3 install gitpython
 cd /tmp && git clone https://github.com/singularityware/singularity-python
 cd singularity-python && python3 setup.py sdist && sudo python3 setup.py install && cd ..
 python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1
-command=$(echo "from singularity.build.google import finish_build; finish_build(logfile='/tmp/.shub-log')")
+command=$(echo "from singularity.build.google import finish_build; finish_build()")
 python3 -c "$command"
