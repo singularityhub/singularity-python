@@ -195,13 +195,12 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         # If size is None, get from image + 50 padding
         if params['size'] == None:
             bot.logger.info("Size not detected for build. Will estimate with 50MB padding.")
-            params['size'] = estimate_image_size(spec_file=params['spec_file'],
+            params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
                                                  sudopw='')
 
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 size=params['size'],
                                 sudopw='', # with root should not need sudo
-                                output_folder=build_dir,
                                 build_dir=build_dir)
 
         # Compress image
