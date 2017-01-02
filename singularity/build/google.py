@@ -232,7 +232,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
             # Start the storage service, retrieve the bucket
             storage_service = get_storage_service()
-            bucket = get_bucket(storage_service,bucket_name)
+            bucket = get_bucket(storage_service,params["bucket_name"])
 
             # For each file, upload to storage
             files = []
