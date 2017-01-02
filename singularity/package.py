@@ -31,63 +31,68 @@ def estimate_image_size(spec_file,sudopw=None,padding=50):
     :param spec_file: the spec file, called "Singuarity"
     :param padding: the padding (MB) to add to the image
     '''
-    size_dir = tempfile.mkdtemp()
-    tmp_dir = tempfile.mkdtemp()
     image_folder = build_from_spec(spec_file=spec_file, # default will package the image
                                    sudopw=sudopw, # with root should not need sudo
-                                   output_folder=size_dir,
-                                   build_dir=tmp_dir,
                                    build_folder=True)
     original_size = calculate_folder_size(image_folder)    
     bot.logger.debug("Original image size calculated as %s",original_size)
     padded_size = original_size + padding
     bot.logger.debug("Size with padding will be %s",padded_size)
-    shutil.rmtree(size_dir)
-    os.system('sudo rm -rf %s' %tmp_dir)
     return padded_size
 
 
-def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,
-                    output_folder=None,build_folder=False):
+def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_folder=False):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec_file: the spec file, called "Singuarity"
     :param sudopw: the sudopw for Singularity, root should provide ''
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
     :param size: the size of the image
-    :param output_folder: where to output the image package
     :param build_folder: "build" the image into a folder instead. Default False
     '''
     if spec_file == None:
         spec_file = "Singularity"
+
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
+
     bot.logger.debug("Building in directory %s",build_dir)
 
     # Copy the spec to a temporary directory
-    spec_path = "%s/%s" %(build_dir,spec_file)
+    bot.logger.debug("Spec file set to %s",spec_file)
+    spec_path = "%s/%s" %(build_dir,os.path.basename(spec_file))
+    bot.logger.debug("Spec file for build should be in %s",spec_path)
+
+    # If it's not already there
     if not os.path.exists(spec_path):
         shutil.copyfile(spec_file,spec_path)
-    # If name isn't provided, call it Singularity
+
     image_path = "%s/image" %(build_dir)
+
     # Run create image and bootstrap with Singularity command line tool.
     if sudopw != None:
         cli = Singularity(sudopw=sudopw)
     else:
         cli = Singularity() # This command will ask the user for sudo
+
     print("\nCreating and boostrapping image...")
+
     # Does the user want to "build" into a folder or image?
     if build_folder == True:
+        bot.logger.debug("build_folder is true, creating %s",image_path)
         os.mkdir(image_path)
     else:
         cli.create(image_path,size=size)
+
     result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
     print(result)
+
     # If image, rename based on hash
     if build_folder == False:
         version = get_image_hash(image_path)
         final_path = "%s/%s" %(build_dir,version)
         os.rename(image_path,final_path)
         image_path = final_path
+
     bot.logger.debug("Built image: %s",image_path)
     return image_path
 

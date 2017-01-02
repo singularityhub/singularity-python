@@ -194,14 +194,14 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
         # If size is None, get from image + 50 padding
         if params['size'] == None:
-            bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
-            params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
-                                                 sudopw='')
+            bot.logger.info("Size not detected for build. Will estimate as 1024MB.")
+            #params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
+            #                                     sudopw='')
+            params['size'] = 1024
 
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 size=params['size'],
                                 sudopw='', # with root should not need sudo
-                                output_folder=build_dir,
                                 build_dir=build_dir)
 
         # Compress image
@@ -232,7 +232,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
             # Start the storage service, retrieve the bucket
             storage_service = get_storage_service()
-            bucket = get_bucket(storage_service,bucket_name)
+            bucket = get_bucket(storage_service,params["bucket_name"])
 
             # For each file, upload to storage
             files = []
@@ -282,6 +282,9 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
     # Clean up
     shutil.rmtree(build_dir)
+
+    # Delay a minute, to give buffer between bringing instance down
+    time.sleep(60)
 
 
 def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name=None,commit=None,
@@ -339,7 +342,6 @@ def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name
     # Finally, package everything to send back to shub
     response = {"log": json.dumps(log_file),
                 "repo_url": params['repo_url'],
-                "commit": params['commit'],
                 "logfile": params['logfile'],
                 "repo_id": params['repo_id'],
                 "secret": params['secret']}
@@ -350,10 +352,7 @@ def finish_build(logfile=None,singularity_version=None,repo_url=None,bucket_name
     # Send it back!
     if params['logging_url'] != None:
         finish = requests.post(params['logging_url'],data=response)
-   
-    # Delay a minute, to give buffer between bringing instance down
-    time.sleep(60)
-    
+       
 
 
 #####################################################################################
