@@ -7,7 +7,7 @@ setup(
     name="singularity",
 
     # Version number:
-    version="0.47",
+    version="0.48",
 
     # Application author details:
     author="Vanessa Sochat",
