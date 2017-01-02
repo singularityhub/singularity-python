@@ -64,10 +64,10 @@ def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,
     bot.logger.debug("Building in directory %s",build_dir)
 
     # Copy the spec to a temporary directory
-    spec_path = "%s/%s" %(build_dir,spec_file)
+    spec_path = "%s/%s" %(build_dir,os.path.basename(spec_file))
     if not os.path.exists(spec_path):
         shutil.copyfile(spec_file,spec_path)
-    # If name isn't provided, call it Singularity
+
     image_path = "%s/image" %(build_dir)
     # Run create image and bootstrap with Singularity command line tool.
     if sudopw != None:
