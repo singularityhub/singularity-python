@@ -1,4 +1,5 @@
 #!/bin/bash
+# This install script assumes using an image with Singularity software installed
 sudo apt-get update > /tmp/.install-log
 sudo apt-get -y install git \
                    build-essential \
@@ -7,13 +8,6 @@ sudo apt-get -y install git \
                    automake \
                    autoconf \
                    python3-pip >> /tmp/.install-log
-
-source $HOME/.profile
-source $HOME/.bashrc
-
-# Install Singularity from Github
-cd /tmp && git clone http://www.github.com/singularityware/singularity 
-cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
 
 # Pip3 installs
 sudo pip3 install --upgrade pip &&
