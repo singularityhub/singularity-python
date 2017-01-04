@@ -194,7 +194,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
         # If size is None, get from image + 50 padding
         if params['size'] == None:
-            bot.logger.info("Size not detected for build. Will estimate with 50MB padding.")
+            bot.logger.info("Size not detected for build. Will estimate with 200MB padding.")
             params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
                                                  sudopw='')
             bot.logger.info("Size estimated as %s",params['size'])  

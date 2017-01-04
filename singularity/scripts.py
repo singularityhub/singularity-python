@@ -22,7 +22,7 @@ def get_parser():
 
     # Two images, for similarity function
     parser.add_argument("--images", dest='images', 
-                        help="images, separated by commas (for use with --simtree)", 
+                        help="images, separated by commas (for use with --simtree and --subtract", 
                         type=str, default=None)
 
     # Does the user want to have verbose logging?
