@@ -24,17 +24,24 @@ import json
 import os
 
 
-def estimate_image_size(spec_file,sudopw=None,padding=200):
+def estimate_image_size(spec_file,sudopw=None,padding=None):
     '''estimate_image_size will generate an image in a directory, and add
     some padding to it to estimate the size of the image file to generate
     :param sudopw: the sudopw for Singularity, root should provide ''
     :param spec_file: the spec file, called "Singuarity"
     :param padding: the padding (MB) to add to the image
     '''
+    if padding == None:
+        padding = 200
+
+    if not isinstance(padding,int):
+        padding = int(padding)
+
     image_folder = build_from_spec(spec_file=spec_file, # default will package the image
                                    sudopw=sudopw, # with root should not need sudo
                                    build_folder=True)
-    original_size = calculate_folder_size(image_folder)    
+    original_size = calculate_folder_size(image_folder)
+    
     bot.logger.debug("Original image size calculated as %s",original_size)
     padded_size = original_size + padding
     bot.logger.debug("Size with padding will be %s",padded_size)
