@@ -5,6 +5,7 @@ pandas
 requests
 selenium
 simplejson
+scikit-learn
 pygments
 oauth2client
 google-api-python-client

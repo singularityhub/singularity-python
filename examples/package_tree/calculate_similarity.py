@@ -32,7 +32,7 @@ if check_install() != True:
 ###############################################################################
 
 # Option 1: Get a family manually
-package_set1 = get_packages(family='docker-os')
+package_set1 = get_packages(family='docker-library')
 
 # Option 2: Specify your own package directory (arg is packages=packages)
 package_directory = '%s/examples/package_image/packages' %(base)
@@ -46,7 +46,7 @@ package_set1 = glob("%s/*.zip" %(package_directory))
 ###############################################################################
 
 # Option 1: specify another (same or different) family of packages
-package_set2 = get_packages(family='docker-library')
+package_set2 = get_packages(family='docker-os')
 
 # Option 2: Same as above
 # Option 3: Don't specify any packages, use defaults

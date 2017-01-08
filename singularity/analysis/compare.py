@@ -125,9 +125,9 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
     package_folder = "%s/analysis/packages" %get_installdir()
 
     if packages_set1 == None:
-        package_set1 = glob("%s/docker-os/*.zip" %(package_folder))
+        package_set1 = glob("%s/docker-library/*.zip" %(package_folder))
     if packages_set2 == None:
-        package_set2 = glob("%s/docker-library/*.zip" %(package_folder))
+        package_set2 = glob("%s/docker-os/*.zip" %(package_folder))
 
     if by == None:
         by = ['files.txt']

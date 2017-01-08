@@ -27,7 +27,7 @@ setup(
     description="Command line tool for working with singularity-hub and packaging singularity containers.",
     keywords='singularity containers hub reproducibility package science',
 
-    install_requires = ['Flask','gitpython','flask-restful','selenium','simplejson','pygments',
+    install_requires = ['Flask','gitpython','flask-restful','selenium','simplejson','scikit-learn','pygments',
                         'requests','oauth2client','google-api-python-client','pandas'],
 
     entry_points = {
