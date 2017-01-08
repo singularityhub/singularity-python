@@ -22,4 +22,4 @@ plt = make_package_tree(matrix=data)
 plt.show()
 
 # or save to file
-plt.savefig('examples/package_tree/docker-library.png')
+plt.savefig('examples/package_tree/docker-os.png')
