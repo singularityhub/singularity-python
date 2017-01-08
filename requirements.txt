@@ -1,6 +1,7 @@
 flask
 flask-restful
 gitpython
+pandas
 requests
 selenium
 simplejson

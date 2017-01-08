@@ -1,4 +1,6 @@
 recursive-include singularity/templates *
 recursive-include singularity/static *
 recursive-include singularity/build *
+recursive-include singularity/analysis *
+recursive-include singularity/views *
 recursive-include singularity/testing *

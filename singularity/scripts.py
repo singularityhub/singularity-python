@@ -101,6 +101,11 @@ def main():
        # If we are given an image, ensure full path
        if args.image != None:
 
+           # Exit if the image cannot be found
+           if os.path.exists(args.image) == False:
+               print("Cannot find image. Exiting.")
+               sys.exit(1)
+
            image,existed = get_image(args.image,
                                      return_existed=True,
                                      size=args.size)
@@ -156,7 +161,7 @@ def main():
 
 
            if args.simcalc == True:
-               from singularity.views import calculate_similarity
+               from singularity.analysis.compare import calculate_similarity
                score = calculate_similarity(image1,image2,by="files.txt")
                print(score["files.txt"])
 

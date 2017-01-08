@@ -146,7 +146,7 @@ An [interactive demo](https://singularityware.github.io/singularity-python/examp
 What files and folders differ between two containers? What does it look like if I subtract one image from the second? `shub` provides a command line tool to generate a visualization to do exactly this.
 
 
-      shub --subtract --images docker://ubuntu:latest.docker://centos:latest
+      shub --subtract --images docker://ubuntu:latest,docker://centos:latest
 
 As with `simtree`, this function supports both docker and singularity images as inputs.
 
@@ -159,7 +159,7 @@ An [interactive demo](https://singularityware.github.io/singularity-python/examp
 The same functions above can be used to show the exact similarities (intersect) and differences (files and/or folders unique to two images) between two images. You can get a data structure with this information as follows:
 
 
-      from shub.views import compare_containers
+      from singularity.analysis.compare import compare_containers
   
       image1 = 'ubuntu.img'
       image2 = 'centos.img'
@@ -167,6 +167,12 @@ The same functions above can be used to show the exact similarities (intersect) 
 
       comparison = compare_containers(image1,image2,by=by)
 
+
+Note that you can also compare packages, or a container to a package:
+
+
+      def compare_containers(container1=None,container2=None,by=None,
+                             image_package1=None,image_package2=None)
 
 
 #### Calculate similarity of images

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-views.py: part of singularity package
+singularity views/trees.py: part of singularity package
 
 '''
 
@@ -11,136 +11,21 @@ import re
 import requests
 from singularity.logman import bot
 
+from singularity.views.utils import get_container_contents
+from singularity.analysis.compare import (
+    compare_containers,
+    calculate_similarity
+)
+
 from singularity.package import (
     load_package,
     package
 )
 
 import shutil
+import sys
 import tempfile
 import zipfile
-
-
-###################################################################################
-# COMPARISON FUNCTIONS ############################################################
-###################################################################################
-
-def compare_containers(container1,container2,by=None):
-    '''compare_containers will generate a data structure with common and unique files to
-    two images. If environmental variable SINGULARITY_HUB is set, will use container
-    database objects.
-    :param container1: first container for comparison
-    :param container2: second container for comparison
-    :param shub: If true, will 
-    :param by: what to compare, one or more of 'files.txt' or 'folders.txt'
-    default compares just files
-    '''
-    if by == None:
-        by = ["files.txt"]
-    if not isinstance(by,list):
-        by = [by]
-
-    # Get files and folders for each
-    container1_guts = get_container_contents(container1,
-                                             gets=by,
-                                             split_delim="\n")
-    container2_guts = get_container_contents(container2,
-                                             gets=by,
-                                             split_delim="\n")
-
-    # Do the comparison for each metric
-    comparisons = dict()
-    for b in by:
-        intersect = [x for x in container1_guts[b] if x in container2_guts[b]]
-        unique1 = [x for x in container1_guts[b] if x not in container2_guts[b]]
-        unique2 = [x for x in container2_guts[b] if x not in container1_guts[b]]
-
-        # Return data structure
-        comparison = {"intersect":intersect,
-                      "unique1": unique1,
-                      "unique2": unique2}
-        bot.logger.info("Intersect has length %s",len(intersect))
-        bot.logger.info("Unique to %s: %s",container1,len(unique1))
-        bot.logger.info("Unique to %s: %s",container2,len(unique2))
-        comparisons[b] = comparison 
-
-    return comparisons
-    
-
-
-def calculate_similarity(container1,container2,by="files.txt",comparison=None):
-    '''calculate_similarity will calculate similarity of two containers by files content, default will calculate
-    2.0*len(intersect) / total package1 + total package2
-    :param container1: container 1
-    :param container2: container 2
-    :param by: the one or more metrics (eg files.txt) list to use to compare
-     valid are currently files.txt or folders.txt
-    :param comparison: the comparison result object for the tree. If provided,
-    will skip over function to obtain it.
-    '''
-    if not isinstance(by,list):
-        by = [by]
-
-    if comparison == None:
-        comparison = compare_containers(container1,container2,by=by)
-    scores = dict()
-
-    for b in by:
-        total_unique = len(comparison[b]['unique1']) + len(comparison[b]['unique2'])
-
-        # If neither has equal files, denominator is 0, similarity is 1
-        if total_unique == 0:
-            scores[b] = 1.0     
-        else:
-            scores[b] = 2.0*len(comparison[b]["intersect"]) / total_unique
-    return scores
-
-
-def get_container_contents(container,gets=None,split_delim=None):
-    '''get_container_contents will return a list of folders and or files
-    for a container. The environmental variable SINGULARITY_HUB being set
-    means that container objects are referenced instead of packages
-    :param container: the container to get content for
-    :param gets: a list of file names to return, without parent folders
-    :param split_delim: if defined, will split text by split delimiter
-    '''
-    # Default returns are the list of files and folders
-    if gets == None:
-        gets = ['files.txt','folders.txt']
-    if not isinstance(gets,list):
-        gets = [gets]
-
-    # We will look for everything in guts, then return it
-    guts = dict()
-
-    SINGULARITY_HUB = os.environ.get('SINGULARITY_HUB',"False")
-
-    # Visualization deployed local or elsewhere
-    if SINGULARITY_HUB == "False":
-        bot.logger.debug("Not running from Singularity Hub.")
-        tmpdir = tempfile.mkdtemp()
-        image_package = package(image_path=container,
-                                output_folder=tmpdir,
-                                runscript=False,
-                                software=True,
-                                remove_image=True)
-     
-        guts = load_package(image_package,get=gets)
-        shutil.rmtree(tmpdir)
-        return guts
-
-    # Visualization deployed by singularity hub
-    else:   
-        bot.logger.debug("Running from Singularity Hub.")
-        for sfile in container.files:
-            for gut_key in gets:        
-                if os.path.basename(sfile['name']) == gut_key:
-                    if split_delim == None:
-                        guts[gut_key] = requests.get(sfile['mediaLink']).text
-                    else:
-                        guts[gut_key] = requests.get(sfile['mediaLink']).text.split(split_delim)
-
-    return guts
 
 
 ###################################################################################
@@ -148,18 +33,25 @@ def get_container_contents(container,gets=None,split_delim=None):
 ###################################################################################
 
 
-def container_difference(container,container_subtract,comparison=None):
+def container_difference(container=None,container_subtract=None,image_package=None,
+                         image_package_subtract=None,comparison=None):
     '''container_difference will return a data structure to render an html 
     tree (graph) of the differences between two images or packages. The second
     container is subtracted from the first
     :param container: the primary container object (to subtract from)
     :param container_subtract: the second container object to remove
+    :param image_package: a zipped package for image 1, created with package
+    :param image_package_subtract: a zipped package for subtraction image, created with package
     :param comparison: the comparison result object for the tree. If provided,
     will skip over function to obtain it.
     '''
     if comparison == None:
-        comparison = compare_containers(container,container_subtract,
+        comparison = compare_containers(container1=container,
+                                        container2=container_subtract,
+                                        image_package1=image_package,
+                                        image_package2=image_package_subtract,
                                         by=['files.txt','folders.txt'])
+
     files = comparison["files.txt"]['unique1']
     folders = comparison['folders.txt']['unique1']
     tree = make_container_tree(folders=folders,
@@ -168,16 +60,22 @@ def container_difference(container,container_subtract,comparison=None):
 
 
 
-def container_similarity(container1,container2,comparison=None):
+def container_similarity(container1=None,container2=None,image_package1=None,
+                         image_package2=None,comparison=None):
     '''container_sim will return a data structure to render an html tree 
     (graph) of the intersection (commonalities) between two images or packages
     :param container1: the first container object
-    :param container2: the second container object
+    :param container2: the second container object if either not defined, need
+    :param image_package1: a packaged container1 (produced by package)
+    :param image_package2: a packaged container2 (produced by package)
     :param comparison: the comparison result object for the tree. If provided,
     will skip over function to obtain it.
     '''
     if comparison == None:
-        comparison = compare_containers(container1,container2,
+        comparison = compare_containers(container1=container1,
+                                        container2=container2,
+                                        image_package1=image_package1,
+                                        image_package2=image_package2,
                                         by=['files.txt','folders.txt'])
     files = comparison["files.txt"]['intersect']
     folders = comparison['folders.txt']['intersect']
@@ -186,11 +84,13 @@ def container_similarity(container1,container2,comparison=None):
     return tree
 
 
-def container_tree(container):
+def container_tree(container=None,image_package=None):
     '''tree will render an html tree (graph) of a container
     '''
 
-    guts = get_container_contents(container,split_delim="\n")
+    guts = get_container_contents(container=container,
+                                  image_package=image_package,
+                                  split_delim="\n")
 
     # Make the tree and return it
     tree = make_container_tree(folders = guts["folders.txt"],

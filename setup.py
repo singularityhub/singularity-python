@@ -28,7 +28,7 @@ setup(
     keywords='singularity containers hub reproducibility package science',
 
     install_requires = ['Flask','gitpython','flask-restful','selenium','simplejson','pygments',
-                        'requests','oauth2client','google-api-python-client'],
+                        'requests','oauth2client','google-api-python-client','pandas'],
 
     entry_points = {
         'console_scripts': [
