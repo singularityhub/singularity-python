@@ -125,27 +125,27 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
     package_folder = "%s/analysis/packages" %get_installdir()
 
     if packages_set1 == None:
-        package_set1 = glob("%s/docker-library/*.zip" %(package_folder))
+        packages_set1 = glob("%s/docker-library/*.zip" %(package_folder))
     if packages_set2 == None:
-        package_set2 = glob("%s/docker-os/*.zip" %(package_folder))
+        packages_set2 = glob("%s/docker-os/*.zip" %(package_folder))
 
     if by == None:
         by = ['files.txt']
 
     if not isinstance(by,list):
         by = [by]
-    if not isinstance(package_set1,list):
-        package_set1 = [package_set1]
-    if not isinstance(package_set2,list):
-        package_set2 = [package_set2]
+    if not isinstance(packages_set1,list):
+        packages_set1 = [package_set1]
+    if not isinstance(packages_set2,list):
+        packages_set2 = [packages_set2]
 
     comparisons = dict()
 
     for b in by:
         bot.logger.debug("Starting comparisons for %s",b)
-        df = pandas.DataFrame(index=package_set1,columns=package_set2)
-        for package1 in package_set1:
-            for package2 in package_set2:
+        df = pandas.DataFrame(index=packages_set1,columns=packages_set2)
+        for package1 in packages_set1:
+            for package2 in packages_set2:
                 if package1 != package2:
                     sim = calculate_similarity(image_package1=package1,
                                                image_package2=package2,
