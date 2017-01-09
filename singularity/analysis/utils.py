@@ -55,3 +55,8 @@ def list_package_families():
     '''
     package_base = "%s/analysis/packages" %(install_dir)
     return glob("%s/*" %(package_base))
+
+
+def get_package_base():
+    '''returns base folder of packages'''
+    return "%s/analysis/packages" %(install_dir)

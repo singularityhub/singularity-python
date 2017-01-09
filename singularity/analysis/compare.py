@@ -13,12 +13,12 @@ import re
 import requests
 from singularity.logman import bot
 from singularity.utils import get_installdir
-
+from singularity.analysis.utils import get_packages
 from singularity.views.utils import get_container_contents
 
 from singularity.package import (
     load_package,
-    package
+    package as make_package
 )
 
 import pandas
@@ -74,8 +74,8 @@ def compare_containers(container1=None,container2=None,by=None,
                       "total2": len(container2_guts[b])}
 
         bot.logger.info("Intersect has length %s",len(intersect))
-        bot.logger.info("Unique to %s: %s",container1,len(unique1))
-        bot.logger.info("Unique to %s: %s",container2,len(unique2))
+        bot.logger.info("Unique to 1: %s",len(unique1))
+        bot.logger.info("Unique to 2: %s",len(unique2))
         comparisons[b] = comparison 
 
     return comparisons
@@ -122,12 +122,10 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
     will be used (os vs. docker library)
     :by: metrics to compare by (files.txt and or folders.txt)
     ''' 
-    package_folder = "%s/analysis/packages" %get_installdir()
-
     if packages_set1 == None:
-        packages_set1 = glob("%s/docker-library/*.zip" %(package_folder))
+        packages_set1 = get_packages('docker-library')
     if packages_set2 == None:
-        packages_set2 = glob("%s/docker-os/*.zip" %(package_folder))
+        packages_set2 = get_packages('docker-os')
 
     if by == None:
         by = ['files.txt']
@@ -135,7 +133,7 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
     if not isinstance(by,list):
         by = [by]
     if not isinstance(packages_set1,list):
-        packages_set1 = [package_set1]
+        packages_set1 = [packages_set1]
     if not isinstance(packages_set2,list):
         packages_set2 = [packages_set2]
 
