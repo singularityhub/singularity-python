@@ -48,7 +48,6 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
 
     # Visualization deployed local or elsewhere
     if SINGULARITY_HUB == "False":
-        bot.logger.debug("Not running from Singularity Hub.")
         tmpdir = tempfile.mkdtemp()
         if image_package == None:
             image_package = package(image_path=container,
@@ -63,7 +62,6 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
 
     # Visualization deployed by singularity hub
     else:   
-        bot.logger.debug("Running from Singularity Hub.")
         for sfile in container.files:
             for gut_key in gets:        
                 if os.path.basename(sfile['name']) == gut_key:

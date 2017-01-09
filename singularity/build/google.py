@@ -183,11 +183,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         with zipfile.ZipFile(image_package) as zf:
             zf.extractall(dest_dir)
 
-        # Generate tags based on software
-        #TODO:
-        # generate list of shared paths across operating systems
-        # figure out how to generate list of tags...
-
         # The path to the images on google drive will be the github url/commit folder
         image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
         build_files = glob("%s/*" %(dest_dir))

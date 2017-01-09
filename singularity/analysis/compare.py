@@ -72,10 +72,6 @@ def compare_containers(container1=None,container2=None,by=None,
                       "unique2": unique2,
                       "total1": len(container1_guts[b]),
                       "total2": len(container2_guts[b])}
-
-        bot.logger.info("Intersect has length %s",len(intersect))
-        bot.logger.info("Unique to 1: %s",len(unique1))
-        bot.logger.info("Unique to 2: %s",len(unique2))
         comparisons[b] = comparison 
 
     return comparisons
