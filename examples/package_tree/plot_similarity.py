@@ -4,6 +4,7 @@
 from singularity.views.trees import make_package_tree
 from singularity.analysis.compare import compare_packages
 from singularity.analysis.utils import get_packages
+import pickle
 
 # Compare your own data
 data = pickle.load(open('comparisons.pkl','rb'))['files.txt']
