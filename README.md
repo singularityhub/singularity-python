@@ -127,7 +127,7 @@ Do you have sets of containers or packages, and want to cluster them based on si
 
 ![examples/package_tree/docker-os.png](examples/package_tree/docker-os.png)
 
-We have examples for both deriving scores and producing plots like the above, see [examples/package_tree/docker-os.png](examples/package_tree/docker-os.png)
+We have examples for both deriving scores and producing plots like the above, see [examples/package_tree](examples/package_tree)
 
 
 #### Container Similarity Tree
