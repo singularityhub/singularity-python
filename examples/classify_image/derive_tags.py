@@ -7,7 +7,7 @@ os.environ['MESSAGELEVEL'] = 'CRITICAL'
 
 from singularity.analysis.classify import get_tags
 
-package = "python:3.6.0.img.zip"
+image_package = "python:3.6.0.img.zip"
 
 # The algorithm works as follows:
 #      1) first compare package to set of base OS (provided with shub)
@@ -16,6 +16,6 @@ package = "python:3.6.0.img.zip"
 #      4) return search_folders as tags
 
 # Default tags will be returned as software in "bin"
-tags = get_tags(package=package)
+tags = get_tags(image_package=image_package)
 
 # Most similar OS found to be %s debian:7.11
