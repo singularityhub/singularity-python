@@ -22,7 +22,7 @@ def get_parser():
 
     # Two images, for similarity function
     parser.add_argument("--images", dest='images', 
-                        help="images, separated by commas (for use with --simtree)", 
+                        help="images, separated by commas (for use with --simtree and --subtract", 
                         type=str, default=None)
 
     # Does the user want to have verbose logging?
@@ -38,6 +38,21 @@ def get_parser():
     # Does the user want to package an image?
     parser.add_argument('--package', dest="package", 
                         help="package a singularity container for singularity hub", 
+                        default=False, action='store_true')
+
+    # Does the user want to estimate the os?
+    parser.add_argument('--os', dest="os", 
+                        help="estimate the operating system of your container.", 
+                        default=False, action='store_true')
+
+    # Does the user want to estimate the os?
+    parser.add_argument('--oscalc', dest="oscalc", 
+                        help="calculate similarity score for your container vs. docker library OS.", 
+                        default=False, action='store_true')
+
+    # Does the user want to get tags for an image?
+    parser.add_argument('--tags', dest="tags", 
+                        help="retrieve list of software tags for an image, itself minus it's base", 
                         default=False, action='store_true')
 
     # View the guts of a Singularity image
@@ -115,6 +130,24 @@ def main():
                make_tree(image)
                clean_up(image,existed)
 
+           # The user wants to estimate the os
+           elif args.os == True:
+               from singularity.analysis.classify import estimate_os
+               estimated_os = estimate_os(container=image)
+               print(estimated_os)
+
+           # The user wants to get a list of all os
+           elif args.oscalc == True:
+               from singularity.analysis.classify import estimate_os
+               estimated_os = estimate_os(container=image,return_top=False)
+               print(estimated_os["SCORE"].to_dict())
+
+           # The user wants to get a list of tags
+           elif args.tags == True:
+               from singularity.analysis.classify import get_tags
+               tags = get_tags(container=image)
+               print(tags)
+
 
            # The user wants to package the image
            elif args.package == True:
@@ -156,7 +189,7 @@ def main():
 
 
            if args.simcalc == True:
-               from singularity.views import calculate_similarity
+               from singularity.analysis.compare import calculate_similarity
                score = calculate_similarity(image1,image2,by="files.txt")
                print(score["files.txt"])
 

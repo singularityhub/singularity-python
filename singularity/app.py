@@ -1,4 +1,4 @@
-from singularity.views import (
+from singularity.views.trees import (
     container_tree, 
     container_similarity,
     container_difference

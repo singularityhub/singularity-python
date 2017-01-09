@@ -1,22 +1,20 @@
-#!/bin/sh
-sudo apt-get update &&
+#!/bin/bash
+# This install script assumes using an image with Singularity software installed
+sudo apt-get update > /tmp/.install-log
 sudo apt-get -y install git \
-                        build-essential \
-                        libtool \
-                        autotools-dev \
-                        automake \
-                        autoconf \
-                        python3-pip
-
-# Install Singularity from Github
-cd /tmp && git clone http://www.github.com/singularityware/singularity &&
-   cd singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
+                   build-essential \
+                   libtool \
+                   autotools-dev \
+                   automake \
+                   autoconf \
+                   python3-pip >> /tmp/.install-log
 
 # Pip3 installs
 sudo pip3 install --upgrade pip &&
 sudo pip3 install --upgrade google-api-python-client &&
 sudo pip3 install --upgrade google &&
-sudo pip3 install oauth2client==3.0.0 gitpython singularity
+sudo pip3 install oauth2client==3.0.0 gitpython 
+sudo pip3 install singularity --upgrade
 
 # Main running script
 python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1
