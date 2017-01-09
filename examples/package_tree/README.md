@@ -1,6 +1,16 @@
 # How similar are my operating systems?
 A question that has spun out of one of my projects that I suspect would be useful in many applications but hasn't been fully explored is comparison of operating systems. If you think about it, for the last few decades we've generated many methods for comparing differences between files. We have md5 sums to make sure our downloads didn't poop out, and command line tools to quickly look for differences. We now have to take this up a level, because our new level of operation isn't on a single "file", it's on an entire operating system. It's not just your Mom's computer, it's a container-based thing (e.g., Docker or Singularity that contains a base OS plus additional libraries and packages and then the special sauce, the application or analysis that the container was birthed into existence to carry out. It's not good enough to have message storage places to dump these containers, we need simple and consistent methods to computationally compare them, organize them, and let us explore them.
 
+We have provided this simple method in Singularity Python, which can produce plots like the following
+
+## Cluster Docker (Library) Images based on Base OS
+![docker-os.library](docker-os.png)
+
+## Cluster Base OS Versions
+![docker-os.png](docker-os.png)
+
+The derivation of the scores can be seen in [calculate_similarity.py](calculate_similarity.py), and the simple plot in [plot_similarity.py](plot_similarity.py).
+
 
 # Similarity of File Paths
 When I think about it, an entire understanding of an "image" (or more generally, a computer or operating system) comes down to the programs installed, and files included. Yes, there might be various environmental variables, but I would hypothesize that the environmental variables found in an image have a rather strong correlation with the software installed, and we would do pretty well to understand the guts of an image from the body without the electricity flowing through it. This would need to be tested, but not quite yet.

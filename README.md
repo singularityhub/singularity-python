@@ -32,8 +32,8 @@ After installation, you should be able to run `shub` on the command line, withou
 
       $  shub --help
 	usage: shub [-h] [--image IMAGE] [--images IMAGES] [--debug]
-		    [--outfolder OUTFOLDER] [--package] [--tree] [--simtree]
-		    [--subtract] [--simcalc] [--size SIZE]
+		    [--outfolder OUTFOLDER] [--package] [--os] [--oscalc] [--tags]
+		    [--tree] [--simtree] [--subtract] [--simcalc] [--size SIZE]
 
 	Singularity Hub command line tool
 
@@ -41,16 +41,22 @@ After installation, you should be able to run `shub` on the command line, withou
 	  -h, --help            show this help message and exit
 	  --image IMAGE         full path to singularity image (for use with --package
 		                and --tree)
-	  --images IMAGES       images, separated by commas (for use with --simtree)
+	  --images IMAGES       images, separated by commas (for use with --simtree
+		                and --subtract
 	  --debug               use verbose logging to debug.
 	  --outfolder OUTFOLDER
 		                full path to folder for output, stays in tmp (or pwd)
 		                if not specified
 	  --package             package a singularity container for singularity hub
+	  --os                  estimate the operating system of your container.
+	  --oscalc              calculate similarity score for your container vs.
+		                docker library OS.
+	  --tags                retrieve list of software tags for an image, itself
+		                minus it's base
 	  --tree                view the guts of an singularity image (use --image)
 	  --simtree             view common guts between two images (use --images)
-	  --subtract            subtract one container image from the second to make
-                                a difference tree (use --images first,subtract)
+	  --subtract            subtract one container image from the second to make a
+		                difference tree (use --images first,subtract)
 	  --simcalc             calculate similarity (number) between images based on
 		                file contents.
 	  --size SIZE           If using Docker or shub image, you can change size
@@ -58,36 +64,38 @@ After installation, you should be able to run `shub` on the command line, withou
 
 
 
-### Package your container
+### Classify your container
+Singularity python provides functions for quickly assessing the base operating system of your container, retrieving a list of software tags that are relevant when this base is subtracted, and getting similarity scores of your container to a library of base software.
 
-A package is a zipped up file that contains the image, the singularity runscript as `runscript`, a `VERSION` file, and a list of files `files.txt` and folders `folders.txt` in the container. 
+#### Estimate the OS
 
-![img/singularity-package.png](img/singularity-package.png)
+You can do this on the command line as follows:
 
-The example package can be [downloaded for inspection](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img.zip), as can the [image used to create it](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img). This is one of the drivers underlying [singularity hub](http://www.singularity-hub.org) (under development).
+      shub --image docker://python:latest --os
+      [sudo] password for vanessa
+      Most similar OS found to be  debian:7.11
+      debian:7.11
 
-  - **files.txt** and **folders.txt**: are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. These files also are used to generate interactive visualizations, and calculate similarity between containers.
-  - **VERSION**: is a text file with one line, an md5 hash generated for the image when it was packaged. 
-  - **{{image}}.img**: is of course the original singularity container (usually a .img file)
-
-First, go to where you have some images:
-
-      ls
-      ubuntu.img
-      
-
-You can now use the `shub` command line tool to package your image. Note that you must have [singularity installed](https://singularityware.lbl.gov/install-linux), and depending on the function you use, you will likely need to use sudo. We can use the `--package` argument to package our image:
-
-      shub --image ubuntu.img --package
+or to do this from within Python, see the [provided example](examples/classify_image/estimate_os.py). From within python, you can export the sudopw as the environmental variable "pancakes" and it won't need to ask. This is not ideal, but it's required for now since we are using Singularity to export the image. This will likely be changed soon.
 
 
-If no output folder is specified, the resulting image (named in the format `ubuntu.img.zip` will be output in the present working directory. You can also specify an output folder:
+#### Get software tags
+Singularity Hub uses a simple algorithm to obtain a likely list of software that is important to your image. It assumes that (most) core installed software is in a folder called `bin`, and returns the list of these files with the estimated base image subtracted. You can do this as follows:
 
-      shub --image ubuntu.img --package --outfolder /tmp
 
-For the package command, you will need to put in your password to grant sudo priviledges, as packaging requires using the singularity `export` functionality.
+      shub --image docker://python:latest --tags
+    
 
-For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
+We also provide an [example for Python](examples/classify_image/derive_tags.py). If you do this programatically, you can change the folder(s) that are included, meaning that you could get a custom list of software (eg, libraries in `lib`, or python packages in `site-packages`).
+
+
+#### Compare to base OS
+If you want to get a complete list of scores for your image against a core set of latest [docker-os](singularity/analysis/packages/docker-os) images:
+
+      shub --image docker://python:latest --oscalc
+
+
+or again see [this example](examples/classify_image/estimate_os.py) for doing this from within python.
 
 
 ### View the inside of a container
@@ -113,6 +121,14 @@ An [interactive demo](https://singularityware.github.io/singularity-python/examp
 
 
 ### Visualize Containers
+
+#### Container Similarity Clustering
+Do you have sets of containers or packages, and want to cluster them based on similarities?
+
+![examples/package_tree/docker-os.png](examples/package_tree/docker-os.png)
+
+We have examples for both deriving scores and producing plots like the above, see [examples/package_tree/docker-os.png](examples/package_tree/docker-os.png)
+
 
 #### Container Similarity Tree
 
@@ -182,6 +198,38 @@ We can calculate similarity of images based on the file content inside. For an e
       $ shub --images /home/vanessa/Desktop/ubuntu.img,/home/vanessa/Desktop/ubuntu.img --simcalc
       
 and the same applies for specification of Docker images, as in the previous example. Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. 
+
+
+
+### Package your container
+The driver of much of the above is the simple container package. A package is a zipped up file that contains the image, the singularity runscript as `runscript`, a `VERSION` file, and a list of files `files.txt` and folders `folders.txt` in the container. 
+
+![img/singularity-package.png](img/singularity-package.png)
+
+The example package can be [downloaded for inspection](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img.zip), as can the [image used to create it](http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img). This is one of the drivers underlying [singularity hub](http://www.singularity-hub.org) (under development).
+
+  - **files.txt** and **folders.txt**: are simple text file lists with paths in the container, and this choice is currently done to provide the rawest form of the container contents. These files also are used to generate interactive visualizations, and calculate similarity between containers.
+  - **VERSION**: is a text file with one line, an md5 hash generated for the image when it was packaged. 
+  - **{{image}}.img**: is of course the original singularity container (usually a .img file)
+
+First, go to where you have some images:
+
+      ls
+      ubuntu.img
+      
+
+You can now use the `shub` command line tool to package your image. Note that you must have [singularity installed](https://singularityware.lbl.gov/install-linux), and depending on the function you use, you will likely need to use sudo. We can use the `--package` argument to package our image:
+
+      shub --image ubuntu.img --package
+
+
+If no output folder is specified, the resulting image (named in the format `ubuntu.img.zip` will be output in the present working directory. You can also specify an output folder:
+
+      shub --image ubuntu.img --package --outfolder /tmp
+
+For the package command, you will need to put in your password to grant sudo priviledges, as packaging requires using the singularity `export` functionality.
+
+For more details, and a walkthrough with sample data, please see [examples/package_image](examples/package_image)
 
 
 

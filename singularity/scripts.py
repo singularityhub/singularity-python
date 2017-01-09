@@ -40,6 +40,21 @@ def get_parser():
                         help="package a singularity container for singularity hub", 
                         default=False, action='store_true')
 
+    # Does the user want to estimate the os?
+    parser.add_argument('--os', dest="os", 
+                        help="estimate the operating system of your container.", 
+                        default=False, action='store_true')
+
+    # Does the user want to estimate the os?
+    parser.add_argument('--oscalc', dest="oscalc", 
+                        help="calculate similarity score for your container vs. docker library OS.", 
+                        default=False, action='store_true')
+
+    # Does the user want to get tags for an image?
+    parser.add_argument('--tags', dest="tags", 
+                        help="retrieve list of software tags for an image, itself minus it's base", 
+                        default=False, action='store_true')
+
     # View the guts of a Singularity image
     parser.add_argument('--tree', dest='tree', 
                         help="view the guts of an singularity image (use --image)", 
@@ -101,11 +116,6 @@ def main():
        # If we are given an image, ensure full path
        if args.image != None:
 
-           # Exit if the image cannot be found
-           if os.path.exists(args.image) == False:
-               print("Cannot find image. Exiting.")
-               sys.exit(1)
-
            image,existed = get_image(args.image,
                                      return_existed=True,
                                      size=args.size)
@@ -119,6 +129,24 @@ def main():
                from singularity.app import make_tree
                make_tree(image)
                clean_up(image,existed)
+
+           # The user wants to estimate the os
+           elif args.os == True:
+               from singularity.analysis.classify import estimate_os
+               estimated_os = estimate_os(container=image)
+               print(estimated_os)
+
+           # The user wants to get a list of all os
+           elif args.oscalc == True:
+               from singularity.analysis.classify import estimate_os
+               estimated_os = estimate_os(container=image,return_top=False)
+               print(estimated_os["SCORE"].to_dict())
+
+           # The user wants to get a list of tags
+           elif args.tags == True:
+               from singularity.analysis.classify import get_tags
+               tags = get_tags(container=image)
+               print(tags)
 
 
            # The user wants to package the image
