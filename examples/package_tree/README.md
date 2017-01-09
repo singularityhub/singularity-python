@@ -4,7 +4,7 @@ A question that has spun out of one of my projects that I suspect would be usefu
 We have provided this simple method in Singularity Python, which can produce plots like the following
 
 ## Cluster Docker (Library) Images based on Base OS
-![docker-os.library](docker-os.png)
+![docker-library.png](docker-library.png)
 
 ## Cluster Base OS Versions
 ![docker-os.png](docker-os.png)
