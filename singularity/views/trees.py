@@ -206,7 +206,7 @@ def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None):
     :returns a plot that can be saved with savefig
     '''
     if not isinstance(matrix,pandas.DataFrame):
-        bot.log.info("No pandas DataFrame (matrix) of similarities defined, will use default.")
+        bot.logger.info("No pandas DataFrame (matrix) of similarities defined, will use default.")
         matrix = compare_packages()['files.txt']
         title = 'Docker Library Similarity to Base OS'
 
