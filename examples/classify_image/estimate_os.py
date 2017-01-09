@@ -12,5 +12,3 @@ estimated_os = estimate_os(package=package)
 
 # We can also get the whole list and values
 os_similarity = estimate_os(package=package,return_top=False)
-
-

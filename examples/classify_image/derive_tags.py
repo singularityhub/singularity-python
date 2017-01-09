@@ -19,4 +19,3 @@ package = "python:3.6.0.img.zip"
 tags = get_tags(package=package)
 
 # Most similar OS found to be %s debian:7.11
-
