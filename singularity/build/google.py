@@ -108,7 +108,7 @@ def list_bucket(bucket,storage_service):
 
 def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
               repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
-              padding=None,logfile=None):
+              padding=None,logfile=None,logging_url=None):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
