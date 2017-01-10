@@ -13,7 +13,8 @@ sudo apt-get -y install git \
 sudo pip3 install --upgrade pip &&
 sudo pip3 install --upgrade google-api-python-client &&
 sudo pip3 install --upgrade google &&
-sudo pip3 install oauth2client==3.0.0 gitpython 
+sudo pip3 install oauth2client==3.0.0 
+sudo pip3 install gitpython 
 sudo pip3 install singularity --upgrade
 
 # Main running script
