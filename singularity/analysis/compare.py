@@ -32,6 +32,49 @@ import zipfile
 # CONTAINER COMPARISONS ###########################################################
 ###################################################################################
 
+def container_similarity_vector(container1=None,packages_set=None,by=None,custom_set=None):
+    '''container similarity_vector is similar to compare_packages, but intended
+    to compare a container object (singularity image or singularity hub container)
+    to a list of packages. If packages_set is not provided, the default used is 
+    'docker-os'. This can be changed to 'docker-library', or if the user wants a custom
+    list, should define custom_set.
+    :param container1: singularity image or singularity hub container.
+    :param packages_set: a name of a package set, provided are docker-os and docker-library
+    :param custom_set: a list of package files, used first if provided.
+    :by: metrics to compare by (files.txt and or folders.txt)
+    ''' 
+    if custom_set == None:
+        if packages_set == None:
+            packages_set = get_packages('docker-os')
+    else:
+        packages_set = custom_set
+
+    if by == None:
+        by = ['files.txt']
+
+    if not isinstance(by,list):
+        by = [by]
+    if not isinstance(packages_set,list):
+        packages_set = [packages_set]
+
+    comparisons = dict()
+
+    for b in by:
+        bot.logger.debug("Starting comparisons for %s",b)
+        df = pandas.DataFrame(columns=packages_set)
+        for package1 in packages_set:
+            sim = calculate_similarity(container1=container1,
+                                       image_package2=package1,
+                                       by=b)[b]
+           
+            name1 = os.path.basename(package1).replace('.img.zip','')
+            bot.logger.debug("container vs. %s: %s" %(name1,sim))
+            df.loc["container",package2] = sim
+        df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]
+        comparisons[b] = df
+    return comparisons
+
+
 def compare_containers(container1=None,container2=None,by=None,
                        image_package1=None,image_package2=None):
     '''compare_containers will generate a data structure with common and unique files to
@@ -48,7 +91,7 @@ def compare_containers(container1=None,container2=None,by=None,
         by = ["files.txt"]
     if not isinstance(by,list):
         by = [by]
- 
+
     # Get files and folders for each
     container1_guts = get_container_contents(gets=by,
                                              split_delim="\n",
@@ -111,11 +154,12 @@ def calculate_similarity(container1=None,container2=None,image_package1=None,
 # PACKAGE COMPARISONS #############################################################
 ###################################################################################
 
-
 def compare_packages(packages_set1=None,packages_set2=None,by=None):
     '''compare_packages will compare one image or package to one image or package. If
     the folder isn't specified, the default singularity packages (included with install)
-    will be used (os vs. docker library)
+    will be used (os vs. docker library). Images will take preference over packages
+    :param packages_set1: a list of package files not defined uses docker-library
+    :param packages_set2: a list of package files, not defined uses docker-os
     :by: metrics to compare by (files.txt and or folders.txt)
     ''' 
     if packages_set1 == None:

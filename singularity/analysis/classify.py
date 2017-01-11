@@ -14,8 +14,10 @@ import requests
 from singularity.logman import bot
 from singularity.analysis.compare import (
     compare_packages,
-    compare_containers
+    compare_containers,
+    container_similarity_vector
 )
+
 from singularity.analysis.utils import get_package_base
 from singularity.package import package as make_package
 from singularity.utils import (
@@ -56,11 +58,9 @@ def get_diff(container=None,image_package=None,sudopw=None):
       3) organize custom files into dict based on folder name
 
     '''
-    if image_package == None:
-        image_package = make_package(container,remove_image=True,sudopw=sudopw)
     
     # Find the most similar os
-    most_similar = estimate_os(image_package=image_package,sudopw=sudopw)    
+    most_similar = estimate_os(image_package=image_package,container=container,sudopw=sudopw)    
     similar_package = "%s/docker-os/%s.img.zip" %(get_package_base(),most_similar)
 
     comparison = compare_containers(image_package1=image_package,
@@ -87,7 +87,7 @@ def get_diff(container=None,image_package=None,sudopw=None):
 
 
 ###################################################################################
-# TAGGING #########################################################################
+# OPERATING SYSTEMS ###############################################################
 ###################################################################################
 
 
@@ -96,17 +96,34 @@ def estimate_os(container=None,image_package=None,sudopw=None,return_top=True):
     operating system images, and return the docker image most similar
     :param return_top: return only the most similar (estimated os) default True
     :param image_package: the package created from the image to estimate.
+    FIGURE OUT WHAT DATA WE NEED
     '''
     if image_package == None:
-        image_package = make_package(container,remove_image=True,sudopw=sudopw)
-    
-    comparison = compare_packages(packages_set1=[image_package])['files.txt'].transpose()
+
+        SINGULARITY_HUB = os.environ.get('SINGULARITY_HUB',"False")
+
+        # Visualization deployed local or elsewhere
+        if SINGULARITY_HUB == "False":
+            image_package = make_package(container,remove_image=True,sudopw=sudopw)
+            comparison = compare_packages(packages_set1=[image_package])['files.txt'].transpose()
+        else:
+            comparison = container_similarity_vector(container1=container)['files.txt'].transpose()
+
+    else:
+        comparison = compare_packages(packages_set1=[image_package])['files.txt'].transpose()
+
     comparison.columns = ['SCORE']
     most_similar = comparison['SCORE'].idxmax()
     print("Most similar OS found to be ", most_similar)    
     if return_top == True:
         return most_similar
     return comparison
+
+
+
+###################################################################################
+# TAGGING #########################################################################
+###################################################################################
 
 
 def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,diff=None,

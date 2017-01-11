@@ -50,6 +50,11 @@ def get_parser():
                         help="calculate similarity score for your container vs. docker library OS.", 
                         default=False, action='store_true')
 
+    # Does the user want to estimate the os?
+    parser.add_argument('--osplot', dest="osplot", 
+                        help="plot similarity scores for your container vs. docker library OS.", 
+                        default=False, action='store_true')
+
     # Does the user want to get tags for an image?
     parser.add_argument('--tags', dest="tags", 
                         help="retrieve list of software tags for an image, itself minus it's base", 
@@ -148,6 +153,11 @@ def main():
                tags = get_tags(container=image)
                print(tags)
 
+           # The user wants to plot image vs. the docker os
+           elif args.osplot == True:
+               from singularity.app import plot_os_sims
+               plot_os_sims(image)
+               clean_up(image,existed)
 
            # The user wants to package the image
            elif args.package == True:

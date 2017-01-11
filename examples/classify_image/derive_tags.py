@@ -5,7 +5,10 @@
 import os
 os.environ['MESSAGELEVEL'] = 'CRITICAL'
 
-from singularity.analysis.classify import get_tags
+from singularity.analysis.classify import (
+    get_tags,
+    get_diff
+)
 
 image_package = "python:3.6.0.img.zip"
 
@@ -18,4 +21,12 @@ image_package = "python:3.6.0.img.zip"
 # Default tags will be returned as software in "bin"
 tags = get_tags(image_package=image_package)
 
+# We can also get the raw "diff" between the image and it's base
+# which is usable in other functions (and we don't have to calc 
+# it again)
+diff = get_diff(image_package=image_package)
+
+# We can specify other folders of interest
+folders = ['init','init.d','bin','systemd']
+tags = get_tags(search_folders=folders,diff=diff)
 # Most similar OS found to be %s debian:7.11

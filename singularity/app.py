@@ -4,6 +4,8 @@ from singularity.views.trees import (
     container_difference
 )
 
+from singularity.analysis.classify import estimate_os
+
 from flask import (
     Flask, 
     render_template, 
@@ -26,7 +28,8 @@ class SingularityServer(Flask):
 
         # Set up temporary directory on start of application
         self.tmpdir = tempfile.mkdtemp()
-        self.viz = None # Holds the visualization
+        self.tree = None # Holds tree visualization data
+        self.sims = None  # Holds similarity score visualization data
         self.image = None
         self.images = None
         self.sudopw = None
@@ -40,38 +43,50 @@ app = SingularityServer(__name__)
 #api.add_resource(apiExperiments,'/experiments')
 #api.add_resource(apiExperimentSingle,'/experiments/<string:exp_id>')
 
+
+# BAR PLOTS TO COMPARE TO PACKAGES #################################
+@app.route('/container/os')
+def app_plot_os_sims():
+    if app.sims == None:
+         app.sims = estimate_os(container=app.image,
+                            sudopw=app.sudopw,
+                            return_top=False)['SCORE'].to_dict()
+    container_name = os.path.basename(app.image).split(".")[0]
+    return render_template('similarity_scatter.html',sim_scores=app.sims,
+                                                     container_name=container_name)
+
 # INTERACTIVE CONTAINER EXPLORATION ################################
 
 @app.route('/container/tree')
 def app_container_tree():
     # The server will store the package name and result object for query
-    if app.viz == None:
-        app.viz = container_tree(app.image)
+    if app.tree == None:
+        app.tree = container_tree(app.image)
     container_name = os.path.basename(app.image).split(".")[0]
-    return render_template('container_tree.html',graph=app.viz['graph'],
-                                                 files=app.viz['files'],
+    return render_template('container_tree.html',graph=app.tree['graph'],
+                                                 files=app.tree['files'],
                                                  container_name=container_name)
     
 @app.route('/containers/subtract')
 def difference_tree():
     # The server will store the package name and result object for query
-    if app.viz == None:
-        app.viz = container_difference(app.images[0],app.images[1])
+    if app.tree == None:
+        app.tree = container_difference(app.images[0],app.images[1])
     container1_name,container2_name = get_container_names()
     title = "%s minus %s" %(container1_name,container2_name)
-    return render_template('container_tree.html',graph=app.viz['graph'],
-                                                 files=app.viz['files'],
+    return render_template('container_tree.html',graph=app.tree['graph'],
+                                                 files=app.tree['files'],
                                                  container_name=title)
 
 @app.route('/containers/similarity')
 def app_similar_tree():
     # The server will store the package name and result object for query
-    if app.viz == None:
-        app.viz = container_similarity(app.images[0],app.images[1])
+    if app.tree == None:
+        app.tree = container_similarity(app.images[0],app.images[1])
     container1_name,container2_name = get_container_names()
     title = "%s INTERSECT %s" %(container1_name,container2_name)
-    return render_template('container_tree.html',graph=app.viz['graph'],
-                                                 files=app.viz['files'],
+    return render_template('container_tree.html',graph=app.tree['graph'],
+                                                 files=app.tree['files'],
                                                  container_name=title)
 
 def get_container_names():
@@ -95,6 +110,18 @@ def make_tree(image,port=None,sudopw=None):
     print("It goes without saying. I suspect now it's not going.")
     webbrowser.open("http://localhost:%s/container/tree" %(port))
     app.run(host="0.0.0.0",debug=False,port=port)
+
+
+# Function to make bar chart to compare to os
+def plot_os_sims(image,port=None,sudopw=None):
+    app.image = image
+    app.sudopw = sudopw
+    if port==None:
+        port=8088
+    print("The not remembering is part of the disability, my dear fish.")
+    webbrowser.open("http://localhost:%s/container/os" %(port))
+    app.run(host="0.0.0.0",debug=False,port=port)
+
 
 # Function to make similar tree to compare images
 def make_sim_tree(image1,image2,port=None):

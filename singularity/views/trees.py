@@ -7,16 +7,6 @@ singularity views/trees.py: part of singularity package
 
 import json
 
-from matplotlib import pyplot as plt
-from scipy.cluster.hierarchy import (
-    dendrogram, 
-    linkage
-)
-
-from scipy.cluster.hierarchy import cophenet
-from scipy.spatial.distance import pdist
-import numpy as np
-
 from singularity.logman import bot
 
 from singularity.views.utils import get_container_contents
@@ -205,6 +195,15 @@ def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None):
     :param title: a title for the plot, if not defined, will be left out.
     :returns a plot that can be saved with savefig
     '''
+    from matplotlib import pyplot as plt
+    from scipy.cluster.hierarchy import (
+        dendrogram, 
+        linkage
+    )
+
+    from scipy.cluster.hierarchy import cophenet
+    from scipy.spatial.distance import pdist
+
     if not isinstance(matrix,pandas.DataFrame):
         bot.logger.info("No pandas DataFrame (matrix) of similarities defined, will use default.")
         matrix = compare_packages()['files.txt']

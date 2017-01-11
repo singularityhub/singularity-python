@@ -10,7 +10,7 @@ from singularity.api import (
     api_put
 )
 
-from singularity.build.utils import sniff_metadata
+from singularity.build.utils import sniff_extension
 
 from singularity.build.main import (
     run_build as run_build_main,
@@ -33,6 +33,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 import io
 import os
+import pickle
 import re
 import requests
 import sys
@@ -104,9 +105,10 @@ def list_bucket(bucket,storage_service):
     return objects
 
 
+
 def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
               repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
-              padding=None):
+              padding=None,logfile=None,logging_url=None):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
@@ -155,17 +157,23 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'size', 'value': size, 'return_text': True },
                 {'key': 'branch', 'value': branch, 'return_text': True },
                 {'key': 'spec_file', 'value': spec_file, 'return_text': True },
-                {'key': 'padding', 'value': padding, 'return_text': True }]
+                {'key': 'padding', 'value': padding, 'return_text': True },
+                {'key': 'logging_url', 'value': logging_url, 'return_text': True },
+                {'key': 'logfile', 'value': logfile, 'return_text': True }]
+
 
     # Obtain values from build
     params = get_build_params(metadata)
-
+    
     # Default spec file is Singularity
     if params['spec_file'] == None:
         params['spec_file'] = "Singularity"
-
+        
     if params['bucket_name'] == None:
         params['bucket_name'] = "singularity-hub"
+
+    if params['padding'] == None:
+        params['padding'] = 50
 
     output = run_build_main(build_dir=build_dir,
                             params=params)
@@ -173,7 +181,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     # Output includes:
     image_package = output['image_package']
     compressed_image = output['image']
-    metadata = output['metadata']    
+    metadata = output['metadata']  
+    params = output['params']  
 
     # Upload image package files to Google Storage
     if os.path.exists(image_package):
@@ -233,21 +242,16 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                         response_url=params['response_url'],
                         data=response)
 
+        # Dump final params, for logger to retrieve
+        passing_params = "/tmp/params.pkl"
+        pickle.dump(params,open(passing_params,'wb'))
 
 
-def finish_build(logfile=None,repo_url=None,bucket_name=None,commit=None,repo_id=None,
-                 logging_url=None,secret=None,token=None,verbose=True):
+
+def finish_build(verbose=True):
     '''finish_build will finish the build by way of sending the log to the same bucket.
-    :param build_dir: directory to do the build in. If not specified,
-    will use temporary.   
-    :param logfile: the logfile to send.
-    :param repo_url: the url to download the repo from
-    :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
-    :param commit: the commit to checkout. If none provided, will use most recent.
-    :param bucket_name: the name of the bucket to send files to
-    :param verbose: print out extra details as we go (default True)    
-    :param secret: a secret to match to the correct container
-    :param logging_url: the logging response url to send the response back to.
+    the params are loaded from the previous function that built the image, expected in
+    $HOME/params.pkl
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
@@ -256,25 +260,13 @@ def finish_build(logfile=None,repo_url=None,bucket_name=None,commit=None,repo_id
     if go == None:
         sys.exit(0)
 
-    # Get variables from the instance metadata API
-    metadata = [{'key': 'logging_url', 'value': logging_url, 'return_text': True },
-                {'key': 'repo_url', 'value': repo_url, 'return_text': False },
-                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
-                {'key': 'token', 'value': token, 'return_text': False },
-                {'key': 'commit', 'value': commit, 'return_text': True },
-                {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
-                {'key': 'secret', 'value': secret, 'return_text': True }, 
-                {'key': 'logfile', 'value': logfile, 'return_text': True }]
-
-    if bucket_name == None:
-        bucket_name = "singularity-hub"
-
-    # Obtain values from build
-    params = get_build_params(metadata)
+    # Load metadata
+    passing_params = "/tmp/params.pkl"
+    params = pickle.load(open(passing_params,'rb'))
 
     # Start the storage service, retrieve the bucket
     storage_service = get_storage_service()
-    bucket = get_bucket(storage_service,bucket_name)
+    bucket = get_bucket(storage_service,params['bucket_name'])
     image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
 
     # Upload the log file

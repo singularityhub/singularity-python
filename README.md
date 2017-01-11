@@ -51,6 +51,8 @@ After installation, you should be able to run `shub` on the command line, withou
 	  --os                  estimate the operating system of your container.
 	  --oscalc              calculate similarity score for your container vs.
 		                docker library OS.
+          --osplot              plot similarity scores for your container vs. docker
+                                library OS.
 	  --tags                retrieve list of software tags for an image, itself
 		                minus it's base
 	  --tree                view the guts of an singularity image (use --image)
@@ -94,8 +96,12 @@ If you want to get a complete list of scores for your image against a core set o
 
       shub --image docker://python:latest --oscalc
 
-
 or again see [this example](examples/classify_image/estimate_os.py) for doing this from within python.
+
+You can also generate a [dynamic plot](https://singularityware.github.io/singularity-python/examples/classify_image/) for this data:
+
+      shub --image docker://python:latest --osplot
+
 
 
 ### View the inside of a container

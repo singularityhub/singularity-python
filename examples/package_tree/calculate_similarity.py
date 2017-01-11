@@ -59,7 +59,7 @@ package_set2 = get_packages(family='docker-os')
 
 # Use your own input arguments...
 comparisons = compare_packages(packages_set1=package_set1,
-                               packages_set2=packge_set2,
+                               packages_set2=package_set2,
                                by="folders.txt") 
 
 # Or use defaults
