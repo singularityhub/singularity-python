@@ -243,7 +243,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                         data=response)
 
         # Dump final params, for logger to retrieve
-        passing_params = "%s/params.pkl" %os.environ['HOME']
+        passing_params = "/tmp/params.pkl"
         pickle.dump(params,open(passing_params,'wb'))
 
 
@@ -261,7 +261,7 @@ def finish_build(verbose=True):
         sys.exit(0)
 
     # Load metadata
-    passing_params = "%s/params.pkl" %os.environ['HOME']
+    passing_params = "/tmp/params.pkl"
     params = pickle.load(open(passing_params,'rb'))
 
     # Start the storage service, retrieve the bucket
