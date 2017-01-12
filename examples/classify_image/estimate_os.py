@@ -12,3 +12,6 @@ estimated_os = estimate_os(image_package=image_package)
 
 # We can also get the whole list and values
 os_similarity = estimate_os(image_package=image_package,return_top=False)
+
+# If you want to sort
+os_similarity.sort_values(by=['SCORE'])

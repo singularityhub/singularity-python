@@ -48,9 +48,11 @@ app = SingularityServer(__name__)
 @app.route('/container/os')
 def app_plot_os_sims():
     if app.sims == None:
-         app.sims = estimate_os(container=app.image,
+         sims = estimate_os(container=app.image,
                             sudopw=app.sudopw,
-                            return_top=False)['SCORE'].to_dict()
+                            return_top=False)
+         sims = sims.sort_values(by=['SCORE'])
+         app.sims = sims['SCORE'].to_dict()
     container_name = os.path.basename(app.image).split(".")[0]
     return render_template('similarity_scatter.html',sim_scores=app.sims,
                                                      container_name=container_name)

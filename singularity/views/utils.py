@@ -58,16 +58,22 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
      
         guts = load_package(image_package,get=gets)
         shutil.rmtree(tmpdir)
-        return guts
 
     # Visualization deployed by singularity hub
     else:   
-        for sfile in container.files:
-            for gut_key in gets:        
-                if os.path.basename(sfile['name']) == gut_key:
-                    if split_delim == None:
-                        guts[gut_key] = requests.get(sfile['mediaLink']).text
-                    else:
-                        guts[gut_key] = requests.get(sfile['mediaLink']).text.split(split_delim)
+        
+        # user has provided a package, but not a container
+        if container == None:
+            guts = load_package(image_package,get=gets)
+
+        # user has provided a container, but not a package
+        else:
+            for sfile in container.files:
+                for gut_key in gets:        
+                    if os.path.basename(sfile['name']) == gut_key:
+                        if split_delim == None:
+                            guts[gut_key] = requests.get(sfile['mediaLink']).text
+                        else:
+                            guts[gut_key] = requests.get(sfile['mediaLink']).text.split(split_delim)
 
     return guts

@@ -1,0 +1,141 @@
+<meta charset="utf-8">
+<style> /* set the CSS */
+
+.bar { fill: steelblue; }
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: orange;
+}
+
+.bar:hover {
+  fill: orangered ;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.d3-tip {
+   line-height: 1;
+   padding: 6px;
+   background: rgba(0, 0, 0, 0.8);
+   color: #fff;
+   border-radius: 4px;
+   font-size: 12px;
+}
+ 
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+    box-sizing: border-box;
+    display: inline;
+    font-size: 10px;
+    width: 100%;
+    line-height: 1;
+    color: rgba(0, 0, 0, 0.8);
+    content: "\25BC";
+    position: absolute;
+    text-align: center;
+}
+ 
+/* Style northward tooltips specifically */
+.d3-tip.n:after {
+    margin: -2px 0 0 0;
+    top: 100%;
+    left: 0;
+}
+</style>
+<body>
+	<h2>{{ container_name }} Similarity to Docker OS</h2>
+<!-- load the d3.js library -->    	
+<script src="//d3js.org/d3.v4.min.js"></script>
+<script src="https://rawgit.com/VACLab/d3-tip/master/d3-tip.js"></script>
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom,
+    axis_height = height - 100;
+
+// set the ranges
+var x = d3.scaleBand()
+          .range([0, width])
+          .padding(0.1);
+
+var y = d3.scaleLinear()
+          .range([height, 0]);
+
+// Setup the tool tip.  Note that this is just one example, and that many styling options are available.
+// See original documentation for more details on styling: http://labratrevenge.com/d3-tip/
+var tool_tip = d3.tip()
+      .attr("class", "d3-tip")
+      .offset([-8, 0])
+      .html(function(d) { return "Similarity Score: " + d.score; });
+    
+// acppend the svg object to the body of the page
+// append a 'group' element to 'svg'
+// moves the 'group' element to the top left margin
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom + 200)
+  .append("g")
+    .attr("transform", 
+          "translate(" + margin.left + "," + margin.top + ")");
+
+  svg.call(tool_tip);          
+  raw = {{ sim_scores | safe }};
+  data = [];
+
+  // Format the data
+  for (var os in raw) {
+    if (raw.hasOwnProperty(os)) {
+      var new_os = {dist:os, score: parseFloat(raw[os]).toFixed(8)};
+      data.push(new_os);
+    }
+  }
+
+  // Scale the range of the data in the domains
+  x.domain(data.map(function(d) { return d.dist; }));
+  y.domain([0.0, 1.0]);
+
+  // append the rectangles for the bar chart
+  svg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+      .attr("class", "bar")
+      .attr("x", function(d) { return x(d.dist); })
+      .attr("width", 15)
+      .attr("y", function(d) { return y(d.score); })
+      .attr("height", function(d) { return height - y(d.score); })
+      .on('mouseover', tool_tip.show)
+      .on('mouseout', tool_tip.hide)
+
+  // add the x Axis
+  svg.append("g")
+      .classed('axis',true)
+      .attr("transform", "translate(0," + height + ")")
+      .call(d3.axisBottom(x))
+      .selectAll("text")	
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", "rotate(-65)");
+
+  // add the y Axis
+  svg.append("g")
+      .call(d3.axisLeft(y));
+
+
+</script>
+</body>
