@@ -7,5 +7,6 @@ selenium
 simplejson
 scikit-learn
 pygments
-oauth2client==3.0
 google-api-python-client
+google
+oauth2client==3.0
