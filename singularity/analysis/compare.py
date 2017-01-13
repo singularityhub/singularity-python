@@ -62,12 +62,12 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     for b in by:
         bot.logger.debug("Starting comparisons for %s",b)
         df = pandas.DataFrame(columns=packages_set)
-        for package1 in packages_set:
+        for package2 in packages_set:
             sim = calculate_similarity(container1=container1,
-                                       image_package2=package1,
+                                       image_package2=package2,
                                        by=b)[b]
            
-            name1 = os.path.basename(package1).replace('.img.zip','')
+            name1 = os.path.basename(package2).replace('.img.zip','')
             bot.logger.debug("container vs. %s: %s" %(name1,sim))
             df.loc["container",package2] = sim
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]

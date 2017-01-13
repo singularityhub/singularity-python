@@ -65,6 +65,16 @@ def get_bucket(storage_service,bucket_name):
     return req.execute()
 
 
+def delete_object(storage_service,bucket_name,object_name):
+    '''delete_file will delete a file from a bucket
+    :param storage_service: the service obtained with get_storage_service
+    :param bucket_name: the name of the bucket (eg singularity-hub)
+    :param object_name: the "name" parameter of the object.
+    '''
+    return storage_service.objects().delete(bucket=bucket_name,
+                                            object=object_name).execute()
+
+
 def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
     will create it if not found. If folder is found or created, the metadata is
