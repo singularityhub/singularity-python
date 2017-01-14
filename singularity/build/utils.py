@@ -48,7 +48,7 @@ def test_container(image_path):
     work in most linux.
     :param image_path: path to the container image
     '''
-    testing_command = ["singularity", "exec", image, 'echo pancakemania']
+    testing_command = ["singularity", "exec", image_path, 'echo pancakemania']
     output = Popen(testing_command,stderr=STDOUT,stdout=PIPE)
     t = output.communicate()[0],output.returncode
     result = {'message':t[0],
