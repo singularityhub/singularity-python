@@ -20,13 +20,17 @@ from singularity.utils import (
 
 import sys
 
-import subprocess
+from subprocess import (
+    Popen,
+    PIPE,
+    STDOUT
+)
 
 import tempfile
 import zipfile
 
 ######################################################################################
-# Retry Functions
+# Testing/Retry Functions
 ######################################################################################
 
 def stop_if_result_none(result):
@@ -35,6 +39,21 @@ def stop_if_result_none(result):
     '''
     do_retry = result is not None
     return do_retry
+
+
+def test_container(image_path):
+    '''test_container is a simple function to send a command to a container, and 
+    return the status code and any message run for the test. It does it by
+    way of sending an echo of some message, which (I think?) should
+    work in most linux.
+    :param image_path: path to the container image
+    '''
+    testing_command = ["singularity", "exec", image, 'echo pancakemania']
+    output = Popen(testing_command,stderr=STDOUT,stdout=PIPE)
+    t = output.communicate()[0],output.returncode
+    result = {'message':t[0],
+              'return_code':t[1]}
+    return result
 
 
 ######################################################################################

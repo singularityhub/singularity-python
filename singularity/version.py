@@ -1,4 +1,4 @@
-__version__ = "0.93"
+__version__ = "0.95"
 AUTHOR = 'Vanessa Sochat'
 AUTHOR_EMAIL = 'vsochat@stanford.edu'
 NAME = 'singularity'
