@@ -36,6 +36,7 @@ import os
 import pickle
 import re
 import requests
+from retrying import retry
 import sys
 import tempfile
 import time
@@ -47,24 +48,35 @@ shub_api = "http://www.singularity-hub.org/api"
 from singularity.logman import bot
 
 ##########################################################################################
-# GOOGLE STORAGE API #####################################################################
+# GOOGLE GENERAL API #####################################################################
 ##########################################################################################
 
-def get_storage_service():
+def get_google_service(service_type=None,version=None):
+    '''
+    get_url will use the requests library to get a url
+    :param service_type: the service to get (default is storage)
+    :param version: version to use (default is v1)
+    '''
+    if service_type == None:
+        service_type = "storage"
+    if version == None:
+        version = "v1"
+
     credentials = GoogleCredentials.get_application_default()
-    return build('storage', 'v1', credentials=credentials)
+    return build(service_type, version, credentials=credentials) 
 
 
-def get_compute_service():
-    credentials = GoogleCredentials.get_application_default()
-    return build('compute', 'v1', credentials=credentials)
+##########################################################################################
+# GOOGLE STORAGE API #####################################################################
+##########################################################################################
     
-
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def get_bucket(storage_service,bucket_name):
     req = storage_service.buckets().get(bucket=bucket_name)
     return req.execute()
 
 
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def delete_object(storage_service,bucket_name,object_name):
     '''delete_file will delete a file from a bucket
     :param storage_service: the service obtained with get_storage_service
@@ -75,6 +87,7 @@ def delete_object(storage_service,bucket_name,object_name):
                                             object=object_name).execute()
 
 
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
     will create it if not found. If folder is found or created, the metadata is
@@ -103,6 +116,7 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     return request.execute()
 
 
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def list_bucket(bucket,storage_service):
     # Create a request to objects.list to retrieve a list of objects.        
     request = storage_service.objects().list(bucket=bucket['id'], 
@@ -183,7 +197,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         params['bucket_name'] = "singularity-hub"
 
     if params['padding'] == None:
-        params['padding'] = 50
+        params['padding'] = 200
 
     output = run_build_main(build_dir=build_dir,
                             params=params)
@@ -209,7 +223,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         bot.logger.info("Sending build files %s to storage",'\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
-        storage_service = get_storage_service()
+        storage_service = get_google_service() # default is "storage" "v1"
         bucket = get_bucket(storage_service,params["bucket_name"])
 
         # For each file, upload to storage
@@ -275,7 +289,7 @@ def finish_build(verbose=True):
     params = pickle.load(open(passing_params,'rb'))
 
     # Start the storage service, retrieve the bucket
-    storage_service = get_storage_service()
+    storage_service = get_google_service()
     bucket = get_bucket(storage_service,params['bucket_name'])
     image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
 

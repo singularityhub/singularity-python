@@ -6,7 +6,6 @@ utils.py: part of singularity package
 '''
 
 import collections
-from git import Repo
 import os
 import re
 import requests
@@ -313,5 +312,7 @@ def download_repo(repo_url,destination,commit=None):
     :param repo_url: the url of the repo to clone from
     :param destination: the full path to the destination for the repo
     '''
-    return Repo.clone_from(repo_url, destination)
+    command = "git clone %s %s" %(repo_url,destination)
+    os.system(command)
+    return destination
 
