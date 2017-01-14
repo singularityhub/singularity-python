@@ -6,7 +6,6 @@ utils.py: part of singularity package
 '''
 
 import collections
-from git import Repo
 import os
 import re
 import requests
