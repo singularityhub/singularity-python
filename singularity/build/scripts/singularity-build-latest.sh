@@ -7,8 +7,6 @@ sudo apt-get -y install git \
                    autotools-dev \
                    automake \
                    autoconf \
-                   debootstrap \
-                   yum \
                    python3-pip >> /tmp/.install-log
 
 # Pip3 installs
