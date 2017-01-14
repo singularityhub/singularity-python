@@ -2,6 +2,7 @@ flask
 flask-restful
 pandas
 requests
+retrying
 selenium
 simplejson
 scikit-learn

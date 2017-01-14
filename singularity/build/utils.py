@@ -25,6 +25,17 @@ import subprocess
 import tempfile
 import zipfile
 
+######################################################################################
+# Retry Functions
+######################################################################################
+
+def stop_if_result_none(result):
+    '''stop if result none will return True if we should not retry 
+    when result is none, False otherwise using retrying python package
+    '''
+    do_retry = result is not None
+    return do_retry
+
 
 ######################################################################################
 # Build Templates
@@ -62,6 +73,11 @@ def get_build_template(template_name,params=None,to_file=None):
         return None
 
 
+######################################################################################
+# Software Versions
+######################################################################################
+
+
 def get_singularity_version(singularity_version=None):
     '''get_singularity_version will determine the singularity version for a build
     first, an environmental variable is looked at, followed by using the system
@@ -81,6 +97,12 @@ def get_singularity_version(singularity_version=None):
             bot.logger.warning("Singularity version not found, so it's likely not installed.")
 
     return singularity_version
+
+
+
+######################################################################################
+# Extensions and Files
+######################################################################################
 
 
 def sniff_extension(file_path,verbose=True):
