@@ -183,7 +183,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         params['bucket_name'] = "singularity-hub"
 
     if params['padding'] == None:
-        params['padding'] = 50
+        params['padding'] = 200
 
     output = run_build_main(build_dir=build_dir,
                             params=params)
