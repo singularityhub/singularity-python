@@ -166,8 +166,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     # If the user wants debug, this will be set
     debug = True
     enable_debug = get_build_metadata(key='debug')
-        if enable_debug == None:
-            debug = False
+    if enable_debug == None:
+        debug = False
 
     # If no build directory is specified, make a temporary one
     if build_dir == None:
