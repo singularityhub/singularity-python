@@ -27,10 +27,11 @@ import re
 
 class Singularity:
     
-    def __init__(self,sudo=True,verbose=False,sudopw=None,debug=False):
+    def __init__(self,sudo=True,sudopw=None,debug=False):
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
+       self.debug = debug
 
        # Try getting from environment
        if self.sudopw == None:
@@ -38,8 +39,6 @@ class Singularity:
 
        if sudo == True and self.sudopw == None:
            self.sudopw = getsudo()
-           self.verbose = verbose
-
 
 
     def run_command(self,cmd,sudo=False,suppress=False):
@@ -113,7 +112,6 @@ class Singularity:
         :param writable: This option makes the file system accessible as read/write
         :param contain: This option disables the automatic sharing of writable
                         filesystems on your host
-        :param verbose: add --verbose option (default is false) 
         '''
         sudo = False    
         if self.debug == True:
@@ -241,10 +239,6 @@ class Singularity:
         :param writable: adds --writable
         :param contain: adds --contain
         '''
-
-        # Does the user want verbose output?
-        if self.verbose == True:
-            cmd.append('--verbose')       
 
         # Does the user want to make the container writeable?
         if writable == True:
