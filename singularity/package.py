@@ -119,9 +119,9 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
     # Run create image and bootstrap with Singularity command line tool.
     if S == None:
         if sudopw != None:
-            S = Singularity(sudopw=sudopw,verbose=verbose)
+            S = Singularity(sudopw=sudopw,debug=verbose)
         else:
-            S = Singularity(verbose=verbose) # This command will ask the user for sudo
+            S = Singularity(debug=verbose) # This command will ask the user for sudo
     tmptar = S.export(image_path=image_path,pipe=False)
     tar = tarfile.open(tmptar)
     members = tar.getmembers()
