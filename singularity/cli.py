@@ -27,7 +27,7 @@ import re
 
 class Singularity:
     
-    def __init__(self,sudo=True,verbose=False,sudopw=None):
+    def __init__(self,sudo=True,verbose=False,sudopw=None,debug=False):
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
@@ -85,7 +85,10 @@ class Singularity:
         if size == None:
             size=1024
 
-        cmd = ['singularity','create','--size',str(size),image_path]
+        if self.debug == True:
+            cmd = ['singularity','--debug','create','--size',str(size),image_path]
+        else:
+            cmd = ['singularity','create','--size',str(size),image_path]
         self.run_command(cmd,sudo=True)
 
 
@@ -94,9 +97,11 @@ class Singularity:
         '''create will bootstrap an image using a spec
         :param image_path: full path to image
         :param spec_path: full path to the spec file (Singularity)
-        '''        
-
-        cmd = ['singularity','bootstrap',image_path,spec_path]
+        ''' 
+        if self.debug == True:
+            cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
+        else:
+            cmd = ['singularity','bootstrap',image_path,spec_path]
         return self.run_command(cmd,sudo=True)
 
 
@@ -111,7 +116,11 @@ class Singularity:
         :param verbose: add --verbose option (default is false) 
         '''
         sudo = False    
-        cmd = ["singularity","exec"]
+        if self.debug == True:
+            cmd = ["singularity",'--debug',"exec"]
+        else:
+            cmd = ["singularity","exec"]
+
         cmd = self.add_flags(cmd,writable=writable,contain=contain)
 
         # Needing sudo?
@@ -251,7 +260,7 @@ class Singularity:
 # HELPER FUNCTIONS
 ######################################################################################################
 
-def get_image(image,return_existed=False,sudopw=None,size=None):
+def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
     '''get_image will return the file, if it exists, or if it's docker or
     shub, will use the Singularity command line tool to generate a temporary image
     :param image: the image file or path (eg, docker://)
@@ -268,9 +277,9 @@ def get_image(image,return_existed=False,sudopw=None,size=None):
             sudopw = os.environ.get('pancakes',None)
 
         if sudopw != None:
-            cli = Singularity(sudopw=sudopw)
+            cli = Singularity(sudopw=sudopw,debug=debug)
         else:
-            cli = Singularity() # This command will ask the user for sudo
+            cli = Singularity(debug=debug) # This command will ask the user for sudo
 
         tmpdir = tempfile.mkdtemp()
         image_name = "%s.img" %image.replace("docker://","") 

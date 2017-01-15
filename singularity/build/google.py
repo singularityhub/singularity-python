@@ -163,6 +163,12 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     if go == None:
         sys.exit(0)
 
+    # If the user wants debug, this will be set
+    debug = True
+    enable_debug = get_build_metadata(key='debug')
+        if enable_debug == None:
+            debug = False
+
     # If no build directory is specified, make a temporary one
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
@@ -171,23 +177,23 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         bot.logger.info('Build directory set to %s', build_dir)
 
     # Get variables from the instance metadata API
-    metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
-                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
-                {'key': 'response_url', 'value': response_url, 'return_text': True },
-                {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
-                {'key': 'token', 'value': token, 'return_text': False },
-                {'key': 'commit', 'value': commit, 'return_text': True },
-                {'key': 'secret', 'value': secret, 'return_text': True },
-                {'key': 'size', 'value': size, 'return_text': True },
-                {'key': 'branch', 'value': branch, 'return_text': True },
-                {'key': 'spec_file', 'value': spec_file, 'return_text': True },
-                {'key': 'padding', 'value': padding, 'return_text': True },
-                {'key': 'logging_url', 'value': logging_url, 'return_text': True },
-                {'key': 'logfile', 'value': logfile, 'return_text': True }]
-
+    metadata = [{'key': 'repo_url', 'value': repo_url },
+                {'key': 'repo_id', 'value': repo_id },
+                {'key': 'response_url', 'value': response_url},
+                {'key': 'bucket_name', 'value': bucket_name },
+                {'key': 'token', 'value': token },
+                {'key': 'commit', 'value': commit },
+                {'key': 'secret', 'value': secret},
+                {'key': 'size', 'value': size },
+                {'key': 'branch', 'value': branch },
+                {'key': 'spec_file', 'value': spec_file},
+                {'key': 'padding', 'value': padding },
+                {'key': 'logging_url', 'value': logging_url },
+                {'key': 'logfile', 'value': logfile }]
 
     # Obtain values from build
     params = get_build_params(metadata)
+    params['debug'] = debug
     
     # Default spec file is Singularity
     if params['spec_file'] == None:
@@ -311,8 +317,7 @@ def finish_build(verbose=True):
 
 def get_build_metadata(key):
     '''get_build_metadata will return metadata about an instance from within it.
-    :param key: the key to look upu
-    :param return_text: return text (appropriate for one value, or if needs custom parsing. Otherwise, will return json
+    :param key: the key to look up
     '''
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
@@ -332,12 +337,12 @@ def get_build_metadata(key):
 def get_build_params(metadata):
     '''get_build_params uses get_build_metadata to retrieve corresponding meta data values for a build
     :param metadata: a list, each item a dictionary of metadata, in format:
-    metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
-                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
-                {'key': 'credential', 'value': credential, 'return_text': True },
-                {'key': 'response_url', 'value': response_url, 'return_text': True },
-                {'key': 'token', 'value': token, 'return_text': False },
-                {'key': 'commit', 'value': commit, 'return_text': True }]
+    metadata = [{'key': 'repo_url', 'value': repo_url },
+                {'key': 'repo_id', 'value': repo_id },
+                {'key': 'credential', 'value': credential },
+                {'key': 'response_url', 'value': response_url },
+                {'key': 'token', 'value': token},
+                {'key': 'commit', 'value': commit }]
 
     '''
     params = dict()
