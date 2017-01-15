@@ -96,9 +96,9 @@ def run_build(build_dir,params,verbose=True):
         if params['size'] in [None,'']:
             bot.logger.info("""\n
                             --------------------------------------------------------------
-                            Size not detected for build. Will use default of 800MB padding. If 
-                            your build fails due to running out of disk space, you can adjust the
-                            size under collection --> edit builder
+                            Size not detected for build. Will first try to estimate, and then
+                            use default of 800MB padding. If your build still fails, you should 
+                            try setting the size manually under collection --> edit builder
                             ---------------------------------------------------------------------
                             \n""")
 
