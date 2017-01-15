@@ -168,6 +168,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     enable_debug = get_build_metadata(key='debug')
     if enable_debug == None:
         debug = False
+    bot.logger.info('DEBUG %s', debug)
 
     # If no build directory is specified, make a temporary one
     if build_dir == None:
@@ -325,12 +326,10 @@ def get_build_metadata(key):
 
     # Successful query returns the result
     if response.status_code == 200:
-        if key != "credential":
-            bot.logger.info('Metadata response is %s',response.text)
         return response.text
     else:
         bot.logger.error("Error retrieving metadata %s, returned response %s", key,
-                                                                            response.status_code)
+                                                                               response.status_code)
     return None
 
 
@@ -348,7 +347,6 @@ def get_build_params(metadata):
     params = dict()
     for item in metadata:
         if item['value'] == None:
-            bot.logger.warning('%s not found in function call.',item['key'])        
             response = get_build_metadata(key=item['key'])
             item['value'] = response
         params[item['key']] = item['value']
