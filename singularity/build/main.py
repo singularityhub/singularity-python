@@ -11,7 +11,7 @@ from singularity.version import (
 
 from singularity.package import (
     build_from_spec, 
-    #estimate_image_size,
+    estimate_image_size,
     package
 )
 
@@ -94,21 +94,23 @@ def run_build(build_dir,params,verbose=True):
 
         # If size is None, set default of 800
         if params['size'] in [None,'']:
-            bot.logger.info("""\n\n--------------------------------------------------------------
+            bot.logger.info("""\n
+                            --------------------------------------------------------------
                             Size not detected for build. Will use default of 800MB padding. If 
                             your build fails due to running out of disk space, you can adjust the
                             size under collection --> edit builder
                             ---------------------------------------------------------------------
                             \n""")
 
-            params['size'] = 800
-
-            # In future we can possibly add this back.
-            #params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
-            #                                     sudopw='',
-            #                                     padding=params['padding'])
-            #bot.logger.info("Size estimated as %s",params['size'])  
-
+            # Testing estimation of size
+            try:
+                params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
+                                                     sudopw='',
+                                                     padding=params['padding'])
+                bot.logger.info("Size estimated as %s",params['size'])  
+            except:
+                params['size'] = 800
+                bot.logger.info("Size estimation didn't work, using default %s",params['size'])  
 
         # START TIMING
         start_time = datetime.now()

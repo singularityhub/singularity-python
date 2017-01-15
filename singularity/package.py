@@ -39,12 +39,14 @@ def estimate_image_size(spec_file,sudopw=None,padding=None):
 
     image_folder = build_from_spec(spec_file=spec_file, # default will package the image
                                    sudopw=sudopw, # with root should not need sudo
-                                   build_folder=True)
+                                   build_folder=True,
+                                   debug=False)
     original_size = calculate_folder_size(image_folder)
     
     bot.logger.debug("Original image size calculated as %s",original_size)
     padded_size = original_size + padding
     bot.logger.debug("Size with padding will be %s",padded_size)
+    shutil.rmtree(image_folder)
     return padded_size
 
 
