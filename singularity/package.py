@@ -84,7 +84,7 @@ def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_fo
     else:
         cli = Singularity(debug=debug) # This command will ask the user for sudo
 
-    print("\nCreating and boostrapping image...")
+    print("\nCreating and bootstrapping image...")
 
     # Does the user want to "build" into a folder or image?
     if build_folder == True:

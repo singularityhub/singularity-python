@@ -201,7 +201,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         params['spec_file'] = "Singularity"
         
     if params['bucket_name'] == None:
-        params['bucket_name'] = "singularity-hub"
+        params['bucket_name'] = "singularity-hub-regional"
 
     if params['padding'] == None:
         params['padding'] = 200
