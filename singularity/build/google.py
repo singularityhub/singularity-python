@@ -20,6 +20,7 @@ from singularity.build.main import (
 
 from googleapiclient.discovery import build
 from oauth2client.client import GoogleCredentials
+from googleapiclient.errors import HttpError
 from googleapiclient import http
 
 from glob import glob
@@ -76,15 +77,20 @@ def get_bucket(storage_service,bucket_name):
     return req.execute()
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=10)
 def delete_object(storage_service,bucket_name,object_name):
     '''delete_file will delete a file from a bucket
     :param storage_service: the service obtained with get_storage_service
     :param bucket_name: the name of the bucket (eg singularity-hub)
     :param object_name: the "name" parameter of the object.
     '''
-    return storage_service.objects().delete(bucket=bucket_name,
-                                            object=object_name).execute()
+    try:
+        operation = storage_service.objects().delete(bucket=bucket_name,
+                                                     object=object_name).execute()
+    except HttpError as e:
+        pass
+        operation = e
+    return operation
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
