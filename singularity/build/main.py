@@ -98,11 +98,13 @@ def run_build(build_dir,params,verbose=True):
         bot.logger.warning("Dockerfile found in repository, will attempt build.")
         dockerfile = dockerfile_to_singularity(dockerfile_path='Dockerfile', 
                                                output_dir=build_dir)
-        bot.logger.info("""\n
-                            --------------------------------------------------------------
-                            Dockerfile
-                            --------------------------------------------------------------
-                            \n%s""" %(dockerfile))        
+
+        if dockerfile != None:
+            bot.logger.info("""\n
+                                --------------------------------------------------------------
+                                Dockerfile
+                                --------------------------------------------------------------
+                                \n%s""" %(dockerfile))        
 
     # Now look for spec file
     if os.path.exists(params['spec_file']):

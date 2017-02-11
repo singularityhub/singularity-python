@@ -16,7 +16,7 @@ from singularity.utils import (
     read_file
 )
 
-from logman import logger
+from singularity.logman import bot
 import json
 
 
@@ -226,25 +226,33 @@ def dockerfile_to_singularity(dockerfile_path, output_dir=None):
     :param dockerfile_path: the path to the Dockerfile
     :param output_dir: the output directory to write the Singularity file to
     '''
+    build_file = None
+
     if os.path.basename(dockerfile_path) == "Dockerfile":
-        spec = read_file(dockerfile_path)
-        # Use a common mapping
-        mapping = get_mapping()  
-        # Put into dict of keys (section titles) and list of commands (values)
-        sections = organize_sections(lines=spec,
-                                     mapping=mapping)
-        # We have to, by default, add the Docker bootstrap
-        sections["bootstrap"] = ["docker"]
-        # Put into one string based on "order" variable in mapping
-        build_file = print_sections(sections=sections,
-                                    mapping=mapping)
-        if output_dir != None:
-            write_file("%s/Singularity" %(output_dir),build_file)
-            print("Singularity spec written to %s" %(output_dir))
-        return build_file
+
+        try:
+            spec = read_file(dockerfile_path)
+            # Use a common mapping
+            mapping = get_mapping()  
+            # Put into dict of keys (section titles) and list of commands (values)
+            sections = organize_sections(lines=spec,
+                                         mapping=mapping)
+            # We have to, by default, add the Docker bootstrap
+            sections["bootstrap"] = ["docker"]
+            # Put into one string based on "order" variable in mapping
+            build_file = print_sections(sections=sections,
+                                        mapping=mapping)
+            if output_dir != None:
+                write_file("%s/Singularity" %(output_dir),build_file)
+                print("Singularity spec written to %s" %(output_dir))
+            return build_file
+
+        except:
+            bot.logger.error("Error generating Dockerfile from %s.", dockerfile_path)
+
     # If we make it here, something didn't work
-    logger.error("Could not find %s, exiting.", dockerfile_path)
-    return sys.exit(1)
+    bot.logger.error("Could not find %s.", dockerfile_path)
+    return build_file
 
 
 def organize_sections(lines,mapping=None):
