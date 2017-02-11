@@ -15,11 +15,14 @@ from singularity.package import (
     package
 )
 
+from singularity.build.converter import dockerfile_to_singularity
+
 from singularity.build.utils import (
     get_singularity_version,
     stop_if_result_none,
     test_container
 )
+
 
 from singularity.utils import download_repo
 from singularity.analysis.classify import (
@@ -89,6 +92,19 @@ def run_build(build_dir,params,verbose=True):
     passing_params = "/tmp/params.pkl"
     pickle.dump(params,open(passing_params,'wb'))
 
+    # If there is not a specfile, but is a Dockerfile, try building that
+    if not os.path.exists(params['spec_file']) and os.path.exists('Dockerfile'):
+        bot.logger.warning("Build file %s not found in repository",params['spec_file'])
+        bot.logger.warning("Dockerfile found in repository, will attempt build.")
+        dockerfile = dockerfile_to_singularity(dockerfile_path='Dockerfile', 
+                                               output_dir=build_dir)
+        bot.logger.info("""\n
+                            --------------------------------------------------------------
+                            Dockerfile
+                            --------------------------------------------------------------
+                            \n%s""" %(dockerfile))        
+
+    # Now look for spec file
     if os.path.exists(params['spec_file']):
         bot.logger.info("Found spec file %s in repository",params['spec_file'])
 
