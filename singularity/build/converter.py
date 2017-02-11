@@ -208,13 +208,15 @@ def get_mapping():
     #  Docker : Singularity
     add_command = {"section": "%post","fun": parse_add, "json": True }
     copy_command = {"section": "%post", "fun": parse_add, "json": True }  
-    cmd_command = {"section": "%runscript", "fun": parse_cmd, "json": True }  
+    cmd_command = {"section": "%post", "fun": parse_comment, "json": True }  
+    label_command = {"section": "%post", "fun": parse_comment, "json": True }  
+    port_command = {"section": "%post", "fun": parse_comment, "json": True }  
     env_command = {"section": "%post", "fun": parse_env, "json": False }
     comment_command = {"section": "%post", "fun": parse_comment, "json": False }
     from_command = {"section": "From", "json": False }
     run_command = {"section": "%post", "json": True}       
     workdir_command = {"section": "%post","fun": parse_workdir, "json": False }  
-    entry_command = {"section": "%post", "fun": parse_entry, "json": True }
+    entry_command = {"section": "%runscript", "fun": parse_entry, "json": True }
 
     return {"ADD": add_command,
             "COPY":copy_command,
@@ -225,7 +227,9 @@ def get_mapping():
             "RUN":run_command,
             "WORKDIR":workdir_command,
             "MAINTAINER":comment_command,
-            "VOLUME":comment_command}
+            "VOLUME":comment_command,
+            "PORT":port_command,
+            "LABEL":label_command}
            
     
 
