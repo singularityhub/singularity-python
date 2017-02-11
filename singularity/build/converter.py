@@ -356,7 +356,7 @@ def print_sections(sections,mapping=None):
         mapping = get_mapping()
 
     finished_spec = None
-    ordering = ['bootstrap',"From","%runscript","%post"]
+    ordering = ['bootstrap',"From","%runscript","%post",'%test']
 
     for section in ordering:
 
