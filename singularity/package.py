@@ -39,22 +39,25 @@ def estimate_image_size(spec_file,sudopw=None,padding=None):
 
     image_folder = build_from_spec(spec_file=spec_file, # default will package the image
                                    sudopw=sudopw, # with root should not need sudo
-                                   build_folder=True)
+                                   build_folder=True,
+                                   debug=False)
     original_size = calculate_folder_size(image_folder)
     
     bot.logger.debug("Original image size calculated as %s",original_size)
     padded_size = original_size + padding
     bot.logger.debug("Size with padding will be %s",padded_size)
+    shutil.rmtree(image_folder)
     return padded_size
 
 
-def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_folder=False):
+def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_folder=False,debug=False):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec_file: the spec file, called "Singuarity"
     :param sudopw: the sudopw for Singularity, root should provide ''
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
     :param size: the size of the image
     :param build_folder: "build" the image into a folder instead. Default False
+    :param debug: ask for verbose output from builder
     '''
     if spec_file == None:
         spec_file = "Singularity"
@@ -77,11 +80,11 @@ def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_fo
 
     # Run create image and bootstrap with Singularity command line tool.
     if sudopw != None:
-        cli = Singularity(sudopw=sudopw)
+        cli = Singularity(sudopw=sudopw,debug=debug)
     else:
-        cli = Singularity() # This command will ask the user for sudo
+        cli = Singularity(debug=debug) # This command will ask the user for sudo
 
-    print("\nCreating and boostrapping image...")
+    print("\nCreating and bootstrapping image...")
 
     # Does the user want to "build" into a folder or image?
     if build_folder == True:
@@ -118,9 +121,9 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
     # Run create image and bootstrap with Singularity command line tool.
     if S == None:
         if sudopw != None:
-            S = Singularity(sudopw=sudopw,verbose=verbose)
+            S = Singularity(sudopw=sudopw,debug=verbose)
         else:
-            S = Singularity(verbose=verbose) # This command will ask the user for sudo
+            S = Singularity(debug=verbose) # This command will ask the user for sudo
     tmptar = S.export(image_path=image_path,pipe=False)
     tar = tarfile.open(tmptar)
     members = tar.getmembers()

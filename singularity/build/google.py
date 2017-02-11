@@ -20,6 +20,7 @@ from singularity.build.main import (
 
 from googleapiclient.discovery import build
 from oauth2client.client import GoogleCredentials
+from googleapiclient.errors import HttpError
 from googleapiclient import http
 
 from glob import glob
@@ -76,15 +77,20 @@ def get_bucket(storage_service,bucket_name):
     return req.execute()
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=10)
 def delete_object(storage_service,bucket_name,object_name):
     '''delete_file will delete a file from a bucket
     :param storage_service: the service obtained with get_storage_service
     :param bucket_name: the name of the bucket (eg singularity-hub)
     :param object_name: the "name" parameter of the object.
     '''
-    return storage_service.objects().delete(bucket=bucket_name,
-                                            object=object_name).execute()
+    try:
+        operation = storage_service.objects().delete(bucket=bucket_name,
+                                                     object=object_name).execute()
+    except HttpError as e:
+        pass
+        operation = e
+    return operation
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
@@ -129,6 +135,18 @@ def list_bucket(bucket,storage_service):
     return objects
 
 
+def get_image_path(repo_url,commit):
+    '''get_image_path will determine an image path based on a repo url, removing
+    any token, and taking into account urls that end with .git.
+    :param repo_url: the repo url to parse:
+    :param commit: the commit to use
+    '''
+    repo_url = repo_url.split('@')[-1].strip()
+    if repo_url.endswith('.git'):
+        repo_url =  repo_url[:-4]
+    return "%s/%s" %(re.sub('^http.+//www[.]','',repo_url),commit)
+
+
 
 def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
               repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
@@ -163,6 +181,13 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     if go == None:
         sys.exit(0)
 
+    # If the user wants debug, this will be set
+    debug = True
+    enable_debug = get_build_metadata(key='debug')
+    if enable_debug == None:
+        debug = False
+    bot.logger.info('DEBUG %s', debug)
+
     # If no build directory is specified, make a temporary one
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
@@ -171,30 +196,30 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         bot.logger.info('Build directory set to %s', build_dir)
 
     # Get variables from the instance metadata API
-    metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
-                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
-                {'key': 'response_url', 'value': response_url, 'return_text': True },
-                {'key': 'bucket_name', 'value': bucket_name, 'return_text': True },
-                {'key': 'token', 'value': token, 'return_text': False },
-                {'key': 'commit', 'value': commit, 'return_text': True },
-                {'key': 'secret', 'value': secret, 'return_text': True },
-                {'key': 'size', 'value': size, 'return_text': True },
-                {'key': 'branch', 'value': branch, 'return_text': True },
-                {'key': 'spec_file', 'value': spec_file, 'return_text': True },
-                {'key': 'padding', 'value': padding, 'return_text': True },
-                {'key': 'logging_url', 'value': logging_url, 'return_text': True },
-                {'key': 'logfile', 'value': logfile, 'return_text': True }]
-
+    metadata = [{'key': 'repo_url', 'value': repo_url },
+                {'key': 'repo_id', 'value': repo_id },
+                {'key': 'response_url', 'value': response_url},
+                {'key': 'bucket_name', 'value': bucket_name },
+                {'key': 'token', 'value': token },
+                {'key': 'commit', 'value': commit },
+                {'key': 'secret', 'value': secret},
+                {'key': 'size', 'value': size },
+                {'key': 'branch', 'value': branch },
+                {'key': 'spec_file', 'value': spec_file},
+                {'key': 'padding', 'value': padding },
+                {'key': 'logging_url', 'value': logging_url },
+                {'key': 'logfile', 'value': logfile }]
 
     # Obtain values from build
     params = get_build_params(metadata)
+    params['debug'] = debug
     
     # Default spec file is Singularity
     if params['spec_file'] == None:
         params['spec_file'] = "Singularity"
         
     if params['bucket_name'] == None:
-        params['bucket_name'] = "singularity-hub"
+        params['bucket_name'] = "singularity-hub-regional"
 
     if params['padding'] == None:
         params['padding'] = 200
@@ -217,7 +242,8 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
             zf.extractall(dest_dir)
 
         # The path to the images on google drive will be the github url/commit folder
-        image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
+        image_path = get_image_path(params['repo_url'],params['commit'])
+
         build_files = glob("%s/*" %(dest_dir))
         build_files.append(compressed_image)
         bot.logger.info("Sending build files %s to storage",'\n'.join(build_files))
@@ -291,8 +317,8 @@ def finish_build(verbose=True):
     # Start the storage service, retrieve the bucket
     storage_service = get_google_service()
     bucket = get_bucket(storage_service,params['bucket_name'])
-    image_path = "%s/%s" %(re.sub('^http.+//www[.]','',params['repo_url']),params['commit'])
-
+    image_path = get_image_path(params['repo_url'],params['commit'])
+    
     # Upload the log file
     params['log_file'] = upload_file(storage_service,
                          bucket=bucket,
@@ -311,8 +337,7 @@ def finish_build(verbose=True):
 
 def get_build_metadata(key):
     '''get_build_metadata will return metadata about an instance from within it.
-    :param key: the key to look upu
-    :param return_text: return text (appropriate for one value, or if needs custom parsing. Otherwise, will return json
+    :param key: the key to look up
     '''
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
@@ -320,30 +345,27 @@ def get_build_metadata(key):
 
     # Successful query returns the result
     if response.status_code == 200:
-        if key != "credential":
-            bot.logger.info('Metadata response is %s',response.text)
         return response.text
     else:
         bot.logger.error("Error retrieving metadata %s, returned response %s", key,
-                                                                            response.status_code)
+                                                                               response.status_code)
     return None
 
 
 def get_build_params(metadata):
     '''get_build_params uses get_build_metadata to retrieve corresponding meta data values for a build
     :param metadata: a list, each item a dictionary of metadata, in format:
-    metadata = [{'key': 'repo_url', 'value': repo_url, 'return_text': False },
-                {'key': 'repo_id', 'value': repo_id, 'return_text': True },
-                {'key': 'credential', 'value': credential, 'return_text': True },
-                {'key': 'response_url', 'value': response_url, 'return_text': True },
-                {'key': 'token', 'value': token, 'return_text': False },
-                {'key': 'commit', 'value': commit, 'return_text': True }]
+    metadata = [{'key': 'repo_url', 'value': repo_url },
+                {'key': 'repo_id', 'value': repo_id },
+                {'key': 'credential', 'value': credential },
+                {'key': 'response_url', 'value': response_url },
+                {'key': 'token', 'value': token},
+                {'key': 'commit', 'value': commit }]
 
     '''
     params = dict()
     for item in metadata:
         if item['value'] == None:
-            bot.logger.warning('%s not found in function call.',item['key'])        
             response = get_build_metadata(key=item['key'])
             item['value'] = response
         params[item['key']] = item['value']

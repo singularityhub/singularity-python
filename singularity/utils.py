@@ -197,9 +197,8 @@ def write_file(filename,content,mode="w"):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
     '''
-    filey = open(filename,mode)
-    filey.writelines(content)
-    filey.close()
+    with open(filename,mode) as filey:
+        filey.writelines(content)
     return filename
 
 
@@ -209,12 +208,11 @@ def write_json(json_obj,filename,mode="w",print_pretty=True):
     :param filename: the output file to write to
     :param pretty_print: if True, will use nicer formatting   
     '''
-    filey = open(filename,mode)
-    if print_pretty == True:
-        filey.writelines(simplejson.dumps(json_obj, indent=4, separators=(',', ': ')))
-    else:
-        filey.writelines(simplejson.dumps(json_obj))
-    filey.close()
+    with open(filename,mode) as filey:
+        if print_pretty == True:
+            filey.writelines(simplejson.dumps(json_obj, indent=4, separators=(',', ': ')))
+        else:
+            filey.writelines(simplejson.dumps(json_obj))
     return filename
 
 
@@ -222,9 +220,8 @@ def read_file(filename,mode="r"):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
     '''
-    filey = open(filename,mode)
-    content = filey.readlines()
-    filey.close()
+    with open(filename,mode) as filey:
+        content = filey.readlines()
     return content
 
 
