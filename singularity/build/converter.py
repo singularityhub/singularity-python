@@ -34,7 +34,9 @@ def parse_env(env):
     exports = [] 
     name = None
     value = None
+
     if re.search("=",env):
+
         pieces = [p for p in re.split("( |\\\".*?\\\"|'.*?')", env) if p.strip()]
         while len(pieces) > 0:
             contender = pieces.pop(0)
@@ -50,27 +52,32 @@ def parse_env(env):
                 else:
                     value = "%s %s" %(value,contender)
             exports.append(join_env(name,value))
+
     # otherwise, the rule is one per line
     else: 
         name,value = re.split(' ',env,1)
         exports = ["export %s=%s" %(name,value)]
     environment = []
+
     # Clean exports, make sure we aren't using 
     for export in exports:
         export = export.strip('\n').replace('"',"").replace("'","")
         environment.append(export)
         export = 'echo "\n%s" >> /environment' %(export)
         environment.append(export)
+
     return "%s\n" %"\n".join(environment)
 
 
 def join_env(name,value):
+
     # If it's the end of the string, we don't want a space
     if re.search("=$",name):
         if value != None:
             return "export %s%s" %(name,value)
         else:
             return "export %s" %(name)
+
     if value != None:
         return "export %s %s" %(name,value)
     return "export %s" %(name)
@@ -183,7 +190,9 @@ def get_mapping():
     build spec section. Note - this currently ignores lines that we don't know what to do with
     in the context of Singularity (eg, EXPOSE, LABEL, USER, VOLUME, STOPSIGNAL, escape,
     MAINTAINER)
+
     :: note
+
     each KEY of the mapping should be a command start in the Dockerfile (eg, RUN)
     for each corresponding value, there should be a dictionary with the following:
 
@@ -195,6 +204,7 @@ def get_mapping():
     external files. It should suffice for our purposes (for now) to use the same function 
     (parse_add) until evidence for a major difference is determined.
     '''
+
     #  Docker : Singularity
     add_command = {"section": "%post","fun": parse_add, "json": True }
     copy_command = {"section": "%post", "fun": parse_add, "json": True }  
@@ -205,6 +215,7 @@ def get_mapping():
     run_command = {"section": "%post", "json": True}       
     workdir_command = {"section": "%post","fun": parse_workdir, "json": False }  
     entry_command = {"section": "%post", "fun": parse_entry, "json": True }
+
     return {"ADD": add_command,
             "COPY":copy_command,
             "CMD":cmd_command,
@@ -263,12 +274,15 @@ def organize_sections(lines,mapping=None):
     '''
     if mapping == None:
         mapping = get_mapping()
+
     sections = dict()
     startre = "|".join(["^%s" %x for x in mapping.keys()])
     command = None
     name = None
+
     for l in range(0,len(lines)):
         line = lines[l]
+
         # If it's a newline or comment, just add it to post
         if line == "\n" or re.search("^#",line):
             sections = parse_section(name="%post",
@@ -276,6 +290,7 @@ def organize_sections(lines,mapping=None):
                                      mapping=mapping,
                                      sections=sections)
         elif re.search(startre,line):
+
             # Parse the last section, and start over
             if command != None and name != None:
                 sections = parse_section(name=name,
@@ -284,8 +299,10 @@ def organize_sections(lines,mapping=None):
                                          sections=sections)
             name,command = line.split(" ",1)
         else:
+
             # We have a continuation of the last command or an empty line
             command = "%s\n%s" %(command,line)
+
     return sections
 
 def parse_section(sections,name,command,mapping=None):
@@ -300,17 +317,21 @@ def parse_section(sections,name,command,mapping=None):
     '''
     if mapping == None:
         mapping = get_mapping()
+
     if name in mapping:
         build_section = mapping[name]['section']
+
         # Can the command potentially be json (a list?)
         if mapping[name]['json']:
             try:
                 command = " ".join(json.loads(command))
             except:
                 pass 
+
         # Do we need to pass it through a function first?
         if 'fun' in mapping[name]:
             command = mapping[name]['fun'](command)
+
         # Add to our dictionary of sections!
         if build_section not in sections:
             sections[build_section] = [command]
@@ -326,20 +347,26 @@ def print_sections(sections,mapping=None):
     :param sections: output from organize_sections
     :mapping: a dictionary mapping Docker commands to Singularity sections
     '''
+
     if mapping == None:
         mapping = get_mapping()
+
     finished_spec = None
     ordering = ['bootstrap',"From","%runscript","%post"]
+
     for section in ordering:
+
         # Was the section found in the file?
         if section in sections:
             content = "".join(sections[section])
+
             # A single command, intended to go after a colon (yaml)    
             if not re.search("^%",section):
                 content = "%s:%s" %(section,content)
             else:
                 # A list of things to join, after the section header
                 content = "%s\n%s" %(section,content)
+
             # Are we adding the first line?
             if finished_spec == None:
                 finished_spec = content
