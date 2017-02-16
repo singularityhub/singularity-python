@@ -304,6 +304,12 @@ def format_container_name(name,special_characters=None):
     return ''.join(e.lower() for e in name if e.isalnum() or e in special_characters)
 
 
+def remove_uri(container):
+    '''remove_uri will remove docker:// or shub:// from the uri
+    '''
+    return container.replace('docker://','').replace('shub://','')
+
+
 def download_repo(repo_url,destination,commit=None):
     '''download_repo
     :param repo_url: the url of the repo to clone from

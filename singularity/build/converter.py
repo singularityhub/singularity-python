@@ -218,7 +218,7 @@ def get_mapping():
     workdir_command = {"section": "%post","fun": parse_workdir, "json": False }  
     entry_command = {"section": "%runscript", "fun": parse_entry, "json": True }
 
-    return {"ADD": add_command,
+    return {"ADD":add_command,
             "COPY":copy_command,
             "CMD":cmd_command,
             "ENTRYPOINT":entry_command,
@@ -228,7 +228,7 @@ def get_mapping():
             "WORKDIR":workdir_command,
             "MAINTAINER":comment_command,
             "VOLUME":comment_command,
-            "PORT":port_command,
+            "EXPOSE":port_command,
             "LABEL":label_command}
            
     

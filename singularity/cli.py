@@ -27,7 +27,8 @@ import re
 
 class Singularity:
     
-    def __init__(self,sudo=True,sudopw=None,debug=False):
+
+    def __init__(self,sudo=False,sudopw=None,debug=False):
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
@@ -117,7 +118,7 @@ class Singularity:
         if self.debug == True:
             cmd = ["singularity",'--debug',"exec"]
         else:
-            cmd = ["singularity","exec"]
+            cmd = ["singularity",'--quiet',"exec"]
 
         cmd = self.add_flags(cmd,writable=writable,contain=contain)
 
@@ -194,6 +195,21 @@ class Singularity:
         return None
 
 
+    def pull(self,image_path):
+        '''pull will pull a singularity hub image
+        :param image_path: full path to image
+        ''' 
+        if not image_path.startswit('shub://'):
+            bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
+            sys.exit(1)           
+
+        if self.debug == True:
+            cmd = ['singularity','--debug','pull',image_path]
+        else:
+            cmd = ['singularity','pull',image_path]
+        return self.run_command(cmd)
+
+
 
     def run(self,image_path,command,writable=False,contain=False):
         '''run will run a command inside the container, probably not intended for within python
@@ -212,6 +228,7 @@ class Singularity:
 
         # Run the command
         return self.run_command(cmd,sudo=sudo)
+
 
     def start(self,image_path,writable=False,contain=False):
         '''start will start a container
@@ -276,7 +293,7 @@ def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
             cli = Singularity(debug=debug) # This command will ask the user for sudo
 
         tmpdir = tempfile.mkdtemp()
-        image_name = "%s.img" %image.replace("docker://","") 
+        image_name = "%s.img" %image.replace("docker://","").replace("/","-")
         bot.logger.info("Found docker image %s, creating and importing...",image_name)
         image_path = "%s/%s" %(tmpdir,image_name)
         cli.create(image_path,size=size)
