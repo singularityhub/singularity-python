@@ -177,15 +177,16 @@ def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,d
 ###################################################################################
 
 
-def get_files(container,S=None):
+def get_files(container,S=None,tmpdir=None):
     '''get_files will return a list of files inside a container, sorted by name
     :param container: the container to use, either shub:// or docker:// or actual
     '''
     files = None
-    tmpdir = tempfile.mkdtemp()
+    if tmpdir == None:
+        tmpdir = tempfile.mkdtemp()
     tmpfile = "%s/files.txt" %tmpdir
     container_name = remove_uri(container)
-    command = 'ls -LR >> %s 2>/dev/null' %(tmpfile)
+    command = ' ls -LR >> %s 2>/dev/null' %(tmpfile)
     if S==None:
         S = Singularity(sudo=None)
     result = S.execute(container,command)
@@ -193,7 +194,6 @@ def get_files(container,S=None):
         os.system("sed -i '/^$/d' %s" %(tmpfile))
         os.system('sort %s -or %s' %(tmpfile,tmpfile))
         files = read_file(tmpfile)
-        rootfs=None
         if len(files) > 0:
             files = [x for x in files if x.startswith('.')]
             files = [x.split(container_name)[1:] for x in files]

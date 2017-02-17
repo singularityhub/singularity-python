@@ -40,6 +40,11 @@ def get_parser():
                         help="package a singularity container for singularity hub", 
                         default=False, action='store_true')
 
+    # Does the user want to package an image?
+    parser.add_argument('--remove-image', dest="remove_image", 
+                        help="remove image file from the package", 
+                        default=False, action='store_true')
+
     # Does the user want to estimate the os?
     parser.add_argument('--os', dest="os", 
                         help="estimate the operating system of your container.", 
@@ -165,7 +170,8 @@ def main():
                package(image_path=image,
                        output_folder=output_folder,
                        runscript=True,
-                       software=True)
+                       software=True,
+                       remove_image=args.remove_image)
            else:
                print("Not sure what to do?")
                parser.print_help()
