@@ -285,5 +285,5 @@ def label_tree(n,lookup):
     else:
         leaves = reduce(lambda ls, c: ls + label_tree(c,lookup), n["children"], [])
     del n["node_id"]
-    n["name"] = name = "-".join(sorted(map(str, leaves)))
+    n["name"] = name = "|||".join(sorted(map(str, leaves)))
     return leaves
