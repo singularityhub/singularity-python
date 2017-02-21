@@ -225,6 +225,15 @@ def read_file(filename,mode="r"):
     return content
 
 
+def read_json(filename,mode='r'):
+    '''read_json reads in a json file and returns
+    the data structure as dict.
+    '''
+    with open(filename,mode) as filey:
+        data = json.load(filey)
+    return data
+
+
 ############################################################################
 ## OTHER MISC. #############################################################
 ############################################################################
