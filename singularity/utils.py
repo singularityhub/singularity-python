@@ -11,6 +11,7 @@ import re
 import requests
 
 import shutil
+import json
 import simplejson
 import singularity.__init__ as hello
 from singularity.logman import bot
