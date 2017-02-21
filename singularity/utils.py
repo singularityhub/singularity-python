@@ -11,6 +11,7 @@ import re
 import requests
 
 import shutil
+import json
 import simplejson
 import singularity.__init__ as hello
 from singularity.logman import bot
@@ -225,6 +226,15 @@ def read_file(filename,mode="r"):
     return content
 
 
+def read_json(filename,mode='r'):
+    '''read_json reads in a json file and returns
+    the data structure as dict.
+    '''
+    with open(filename,mode) as filey:
+        data = json.load(filey)
+    return data
+
+
 ############################################################################
 ## OTHER MISC. #############################################################
 ############################################################################
@@ -302,6 +312,12 @@ def format_container_name(name,special_characters=None):
     if special_characters == None:
         special_characters = []
     return ''.join(e.lower() for e in name if e.isalnum() or e in special_characters)
+
+
+def remove_uri(container):
+    '''remove_uri will remove docker:// or shub:// from the uri
+    '''
+    return container.replace('docker://','').replace('shub://','')
 
 
 def download_repo(repo_url,destination,commit=None):

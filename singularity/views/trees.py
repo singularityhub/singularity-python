@@ -4,7 +4,7 @@
 singularity views/trees.py: part of singularity package
 
 '''
-
+from functools import reduce
 import json
 
 from singularity.logman import bot
@@ -227,3 +227,63 @@ def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None):
                leaf_font_size=8.,  # font size for the x axis labels
                labels=labels)
     return plt
+
+
+def make_interactive_tree(matrix=None,labels=None):
+    '''make interactive tree will return complete html for an interactive tree
+    :param title: a title for the plot, if not defined, will be left out.
+    '''
+    from scipy.cluster.hierarchy import (
+        dendrogram, 
+        linkage,
+        to_tree
+    )
+
+    d3 = None
+    from scipy.cluster.hierarchy import cophenet
+    from scipy.spatial.distance import pdist
+
+    if isinstance(matrix,pandas.DataFrame):
+        Z = linkage(matrix, 'ward') # clusters
+        T = to_tree(Z, rd=False)
+
+        if labels == None:
+            labels = matrix.index.tolist()
+        lookup = dict(zip(range(len(labels)), labels))
+
+        # Create a dendrogram object without plotting
+        dend = dendrogram(Z,no_plot=True,
+                      orientation="right",
+                      leaf_rotation=90.,  # rotates the x axis labels
+                      leaf_font_size=8.,  # font size for the x axis labels
+                      labels=labels)
+
+        d3 = dict(children=[], name="root")
+        add_node(T, d3)
+        label_tree(d3["children"][0],lookup)
+    else:
+        bot.logger.warning('Please provide data as pandas Data Frame.')
+    return d3
+
+
+def add_node(node, parent):
+    '''add_node will add a node to it's parent
+    '''
+    newNode = dict(node_id=node.id, children=[])
+    parent["children"].append(newNode)
+    if node.left: add_node(node.left, newNode)
+    if node.right: add_node(node.right, newNode)
+
+
+def label_tree(n,lookup):
+    '''label tree will again recursively label the tree
+    :param n: the root node, usually d3['children'][0]
+    :param lookup: the node/id lookup
+    '''
+    if len(n["children"]) == 0:
+        leaves = [lookup[n["node_id"]]]
+    else:
+        leaves = reduce(lambda ls, c: ls + label_tree(c,lookup), n["children"], [])
+    del n["node_id"]
+    n["name"] = name = "|||".join(sorted(map(str, leaves)))
+    return leaves
