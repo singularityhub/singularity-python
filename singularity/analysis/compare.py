@@ -75,6 +75,7 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     return comparisons
 
 
+
 def compare_containers(container1=None,container2=None,by=None,
                        image_package1=None,image_package2=None):
     '''compare_containers will generate a data structure with common and unique files to
@@ -105,19 +106,29 @@ def compare_containers(container1=None,container2=None,by=None,
     # Do the comparison for each metric
     comparisons = dict()
     for b in by:
-        intersect = list(set(container1_guts[b]).intersection(container2_guts[b]))
-        unique1 = list(set(container1_guts[b]).difference(container2_guts[b]))
-        unique2 = list(set(container2_guts[b]).difference(container1_guts[b]))
-
-        # Return data structure
-        comparison = {"intersect":intersect,
-                      "unique1": unique1,
-                      "unique2": unique2,
-                      "total1": len(container1_guts[b]),
-                      "total2": len(container2_guts[b])}
-        comparisons[b] = comparison 
+        comparisons[b] = compare_lists(container1_guts[b],container2_guts[b])
 
     return comparisons
+
+
+def compare_lists(list1,list2):
+    '''compare lists is the lowest level that drives compare_containers and
+    compare_packages. It returns a comparison object (dict) with the unique,
+    total, and intersecting things between two lists
+    :param list1: the list for container1
+    :param list2: the list for container2
+    '''
+    intersect = list(set(list1).intersection(list2))
+    unique1 = list(set(list1).difference(list2))
+    unique2 = list(set(list2).difference(list1))
+
+    # Return data structure
+    comparison = {"intersect":intersect,
+                  "unique1": unique1,
+                  "unique2": unique2,
+                  "total1": len(list1),
+                  "total2": len(list2)}
+    return comparison
     
 
 def calculate_similarity(container1=None,container2=None,image_package1=None,
