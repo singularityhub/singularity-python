@@ -10,8 +10,12 @@ from singularity.hub.auth import (
 )
 
 from singularity.logman import bot
-from singularity.hub.base import get_template
+from singularity.hub.base import (
+    get_template,
+    download_image
+)
 
+import demjson
 
 class Client(object):
 
@@ -31,11 +35,25 @@ class Client(object):
         for key,value in headers.items():
             self.client.headers[key] = item
 
+    def load_metrics(self,manifest):
+        '''load metrics about a container build from the manifest
+        '''
+        return demjson.decode(manifest['metrics'])
+
 
     def get_container(self,container_name):
         '''get a container or return None.
         '''
         return get_template(container_name,"container")
+
+
+    def pull_container(self,manifest,download_folder=None,extract=True,name=None):
+        '''pull a container to the local machine'''
+        return download_image(manifest=manifest,
+                              download_folder=download_folder,
+                              extract=extract,
+                              name=name)
+
 
 
     def get_collection(self,container_name):

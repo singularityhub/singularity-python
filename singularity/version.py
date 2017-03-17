@@ -9,6 +9,7 @@ LICENSE = "LICENSE"
 
 INSTALL_REQUIRES = (
 
+    ('demjson', {'min_version': None}),
     ('flask', {'min_version': '0.12'}),
     ('flask-restful', {'min_version': None}),
     ('pandas', {'min_version': '0.19.2'}),

@@ -13,29 +13,44 @@ import os
 import sys
 
 
-def api_get(url,headers=None,token=None,data=None, return_json=True):
+def api_get(url,headers=None,token=None,data=None, return_json=True, stream_to=None):
     '''api_get will use requests to get a particular url
     :param url: the url to send file to
     :param headers: a dictionary with headers for the request
     :param putdata: additional data to add to the request
     :param return_json: return json if successful
+    :param stream_to: stream the response to file
     '''
     bot.logger.debug("GET %s",url)
 
+    stream = False
+    if stream_to is not None:
+        stream = True
+
     if headers == None:
         headers = get_headers(token=token)
+
     if data == None:
         response = requests.get(url,         
-                                headers=headers)
+                                headers=headers,
+                                stream=stream)
     else:
         response = requests.get(url,         
                                 headers=headers,
-                                json=data)
+                                json=data,
+                                stream=stream)
 
-    if response.status_code == 200 and return_json:
+    if response.status_code == 200 and return_json and not stream:
         return response.json()
 
-    return response
+   
+    chunk_size = 1 << 20
+    with open(stream_to,'wb') as filey:
+        for chunk in response.iter_content(chunk_size=chunk_size):
+            filey.write(chunk)
+
+    return stream_to 
+
 
 
 def api_put(url,headers=None,token=None,data=None, return_json=True):
@@ -116,7 +131,7 @@ def parse_container_name(image):
 
     # If the user provided a number (unique id for an image), return it
     if is_number(image) == True:
-        logger.info("Numeric image ID %s found.", image)
+        bot.logger.info("Numeric image ID %s found.", image)
         return int(image)
 
     image = image.split('/')
