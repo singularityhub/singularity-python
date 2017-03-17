@@ -126,14 +126,17 @@ class Singularity:
         if writable == True:
             sudo = True
 
-        cmd = cmd + [image_path,command]
+        if not isinstance(list,command):
+            command = command.split(' ')
+
+        cmd = cmd + [image_path] + command
 
         # Run the command
         return self.run_command(cmd,sudo=sudo)
 
 
 
-    def export(self,image_path,pipe=False,output_file=None,command=None,export_format="tar"):
+    def export(self,image_path,pipe=False,output_file=None,export_format="tar"):
         '''export will export an image, sudo must be used.
         :param image_path: full path to image
         :param pipe: export to pipe and not file (default, False)
@@ -184,8 +187,10 @@ class Singularity:
         sudo = True
         if import_type == "tar":
             cmd = ['singularity','import','--file',input_source]
-            if command != None:
-                cmd = cmd + ["--command",command]
+            if command is not None:
+                if not isinstance(list,command):
+                    command = command.split(' ')
+                cmd = cmd + ["--command"] + command
             cmd.append(image_path)
             return self.run_command(cmd,sudo=sudo)
         else:
@@ -199,7 +204,7 @@ class Singularity:
         '''pull will pull a singularity hub image
         :param image_path: full path to image
         ''' 
-        if not image_path.startswit('shub://'):
+        if not image_path.startswith('shub://'):
             bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
             sys.exit(1)           
 
@@ -211,44 +216,57 @@ class Singularity:
 
 
 
-    def run(self,image_path,command,writable=False,contain=False):
-        '''run will run a command inside the container, probably not intended for within python
+    def run(self,image_path,args=None,writable=False,contain=False):
+        '''run will run the container, with or withour arguments (which
+        should be provided in a list)
         :param image_path: full path to singularity image
-        :param command: command to send to container
+        :param args: args to include with the run
         '''
         sudo = False
         cmd = ["singularity","run"]
         cmd = self.add_flags(cmd,writable=writable,contain=contain)
+        cmd = cmd + [image_path]
 
         # Conditions for needing sudo
         if writable == True:
             sudo = True
+        
+        if args is not None:        
+            if not isinstance(list,args):
+                args = command.split(' ')
+            cmd = cmd + args
 
-        cmd = cmd + [image_path,command]
+        result = self.run_command(cmd,sudo=sudo)
+        if isinstance(result,bytes):
+            result = result.decode('utf-8')
+        result = result.strip('\n')
+        try:
+            result = json.loads(result)
+        except:
+            pass
+        return result
 
-        # Run the command
-        return self.run_command(cmd,sudo=sudo)
 
-
-    def start(self,image_path,writable=False,contain=False):
-        '''start will start a container
+    def get_labels(self,image_path):
+        '''get_labels will return all labels defined in the image
         '''
-        sudo = False
-        cmd = ['singularity','start']
-        cmd = self.add_flags(cmd,writable=writable,contain=contain)
-        if writable == True:
-            sudo = True
+        cmd = ['singularity','exec',image_path,'cat','/.singularity/labels.json']
+        labels = self.run_command(cmd)
+        return json.loads(labels.decode('utf-8'))
+        
 
-        cmd.append(image_path)
-        return self.run_command(cmd,sudo=sudo)
-
-
-    def stop(self,image_path):
-        '''stop will stop a container
+    def get_args(self,image_path):
+        '''get_args will return the subset of labels intended to be arguments
+        (in format SINGULARITY_RUNSCRIPT_ARG_*
         '''
-        cmd = ['singularity','stop',image_path]
-        return self.run_command(cmd)
-
+        labels = self.get_labels(image_path)
+        args = dict()
+        for label,values in labels.items():
+            if re.search("^SINGULARITY_RUNSCRIPT_ARG",label):
+                vartype = label.split('_')[-1].lower()
+                if vartype in ["str","float","int","bool"]:
+                    args[vartype] = values.split(',')
+        return args
 
 
     def add_flags(self,cmd,writable,contain):
@@ -267,9 +285,11 @@ class Singularity:
         return cmd
 
 
-######################################################################################################
+
+
+#################################################################################
 # HELPER FUNCTIONS
-######################################################################################################
+#################################################################################
 
 def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
     '''get_image will return the file, if it exists, or if it's docker or
