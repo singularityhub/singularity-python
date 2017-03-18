@@ -126,7 +126,7 @@ class Singularity:
         if writable == True:
             sudo = True
 
-        if not isinstance(list,command):
+        if not isinstance(command,list):
             command = command.split(' ')
 
         cmd = cmd + [image_path] + command
@@ -188,7 +188,7 @@ class Singularity:
         if import_type == "tar":
             cmd = ['singularity','import','--file',input_source]
             if command is not None:
-                if not isinstance(list,command):
+                if not isinstance(command,list):
                     command = command.split(' ')
                 cmd = cmd + ["--command"] + command
             cmd.append(image_path)
@@ -232,7 +232,7 @@ class Singularity:
             sudo = True
         
         if args is not None:        
-            if not isinstance(list,args):
+            if not isinstance(args,list):
                 args = command.split(' ')
             cmd = cmd + args
 
