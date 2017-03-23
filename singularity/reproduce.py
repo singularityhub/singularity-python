@@ -19,6 +19,51 @@ import re
 import io
 
 
+def assess_replication(image_file1,image_file2,version=None):
+    '''assess_replications will compare two images on each level of 
+    reproducibility,
+    '''
+    levels = get_levels(version=version)
+    report = dict()
+    for level_name, values in levels.items():
+        hash1 = get_image_hash(image_path=image_file1,
+                               level=level_name)
+        hash2 = get_image_hash(image_path=image_file2,
+                               level=level_name)
+        if hash1 == hash2:
+            report[level_name] = True
+        else:
+            report[level_name] = False
+    return report
+
+
+def assess_differences(image_file1,image_file2,version=None):
+    '''assess_replications will compare two images on each level of 
+    reproducibility,
+    '''
+    levels = get_levels(version=version)
+    different = []
+    same = []
+    setdiff = []
+    for level_name, values in levels.items():
+        hashes1 = get_content_hashes(image_path=image_file1,
+                                     level=level_name)
+        hashes2 = get_content_hashes(image_path=image_file2,
+                                     level=level_name)
+        for file_name,hash_value in hashes1.items():
+            if file_name in hashes2:
+                if hashes2[file_name] == hashes1[file_name]:
+                    same.append(file_name)
+                else:
+                    different.append(file_name)
+            else:
+                setdiff.append(file_name)
+
+    report = {'missing':setdiff,
+              'same':same,
+              'different':different}
+    return report
+
 
 def get_custom_level(regexp,name=None,description=None):
     '''get_custom_level will generate a custom level for the user, 
@@ -40,11 +85,18 @@ def get_level(level):
     return get_levels(level)
 
 
-def get_levels(level=None):
+def get_levels(level=None,version=None):
     '''get_levels returns a dictionary of levels (key) and values (dictionaries with
     descriptions and regular expressions for files) for the user. 
+    :param version: the version of singularity to use (default is 2.2)
     '''
-  
+    if version is None:
+        version = "2-2"  
+    version = str(version).replace('.','-')
+    valid_versions = ['2-2','2-3']
+    if version not in valid_versions:
+        bot.logger.error("Unsupported version %s, valid versions are %s",version,",".join(valid_versions))
+
     levels_file = os.path.abspath(os.path.join(get_installdir(),
                                                            'hub',
                                                            'data',
@@ -63,23 +115,39 @@ def get_levels(level=None):
     return valid_levels
 
 
-def include_file(member_path,regexp):
+def include_file(member_path,file_filter):
     '''include_file will look at a path and determine
     if it matches a regular expression from a level
     '''
     member_path = member_path.replace('.','',1)
-    if re.search(regexp,member_path):
-        return True
+
+    # Does the filter skip it explicitly?
+    if "skip_files" in file_filter:
+        if member_path in file_filter['skip_files']:
+            return False
+
+    # Include explicitly?
+    if "include_files" in file_filter:
+        if member_path in file_filter['include_files']:
+            return True
+
+    # Regular expression?
+    if "regexp" in file_filter:
+        if re.search(file_filter["regexp"],member_path):
+            return True
     return False
 
 
-def get_image_hash(image_path,level=None,regexp=None):
+
+def get_image_hash(image_path,level=None,regexp=None,include_files=None,skip_files=None):
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
     :param level: the level of reproducibility to use, which maps to a set regular
     expression to match particular files/folders in the image. Choices are in notes.
     :param regexp: if defined, the level is ignored and the regular expression used
     instead.
+    :param skip_files: an optional list of files to skip
+    :param include_files: an optional list of files to keep (only if level not defined)
 
     ::notes
 
@@ -92,16 +160,17 @@ def get_image_hash(image_path,level=None,regexp=None):
     '''    
 
     # First get a level dictionary, with description and regexp
-    if regexp is not None:
-        file_filter = get_custom_level(regexp)  
+    if level is None:
+        if regexp is not None or include_files is not None or skip_files is not None:
+            file_filter = get_custom_level(regexp=regexp,
+                                           include_files=include_files,
+                                           skip_files=skip_files)  
+        else:
+            file_filter = get_level("REPLICATE")
 
-    elif level is not None:
-        if level is "IDENTICAL":
-            return get_image_file_hash(image_path)
+    else:
         file_filter = get_level(level)
                 
-    else:
-        file_filter = get_level("REPLICATE")
 
     cli = Singularity()
     byte_array = cli.export(image_path,pipe=True)
@@ -109,34 +178,31 @@ def get_image_hash(image_path,level=None,regexp=None):
  
     # Now create a tarfile from the file object
     tar = tarfile.open(mode="r|*", fileobj=file_object) 
-    chunk_size = 100*1024
     hasher = hashlib.sha1()
     for member in tar:
         if member.isfile():
-            if include_file(member.name,file_filter['regexp']):
-                filey = tar.extractfile(member)
-                buf = filey.read(chunk_size)
-                while buf:
-                    hasher.update(buf)
-                    buf = filey.read(chunk_size)
+            if include_file(member.name,file_filter):
+                buf = member.tobuf()
+                hasher.update(buf)
     return hasher.hexdigest()
 
 
-def get_content_hashes(image_path,level=None,regexp=None):
+def get_content_hashes(image_path,level=None,regexp=None,include_files=None,skip_files=None):
     '''get_content_hashes is like get_image_hash, but it returns a complete dictionary 
     of file names (keys) and their respective hashes (values). This function is intended
     for more research purposes and was used to generate the levels in the first place
     '''    
-
     # First get a level dictionary, with description and regexp
-    if regexp is not None:
-        file_filter = get_custom_level(regexp)  
+    if level is None:
+        if regexp is not None or include_files is not None or skip_files is not None:
+            file_filter = get_custom_level(regexp=regexp,
+                                           include_files=include_files,
+                                           skip_files=skip_files)  
+        else:
+            file_filter = get_level("REPLICATE")
 
-    elif level is not None:
-        file_filter = get_level(level)
-                
     else:
-        file_filter = get_level("REPLICATE")
+        file_filter = get_level(level)
 
     cli = Singularity()
     byte_array = cli.export(image_path,pipe=True)
@@ -148,7 +214,7 @@ def get_content_hashes(image_path,level=None,regexp=None):
     digest = dict()
     for member in tar:
         if member.isfile():
-            if include_file(member.name,file_filter['regexp']):
+            if include_file(member.name,file_filters):
                 buf = member.tobuf()
                 hasher = hashlib.sha1()
                 hasher.update(buf)
