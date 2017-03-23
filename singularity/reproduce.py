@@ -37,31 +37,38 @@ def assess_replication(image_file1,image_file2,version=None):
     return report
 
 
-def assess_differences(image_file1,image_file2,version=None):
+def assess_differences(image_file1,image_file2,level=None,version=None):
     '''assess_replications will compare two images on each level of 
     reproducibility,
     '''
     levels = get_levels(version=version)
+    if level is None:
+        level = "IDENTICAL"
+
+    if level not in list(levels.keys()):
+        bot.logger.error("%s is not a valid level. See get_levels().",level)
+        sys.exit(1)
+
     different = []
     same = []
     setdiff = []
-    for level_name, values in levels.items():
-        hashes1 = get_content_hashes(image_path=image_file1,
-                                     level=level_name)
-        hashes2 = get_content_hashes(image_path=image_file2,
-                                     level=level_name)
-        for file_name,hash_value in hashes1.items():
-            if file_name in hashes2:
-                if hashes2[file_name] == hashes1[file_name]:
-                    same.append(file_name)
-                else:
-                    different.append(file_name)
+
+    # Compare the dictionary of file:hash between two images
+    hashes1 = get_content_hashes(image_path=image_file1,level=level)
+    hashes2 = get_content_hashes(image_path=image_file2,level=level)
+    for file_name,hash_value in hashes1.items():
+        if file_name in hashes2:
+            if hashes2[file_name] == hashes1[file_name]:
+                same.append(file_name)
             else:
-                setdiff.append(file_name)
+                different.append(file_name)
+        else:
+            setdiff.append(file_name)
 
     report = {'missing':setdiff,
               'same':same,
               'different':different}
+
     return report
 
 
@@ -214,7 +221,7 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,skip
     digest = dict()
     for member in tar:
         if member.isfile():
-            if include_file(member.name,file_filters):
+            if include_file(member.name,file_filter):
                 buf = member.tobuf()
                 hasher = hashlib.sha1()
                 hasher.update(buf)
