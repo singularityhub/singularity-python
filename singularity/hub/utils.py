@@ -166,3 +166,35 @@ def parse_container_name(image):
               'user':user }
 
     return parsed
+
+
+######################################################################
+# Downloading
+######################################################################
+
+
+def download_atomically(url,file_name,headers=None):
+    '''download atomically will stream to a temporary file, and
+    rename only upon successful completion. This is to ensure that
+    errored downloads are not found as complete in the cache
+    :param file_name: the file name to stream to
+    :param url: the url to stream from
+    :param headers: additional headers to add to the get (default None)
+    '''
+    try:               # file_name.tmp.XXXXXX
+        fd, tmp_file = tempfile.mkstemp(prefix=("%s.tmp." % file_name)) 
+        os.close(fd)
+        response = api_get(url,headers=headers,stream=tmp_file)
+        if isinstance(response, HTTPError):
+            logger.error("Error downloading %s, exiting.", url)
+            sys.exit(1)
+        os.rename(tmp_file, file_name)
+    except:
+        download_folder = os.path.dirname(os.path.abspath(file_name))
+        logger.error("Error downloading %s. Do you have permission to write to %s?", url, download_folder)
+        try:
+            os.remove(tmp_file)
+        except:
+            pass
+        sys.exit(1)
+    return file_name

@@ -15,13 +15,19 @@ from singularity.utils import (
 )
 
 from singularity.cli import Singularity
+from singularity.reproduce import (
+    get_image_hash
+)
 import tempfile
 import tarfile
 import hashlib
 import zipfile
 import shutil
 import json
+import io
 import os
+import re
+import sys
 
 
 def estimate_image_size(spec_file,sudopw=None,padding=None):
@@ -208,16 +214,3 @@ def load_package(package_path,get=None):
             bot.logger.debug("Unknown extension %s, skipping %s", ext,g)
 
     return retrieved
-
-
-def get_image_hash(image_path):
-    '''get_image_hash will return an md5 hash of the file. Since we don't have git commits
-    this seems like a reasonable option to "version" an image, since we can easily say yay or nay
-    if the image matches the spec file
-    :param image_path: full path to the singularity image
-    '''
-    hash_md5 = hashlib.md5()
-    with open(image_path, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()

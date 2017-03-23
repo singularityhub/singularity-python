@@ -7,6 +7,7 @@ base.py: base module for working with singularity hub api. Right
 '''
 
 from singularity.hub.utils import (
+    download_stream_atomically,
     parse_container_name,
     is_number,
     api_get,
@@ -61,15 +62,17 @@ def download_image(manifest,download_folder=None,extract=True,name=None):
     print("Found image %s:%s" %(manifest['name'],manifest['branch']))
     print("Downloading image... %s" %(image_file))
 
-    if download_folder != None:
+    #TODO: add temporary file here
+    if download_folder is not None:
         image_file = "%s/%s" %(download_folder,image_file)
     url = manifest['image']
-    image_file = api_get(url,stream_to=image_file)
+    image_file = download_stream_atomically(url,file_name=image_file)
     if extract == True:
         print("Decompressing %s" %image_file)
         os.system('gzip -d -f %s' %(image_file))
         image_file = image_file.replace('.gz','')
     return image_file
+
 
 
 # Various Helpers ---------------------------------------------------------------------------------

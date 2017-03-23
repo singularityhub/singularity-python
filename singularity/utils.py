@@ -91,7 +91,7 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
     if sudopw == None:
         sudopw = os.environ.get('pancakes',None)
 
-    if sudopw != None:
+    if sudopw is not None:
         cmd = ' '.join(["echo", sudopw,"|","sudo","-S"] + cmd)
         if suppress == False:
             output = os.popen(cmd).read().strip('\n')

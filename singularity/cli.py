@@ -144,10 +144,10 @@ class Singularity:
         will generate temporary directory.
         :param export_format: the export format (only tar currently supported)
         '''
-        sudo = True
+        sudo = False
         cmd = ['singularity','export']
 
-        if export_format != "tar":
+        if export_format is not "tar":
             print("Currently only supported export format is tar.")
             return None
     
@@ -166,7 +166,7 @@ class Singularity:
                 return None
 
             # if user has specified output file, move it there, return path
-            if output_file != None:
+            if output_file is not None:
                 shutil.copyfile(tmptar,output_file)
                 return output_file
             else:
