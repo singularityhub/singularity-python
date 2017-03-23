@@ -51,5 +51,4 @@ digest['./usr/bin/pinky']
 # binary file and not contents inside.
 
 file_hash = get_image_file_hash(image_path)
-# '13775a83962ae60744d691eb7f7fd1e96599e656'
-
+# e'13775a83962ae60744d691eb7f7fd1e96599e656'

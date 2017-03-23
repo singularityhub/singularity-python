@@ -86,9 +86,6 @@ image_files = glob("*.img")
 # Here we will download the same image 10 times, create a sha1 sum of the files,
 # and determine which sets of files should be consistent for the same image file
 
-5665
-5673
-
 
 # Question 2: What files are consistent across the same image, different downloads?
 # LEVEL REPLICATE
