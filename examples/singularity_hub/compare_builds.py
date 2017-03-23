@@ -3,8 +3,6 @@
 # This is a simple script to use the singularity command line tool to obtain manifests
 # and compare build specs (using Singularity Hub API) 
 
-container_name = 'vsoch/singularity-hello-world'
-
 from singularity.hub.client import Client
 
 import pickle
@@ -41,25 +39,22 @@ results['collection'] = collection
 container_ids = collection['container_set']
 cids = []
 for c in range(0,len(container_ids)):
-   try:
-       container_id = container_ids[c]
-       cids.append(container_id)
-       manifest = shub.get_container(container_id)
-       container_uri = '%s-%s' %(container_name,manifest['version'])
-       containers[container_uri] = manifest
-       image = shub.pull_container(manifest,
-                                   download_folder=storage,
-                                   name="%s.img.gz" %(manifest['version']))       
-       metrics = shub.load_metrics(manifest)
-       top_os = get_top_os(metrics['os_sims'])       
-       entry = [container_name,
-                metrics['build_time_seconds'],
-                metrics['size'],
-                manifest['version'],
-                top_os]
-       df.loc[container_uri] = entry
-   except:
-       pass
+   container_id = container_ids[c]
+   cids.append(container_id)
+   manifest = shub.get_container(container_id)
+   container_uri = '%s-%s' %(container_name,manifest['version'])
+   containers[container_uri] = manifest
+   image = shub.pull_container(manifest,
+                               download_folder=storage,
+                               name="%s.img.gz" %(manifest['version']))       
+   metrics = shub.load_metrics(manifest)
+   top_os = get_top_os(metrics['os_sims'])       
+   entry = [container_name,
+            metrics['build_time_seconds'],
+            metrics['size'],
+            manifest['version'],
+            top_os]
+   df.loc[container_uri] = entry
     
 results['containers'] = containers    
 results['df'] = df

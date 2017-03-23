@@ -186,12 +186,12 @@ def download_atomically(url,file_name,headers=None):
         os.close(fd)
         response = api_get(url,headers=headers,stream=tmp_file)
         if isinstance(response, HTTPError):
-            logger.error("Error downloading %s, exiting.", url)
+            bot.logger.error("Error downloading %s, exiting.", url)
             sys.exit(1)
         os.rename(tmp_file, file_name)
     except:
         download_folder = os.path.dirname(os.path.abspath(file_name))
-        logger.error("Error downloading %s. Do you have permission to write to %s?", url, download_folder)
+        bot.logger.error("Error downloading %s. Do you have permission to write to %s?", url, download_folder)
         try:
             os.remove(tmp_file)
         except:
