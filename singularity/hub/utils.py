@@ -13,6 +13,11 @@ import os
 import tempfile
 import sys
 
+try:
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import HTTPError
+
 
 def api_get(url,headers=None,token=None,data=None, return_json=True, stream_to=None):
     '''api_get will use requests to get a particular url
