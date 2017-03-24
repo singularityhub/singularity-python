@@ -10,6 +10,7 @@ from singularity.hub.auth import get_headers
 
 import requests
 import os
+import tempfile
 import sys
 
 
@@ -184,7 +185,7 @@ def download_atomically(url,file_name,headers=None):
     try:               # file_name.tmp.XXXXXX
         fd, tmp_file = tempfile.mkstemp(prefix=("%s.tmp." % file_name)) 
         os.close(fd)
-        response = api_get(url,headers=headers,stream=tmp_file)
+        response = api_get(url,headers=headers,stream_to=tmp_file)
         if isinstance(response, HTTPError):
             bot.logger.error("Error downloading %s, exiting.", url)
             sys.exit(1)

@@ -12,6 +12,8 @@ import shutil
 
 shub = Client()    # Singularity Hub Client
 
+container_name = 'vsoch/singularity-hello-world'
+
 # Let's keep images in a temporary folder
 base = "/home/vanessa/Documents/Work/singularity/hub"
 storage = "%s/containers" %base

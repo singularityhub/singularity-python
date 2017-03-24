@@ -62,7 +62,6 @@ def download_image(manifest,download_folder=None,extract=True,name=None):
     print("Found image %s:%s" %(manifest['name'],manifest['branch']))
     print("Downloading image... %s" %(image_file))
 
-    #TODO: add temporary file here
     if download_folder is not None:
         image_file = "%s/%s" %(download_folder,image_file)
     url = manifest['image']
