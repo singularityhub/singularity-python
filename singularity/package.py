@@ -16,7 +16,10 @@ from singularity.utils import (
 
 from singularity.cli import Singularity
 from singularity.reproduce import (
-    get_image_hash
+    get_image_hash,
+    get_image_hashes,
+    get_memory_tar
+
 )
 import tempfile
 import tarfile
@@ -85,10 +88,10 @@ def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_fo
     image_path = "%s/image" %(build_dir)
 
     # Run create image and bootstrap with Singularity command line tool.
-    if sudopw != None:
+    if sudopw is not None:
         cli = Singularity(sudopw=sudopw,debug=debug)
     else:
-        cli = Singularity(debug=debug) # This command will ask the user for sudo
+        cli = Singularity(debug=debug)
 
     print("\nCreating and bootstrapping image...")
 
@@ -130,24 +133,29 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
             S = Singularity(sudopw=sudopw,debug=verbose)
         else:
             S = Singularity(debug=verbose) # This command will ask the user for sudo
-    tmptar = S.export(image_path=image_path,pipe=False)
-    tar = tarfile.open(tmptar)
+
+    tar = get_memory_tar(image_path)
     members = tar.getmembers()
     image_name = os.path.basename(image_path)
     zip_name = "%s.zip" %(image_name.replace(" ","_"))
+
     # Include the image in the package?
     if remove_image:
         to_package = dict()
     else:
         to_package = {"files":[image_path]}
+
     # If the specfile is provided, it should also be packaged
     if spec_path != None:
         singularity_spec = "".join(read_file(spec_path))
         to_package['Singularity'] = singularity_spec
-    # Package the image with an md5 sum as VERSION
-    version = get_image_hash(image_path)
-    to_package["VERSION"] = version
+
+    # Package the image with an sha1, replication standard,  as VERSION
+    hashes = get_image_hashes(image_path)
+    to_package["VERSION"] = hashes['REPLICATE']
+    to_package["HASHES"] = hashes
     # Look for runscript
+
     if runscript == True:
         try:
             runscript_member = tar.getmember("./singularity")
@@ -157,12 +165,14 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
             bot.logger.debug("Found runscript.")
         except KeyError:
             bot.logger.warning("No runscript found")
+
     if software == True:
         bot.logger.info("Adding software list to package.")
         files = [x.path for x in members if x.isfile()]
         folders = [x.path for x in members if x.isdir()]
         to_package["files.txt"] = files
         to_package["folders.txt"] = folders
+
     # Do zip up here - let's start with basic structures
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     bot.logger.debug("Package created at %s" %(zipfile))

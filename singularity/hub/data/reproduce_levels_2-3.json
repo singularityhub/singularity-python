@@ -9,9 +9,9 @@
     "regexp": "^/usr|^/bin|^/boot|^/lib64|/proc|^/run|^/dev|^/opt|^/sbin|^/srv|^/sys",
     "skip_files":["/etc/resolv.conf",
                   "/etc/hosts",
-                  "/.singularity/actions/exec",
-                  "/.singularity/actions/run",
-                  "/.singularity/actions/shell",
+                  "/singularity.d/actions/exec",
+                  "/singularity.d/actions/run",
+                  "/singularity.d/actions/shell",
                   "/etc/mtab"]
   },
 
@@ -21,18 +21,18 @@
   },
   "ENVIRONMENT": {
     "description": "only look at the container's environment. This level will only look at the environment files when assessing similarity.",
-   "regexp": "/.singularity/env" 
+   "regexp": "/singularity.d/env" 
   },
   "LABELS": {
     "description": "only look at the container labels, if they exist (singularity version 2.3)",
-    "include_files": "/.singularity/labels.json"
+    "include_files": "/singularity.d/labels.json"
   },
   "RECIPE": {
     "description": "singularity looks at everything on the level of the Singularity image, meaning the runscript, environment, and labels.",
-    "regexp": "/.singularity/env",
-    "include_files":["/.singularity/actions/exec",
-                     "/.singularity/actions/run",
-                     "/.singularity/actions/shell",
-                     "/.singularity/labels.json"]
+    "regexp": "/singularity.d/env",
+    "include_files":["/singularity.d/actions/exec",
+                     "/singularity.d/actions/run",
+                     "/singularity.d/actions/shell",
+                     "/singularity.d/labels.json"]
   }
 }

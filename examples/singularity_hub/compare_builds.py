@@ -5,9 +5,10 @@
 
 from singularity.hub.client import Client
 
-import pickle
+from glob import glob
 import os
 import pandas
+import pickle
 import shutil
 
 shub = Client()    # Singularity Hub Client
@@ -60,7 +61,8 @@ for c in range(0,len(container_ids)):
     
 results['containers'] = containers    
 results['df'] = df
-pickle.dump(results,open('%s/results.pkl' %storage,'wb'))
+result_file = '%s/results-%s.pkl' %(base,container_name.replace('/','-'))
+pickle.dump(results,open(result_file),'wb'))
 
 
 #############################################################################
@@ -69,14 +71,62 @@ pickle.dump(results,open('%s/results.pkl' %storage,'wb'))
 
 from singularity.reproduce import (
     get_content_hashes,
+    get_image_hash,
     get_levels
 )
 
-levels = get_levels()
-results = pickle.load(open('%s/results.pkl' %storage,'rb'))
+levels = get_levels(version=2.2)
+result_file = '%s/results-%s.pkl' %(base,container_name.replace('/','-'))
+results = pickle.load(open(result_file,'rb'))
 
 os.chdir(storage)
 image_files = glob("*.img")
+
+
+# Let's assess what files are identical across the images. We can use this to develop
+# our subsequent levels.
+# Here we will use the 100 files in the folder, and find files/folders consistent across
+# we will not include the runscript, since we know this was changed.
+identical_across = get_content_hashes(image_files[0],level='IDENTICAL',version=2.2)
+image_files.pop(0)
+not_identical = []
+
+for image_file in image_files:
+    hashes = get_content_hashes(image_file,level='IDENTICAL',version=2.2)
+    for hash_path,hash_val in hashes.items():
+        if hash_path in identical_across:
+            if not identical_across[hash_path] == hashes[hash_path]:
+                del identical_across[hash_path]
+                not_identical.append(hash_path)
+
+# From the above we learn that all files are identical except for those
+# in:
+
+#['./.run',
+# './etc/hosts',
+# './singularity',
+# './etc/mtab',
+# './.exec',
+# './etc/resolv.conf',
+# './.shell',
+# './environment']
+
+# Since we know that the images were produced by way of changing the runscript,
+# and this influences the singularity metadata folders, we can conclude that we would
+# see differences for REPLICATE in /etc/hosts and /etc/mtab and /etc/resolv.conf
+
+# Identical: logically, if we compare an image to itself, all files are the same
+# Replicate: if we produce an equivalent image at a different time, we might have
+#            variance in package directories (anything involving variable with mirrors, etc)
+# Environment/Runscript/Labels: these are logical to compare, we compare the hash of
+#             just a few specific files in the image
+
+
+#############################################################################
+# Task 3: Assess levels of reproducibility
+#############################################################################
+
+# The first thing we want to do is evaluate our metrics for reproducibility.
 
 # Question 1: What files are consistent across the same image?
 # LEVEL IDENTICAL
@@ -86,28 +136,51 @@ image_files = glob("*.img")
 
 # Question 2: What files are consistent across the same image, different downloads?
 # LEVEL REPLICATE
+# An image that is a replicate should be assessed as identical using the "REPLICATE"
+# criteria. 
+
+image_files = glob("*.img")
+
+# Let's assess what files are identical across the images. We can use this to develop
+# our subsequent levels.
 # Here we will use the 100 files in the folder, and find files/folders consistent across
 # we will not include the runscript, since we know this was changed.
-identical_across = get_content_hashes(image_files[0],level='IDENTICAL')
-image_files.pop(0)
-not_identical = []
+level_names = ['IDENTICAL',
+               'REPLICATE',
+               'RUNSCRIPT']
+
+dfs = dict()
+
+def generate_replication_df(level_name,image_files,version,skip_files=None):
+
+    print("CALCULATING COMPARISONS FOR LEVEL %s" %level_name)
+    df = pandas.DataFrame(0,index=image_files,columns=image_files)
+    for image_file1 in image_files:
+        for image_file2 in image_files:
+            hash1 = get_image_hash(image_file1,level=level_name,version=version)
+            hash2 = get_image_hash(image_file2,level=level_name,version=version)
+            if hash1 == hash2:
+                df.loc[image_file1,image_file2] = 1
+                df.loc[image_file2,image_file1] = 1
+    return df
+
+
+dfs['IDENTICAL'] = generate_replication_df('IDENTICAL',image_files,version=2.2)
+dfs['REPLICATE'] = generate_replication_df('REPLICATE',image_files,version=2.2, skip_files=['/singularity'])
+
+# Finally, if we compare runscripts only, we should see two container versions
+hashes = []
 
 for image_file in image_files:
-    hashes = get_content_hashes(image_file,level='IDENTICAL')
-    for hash_path,hash_val in hashes.items():
-        if hash_path in identical_across:
-            if not identical_across[hash_path] == hashes[hash_path]:
-                del identical_across[hash_path]
-                not_identical.append(hash_path)
+    hashy = get_image_hash(image_file,level="RUNSCRIPT",version=2.2)
+    hashes.append(hashy)
 
-
-start = time.time()
-hashy=get_image_hash(image_file)
-end = time.time()
-
-# Question 3: What files are consistent between the same operating systems?
-# LEVEL BASE
-# A base similarity means the base of the images (the OS) are likely the same
+uniques = dict()
+for hashy in hashes:
+    if hashy in uniques:
+        uniques[hashy] +=1
+    else:
+        uniques[hashy] = 1
 
 
 # Outputs:
@@ -120,7 +193,6 @@ end = time.time()
  
 We can then allow the user to use our functions, and go a bit deeper into image comparison and asses, given equal file paths, which are actually equal in content across two images. The user could even save a definition of "how they are assessing reproducibility" of the image by way of a list of regular expressions, and a hash for their image generated from it. I think it would be interesting, given this algorithm, to parse all singularity hub public images and assess the total level of redundancy!
 
-Anyhoo, I think I'm going to go to sleep now, I keep doing this not sleeping thing, lol.
 
 
 from glob import glob
