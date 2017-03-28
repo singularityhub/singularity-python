@@ -11,9 +11,13 @@ from singularity.hub.auth import (
 
 from singularity.logman import bot
 from singularity.hub.base import (
+    api_base,
     get_template,
     download_image
 )
+
+from singularity.hub.utils import paginate_get
+
 
 import demjson
 
@@ -60,3 +64,31 @@ class Client(object):
         '''get a container collection or return None.
         '''
         return get_template(container_name,"collection")
+
+
+    def get_collections(self):
+        '''get all container collections
+        '''
+        results = paginate_get(url='%s/collections/?format=json' %(api_base))
+        print("Found %s collections." %(len(results)))
+        # TODO: The shub API needs to have this endpoint expanded
+        return results
+
+
+    def get_containers(self,latest=True):
+        '''get all containers'''
+        results = paginate_get(url='%s/containers/?format=json' %(api_base))
+        print("Found %s containers." %(len(results)))
+        containers = dict()
+        if latest == True:
+            for container in results:
+                if container['name'] in containers:
+                    if container['branch'] in containers[container['name']]:
+                        if containers[container['name']][container['branch']]['id'] < container['id']:
+                            containers[container['name']][container['branch']] = container
+                    else:
+                        containers[container['name']][container['branch']] = container
+                else:
+                    containers[container['name']] = {container['branch']: container}
+        return containers
+

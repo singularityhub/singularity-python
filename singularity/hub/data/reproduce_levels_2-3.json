@@ -9,15 +9,18 @@
     "regexp": "^/usr|^/bin|^/boot|^/lib64|/proc|^/run|^/dev|^/opt|^/sbin|^/srv|^/sys",
     "skip_files":["/etc/resolv.conf",
                   "/etc/hosts",
+                  "/singularity.d/labels.json"
                   "/singularity.d/actions/exec",
                   "/singularity.d/actions/run",
                   "/singularity.d/actions/shell",
+                  "/singularity.d/runscript",
                   "/etc/mtab"]
   },
 
   "RUNSCRIPT": {
     "description": "runscript is a level that assesses only the executable runscript in the  image. This is a fast approach to sniff if the container is broadly doing the same thing",
-   "include_files":["/.singularity/runscript"] 
+   "include_files":["/singularity",
+                    "/singularity.d/runscript"] 
   },
   "ENVIRONMENT": {
     "description": "only look at the container's environment. This level will only look at the environment files when assessing similarity.",

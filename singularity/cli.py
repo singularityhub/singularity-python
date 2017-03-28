@@ -68,6 +68,9 @@ class Singularity:
             cmd.append(command)
         help = self.run_command(cmd)
 
+        if isinstance(help,bytes):
+            help = help.decode('utf-8')
+
         # Print to console, or return string to user
         if stdout == True:
             print(help)
@@ -89,8 +92,10 @@ class Singularity:
             cmd = ['singularity','--debug','create','--size',str(size),image_path]
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
-        self.run_command(cmd,sudo=True)
-
+        self.run_command(cmd,sudo=False)
+        if os.path.exists(image_path):
+            return image_path
+        return None
 
 
     def bootstrap(self,image_path,spec_path):
@@ -144,7 +149,6 @@ class Singularity:
         will generate temporary directory.
         :param export_format: the export format (only tar currently supported)
         '''
-        sudo = False
         cmd = ['singularity','export']
 
         if export_format is not "tar":
@@ -158,7 +162,7 @@ class Singularity:
             _,tmptar = tempfile.mkstemp(suffix=".%s" %export_format)
             os.remove(tmptar)
             cmd = cmd + ["-f",tmptar,image_path]
-            self.run_command(cmd,sudo=sudo)
+            self.run_command(cmd,sudo=False)
 
             # Was there an error?            
             if not os.path.exists(tmptar):
@@ -173,31 +177,19 @@ class Singularity:
                 return tmptar
 
         # Otherwise, return output of pipe    
-        return self.run_command(cmd,sudo=sudo)
+        return self.run_command(cmd,sudo=False)
 
 
 
-    def importcmd(self,image_path,input_source,import_type=None,command=None):
+    def importcmd(self,image_path,input_source):
         '''import will import (stdin) to the image
         :param image_path: path to image to import to. 
         :param input_source: input source or file
         :param import_type: if not specified, imports whatever function is given
-        :param command: replace "tar" command
         '''
-        sudo = True
-        if import_type == "tar":
-            cmd = ['singularity','import','--file',input_source]
-            if command is not None:
-                if not isinstance(command,list):
-                    command = command.split(' ')
-                cmd = cmd + ["--command"] + command
-            cmd.append(image_path)
-            return self.run_command(cmd,sudo=sudo)
-        else:
-            cmd = ['singularity','import',image_path,input_source]
-            return self.run_command(cmd,sudo=sudo)
+        cmd = ['singularity','import',image_path,input_source]
+        return self.run_command(cmd,sudo=False)
 
-        return None
 
 
     def pull(self,image_path):
@@ -291,7 +283,7 @@ class Singularity:
 # HELPER FUNCTIONS
 #################################################################################
 
-def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
+def get_image(image,return_existed=False,size=None,debug=False):
     '''get_image will return the file, if it exists, or if it's docker or
     shub, will use the Singularity command line tool to generate a temporary image
     :param image: the image file or path (eg, docker://)
@@ -304,14 +296,7 @@ def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
     # Is the image a docker image?
     if re.search('^docker://',image):
         existed = False
-        if sudopw == None:
-            sudopw = os.environ.get('pancakes',None)
-
-        if sudopw != None:
-            cli = Singularity(sudopw=sudopw,debug=debug)
-        else:
-            cli = Singularity(debug=debug) # This command will ask the user for sudo
-
+        cli = Singularity(debug=debug)
         tmpdir = tempfile.mkdtemp()
         image_name = "%s.img" %image.replace("docker://","").replace("/","-")
         bot.logger.info("Found docker image %s, creating and importing...",image_name)

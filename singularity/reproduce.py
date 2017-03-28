@@ -37,39 +37,55 @@ def assess_replication(image_file1,image_file2,version=None):
     return report
 
 
-def assess_differences(image_file1,image_file2,level=None,version=None):
-    '''assess_replications will compare two images on each level of 
-    reproducibility,
+def assess_differences(image_file1,image_file2,levels=None,version=None,include_same=False):
+    '''assess_differences will compare two images on each level of 
+    reproducibility, returning for each level a dictionary with files
+    that are the same, different, and an overall score.
+    :param include_same: if True, also include list of intersect_same files (default False)
     '''
-    levels = get_levels(version=version)
-    if level is None:
-        level = "IDENTICAL"
 
-    if level not in list(levels.keys()):
-        bot.logger.error("%s is not a valid level. See get_levels().",level)
-        sys.exit(1)
+    if levels is None:
+        levels = get_levels(version=version)
 
-    different = []
-    same = []
-    setdiff = []
+    reports = dict()
+    scores = dict()
 
-    # Compare the dictionary of file:hash between two images
-    hashes1 = get_content_hashes(image_path=image_file1,level=level)
-    hashes2 = get_content_hashes(image_path=image_file2,level=level)
-    for file_name,hash_value in hashes1.items():
-        if file_name in hashes2:
-            if hashes2[file_name] == hashes1[file_name]:
-                same.append(file_name)
+    for level_name, level_filter in levels.items():
+        different = []
+        same = []
+        setdiff = []
+
+        # Compare the dictionary of file:hash between two images
+        hashes1 = get_content_hashes(image_path=image_file1,level_filter=level_filter)
+        hashes2 = get_content_hashes(image_path=image_file2,level_filter=level_filter)        
+        files = list(set(list(hashes1.keys()) + list(hashes2.keys())))
+
+        for file_name in files:
+
+            # If it's not in one or the other
+            if file_name not in hashes1 or file_name not in hashes2:
+                setdiff.append(file_name)
+
             else:
-                different.append(file_name)
+                if hashes2[file_name] == hashes1[file_name]:
+                    same.append(file_name)
+                else:
+                    different.append(file_name)
+
+        report = {'difference': setdiff,
+                  'intersect_different': different}
+
+        if include_same == True:
+            report['intersect_same'] = same
+
+        # Calculated score is number of same / total
+        if len(files) == 0:
+            scores[level_name] = 0
         else:
-            setdiff.append(file_name)
-
-    report = {'missing':setdiff,
-              'same':same,
-              'different':different}
-
-    return report
+            scores[level_name] = len(same)/float(len(files)) 
+        reports[level_name] = report
+    reports['scores'] = scores
+    return reports
 
 
 def get_custom_level(regexp=None,description=None,skip_files=None,include_files=None):
@@ -155,10 +171,12 @@ def get_levels(version=None):
     :param version: the version of singularity to use (default is 2.2)
     :param include_files: files to add to the level, only relvant if
     '''
+    valid_versions = ['2.3','2.2']
+
     if version is None:
-        version = "2-2"  
-    version = str(version).replace('.','-')
-    valid_versions = ['2-2','2-3']
+        version = "2.3"  
+    version = str(version)
+
     if version not in valid_versions:
         bot.logger.error("Unsupported version %s, valid versions are %s",version,",".join(valid_versions))
 
@@ -166,7 +184,11 @@ def get_levels(version=None):
                                                            'hub',
                                                            'data',
                                                            'reproduce_levels.json'))
-    return read_json(levels_file)
+    levels = read_json(levels_file)
+    if version == "2.2":
+        # Labels not added until 2.3
+        del levels['LABELS']
+    return levels
 
 
 def include_file(member_path,file_filter):
@@ -192,20 +214,35 @@ def include_file(member_path,file_filter):
     return False
 
 
-def get_image_hashes(image_path,version=None):
+def assess_content(member_path,file_filter):
+    '''Determine if the filter wants the file to be read for content.
+    In the case of yes, we would then want to add the content to the
+    hash and not the file object.
+    '''
+    member_path = member_path.replace('.','',1)
+
+    if "assess_content" in file_filter:
+        if member_path in file_filter['assess_content']:
+            return True
+    return False
+
+
+def get_image_hashes(image_path,version=None,levels=None,verbose=False):
     '''get_image_hashes returns the hash for an image across all levels. This is the quickest,
     easiest way to define a container's reproducibility on each level.
     '''
-    levels = get_levels(version=version)
+    if levels is None:
+        levels = get_levels(version=version)
     hashes = dict()
     for level_name,level_filter in levels.items():
         hashes[level_name] = get_image_hash(image_path,
-                                            level_filter=level_filter)
+                                            level_filter=level_filter,
+                                            verbose=verbose)
     return hashes
 
 
-
-def get_image_hash(image_path,level=None,level_filter=None,include_files=None,skip_files=None,version=None):
+def get_image_hash(image_path,level=None,level_filter=None,verbose=False,
+                   include_files=None,skip_files=None,version=None):
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
     the user can also provide a level_filter manually with level_filter (for custom levels)
@@ -213,16 +250,15 @@ def get_image_hash(image_path,level=None,level_filter=None,include_files=None,sk
     expression to match particular files/folders in the image. Choices are in notes.
     :param skip_files: an optional list of files to skip
     :param include_files: an optional list of files to keep (only if level not defined)
+    :param verbose: print out files that are included, default False
     :param version: the version to use. If not defined, default is 2.3
 
     ::notes
 
     LEVEL DEFINITIONS
-    The level definitions come down to including folders/files in the comparison. 
-    The top are the most time intensive (applied to more files), and the bottom
-    are quicker and more specific, but don't assess as much of the image. The default
-    level, if not specified, is REPLICATE. It is the user's choice where to operate
-    on these levels of reproducibility.
+    The level definitions come down to including folders/files in the comparison. For files
+    that Singularity produces on the fly that might be different (timestamps) but equal content
+    (eg for a replication) we hash the content ("assess_content") instead of the file.
     '''    
 
     # First get a level dictionary, with description and regexp
@@ -230,7 +266,7 @@ def get_image_hash(image_path,level=None,level_filter=None,include_files=None,sk
         file_filter = level_filter
 
     elif level is None:
-        file_filter = get_level("REPLICATE",
+        file_filter = get_level("RECIPE",
                                 version=version,
                                 include_files=include_files,
                                 skip_files=skip_files)
@@ -240,31 +276,38 @@ def get_image_hash(image_path,level=None,level_filter=None,include_files=None,sk
                                 skip_files=skip_files,
                                 include_files=include_files)
                 
+    cli = Singularity()
     tar = get_memory_tar(image_path)
-    hasher = hashlib.sha1()
+    hasher = hashlib.md5()
     for member in tar:
-        if member.isfile():
-            if include_file(member.name,file_filter):
+        if member.isfile() or member.islnk() or member.issym():
+            if assess_content(member.name,file_filter):
+                if verbose == True:
+                    print('Including %s' %(member.name))
+                member_name = member.name.replace('.','',1)
+                content = cli.execute(image_path,'cat %s' %(member_name))
+                if not isinstance(content,bytes):
+                    content = bytes(content)
+                hasher.update(content) 
+            elif include_file(member.name,file_filter):
                 buf = member.tobuf()
                 hasher.update(buf)
     return hasher.hexdigest()
 
 
-def get_content_hashes(image_path,level=None,regexp=None,include_files=None,skip_files=None,version=None):
+def get_content_hashes(image_path,level=None,regexp=None,include_files=None,
+                       level_filter=None,skip_files=None,version=None,verbose=False):
     '''get_content_hashes is like get_image_hash, but it returns a complete dictionary 
     of file names (keys) and their respective hashes (values). This function is intended
     for more research purposes and was used to generate the levels in the first place
     '''    
-    # First get a level dictionary, with description and regexp
-    if level is None:
-        if regexp is not None or include_files is not None or skip_files is not None:
-            file_filter = get_custom_level(regexp=regexp,
-                                           include_files=include_files,
-                                           skip_files=skip_files)  
-        else:
-            file_filter = get_level("REPLICATE",version=version,
-                                    skip_files=skip_files,
-                                    include_files=include_files)
+    if level_filter is not None:
+        file_filter = level_filter
+
+    elif level is None:
+        file_filter = get_level("RECIPE",version=version,
+                                skip_files=skip_files,
+                                include_files=include_files)
 
     else:
         file_filter = get_level(level,version=version,
@@ -273,12 +316,23 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,skip
 
     tar = get_memory_tar(image_path)
     chunk_size = 100*1024
+    cli = Singularity()
     digest = dict()
     for member in tar:
-        if member.isfile():
-            if include_file(member.name,file_filter):
+        if member.isfile() or member.islnk() or member.issym():
+            if assess_content(member.name,file_filter):
+                hasher = hashlib.md5()
+                if verbose == True:
+                    print('Including %s' %(member.name))
+                member_name = member.name.replace('.','',1)
+                content = cli.execute(image_path,'cat %s' %(member_name))
+                if not isinstance(content,bytes):
+                    content = bytes(content)
+                hasher.update(content) 
+                digest[member.name] = hasher.hexdigest()
+            elif include_file(member.name,file_filter):
+                hasher = hashlib.md5()
                 buf = member.tobuf()
-                hasher = hashlib.sha1()
                 hasher.update(buf)
                 digest[member.name] = hasher.hexdigest()
     return digest
@@ -289,7 +343,7 @@ def get_image_file_hash(image_path):
     :param level: one of LOW, MEDIUM, HIGH
     :param image_path: full path to the singularity image
     '''
-    hasher = hashlib.sha1()
+    hasher = hashlib.md5()
     with open(image_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hasher.update(chunk)
@@ -302,3 +356,13 @@ def get_memory_tar(image_path):
     byte_array = cli.export(image_path,pipe=True)
     file_object = io.BytesIO(byte_array)
     return tarfile.open(mode="r|*", fileobj=file_object) 
+
+
+def read_image_content(image_path,file_path):
+    '''read_tar_content will read the content of a tar file,
+    and return as a bytes array. This is intended for adding content
+    of files to the hash, and not the files themselves.
+    '''
+    cli = Singularity()
+    content = cli.execute(image_path,'cat %s' %(file_path))
+

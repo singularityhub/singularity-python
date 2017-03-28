@@ -4,37 +4,43 @@
 
 from singularity.cli import Singularity
 
-# The default will ask for your sudo password, and then not ask again to
-# run commands. It is not stored anywhere, however you should not save / pickle
-# the object as it will expose your password. 
+# Create a client
 S = Singularity()
 
 # Get general help:
 S.help()
 
 # These are the defaults, which can be specified
-S = Singularity(sudo=True,verbose=False)
+S = Singularity(sudo=False,sudopw=None,debug=False)
 
-# Let's define a path to an image
-# wget http://www.vbmis.com/bmi/project/singularity/package_image/ubuntu:latest-2016-04-06.img
-image_path = 'ubuntu:latest-2016-04-06.img'
+# Create an image
+image = S.create('myimage.img')
 
-# Run singularity --exec
-S.execute(image_path=image_path,command='ls')
-# $'docker2singularity.sh\nget_docker_container_id.sh\nget_docker_meta.py\nmakeBases.py\nsingularity\nubuntu:latest-2016-04-06.img\n'
-# These are the defaults, which can be specified
+# Import into it
+S.importcmd(image,'docker://ubuntu:latest')
+
+# Execute command to container
+result = S.execute(image,command='cat /singularity')
+print(result)
+'''
+#!/bin/sh
+
+if test -x /bin/bash; then
+    exec /bin/bash "$@"
+elif test -x /bin/sh; then
+    exec /bin/sh "$@"
+else
+    echo "ERROR: No valid shell within container"
+    exit 255
+fi
+'''
 
 # For any function you can get the docs:
 S.help(command="exec")
 
-# or return as string
-help = S.help(command="exec",stdout=False)
+# export an image as a byte array
+byte_array = S.export(image,pipe=True)
 
-# export an image, default export_type="tar" , pipe=False , output_file = None will produce file in tmp
-tmptar = S.export(image_path=image_path)
-
-# create an empty image
-S.create(image_path='test.img')
-
-# import a docker image
-S.importcmd(image_path,input_source='docker://ubuntu:latest')
+# Get an in memory tar
+from singularity.reproduce import get_memory_tar
+tar = get_memory_tar(image)

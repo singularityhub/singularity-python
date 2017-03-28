@@ -19,6 +19,25 @@ except ImportError:
     from urllib2 import HTTPError
 
 
+def paginate_get(url,headers=None,token=None,data=None,return_json=True,stream_to=None,
+                 start_page=None):
+    '''paginate_get is a wrapper for api_get to get results until there isn't an additional page
+    '''
+    if start_page == None:
+        url = '%s&page=1' %(url)
+    else:
+        url = '%s&page=%s' %(url,start_page)
+
+    results = []
+    while url is not None:
+        result = api_get(url)
+        if 'results' in result:
+            results = results + result['results']
+        url = result['next']
+    return results
+        
+
+
 def api_get(url,headers=None,token=None,data=None, return_json=True, stream_to=None):
     '''api_get will use requests to get a particular url
     :param url: the url to send file to
