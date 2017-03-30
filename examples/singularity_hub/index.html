@@ -250,8 +250,7 @@ var node = g.selectAll(".node")
              })
              list = list + "</ul>"
              $("#container_set").append($(list))
-           }
-          })
+         }
       }) 
       .on('mouseout',function(d){
           $("#" + d.data.name.hashCode()).hide();
