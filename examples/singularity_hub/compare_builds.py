@@ -208,15 +208,23 @@ for image_file1 in image_files:
         counter+=1
 
 pickle.dump(diffs,open('%s/replicate_hubdiffs_dfs.pkl' %base,'wb'))
+diffs = pickle.load(open('%s/replicate_hubdiffs_dfs.pkl' %base,'rb'))
 
-from singularity.views.trees import make_package_tree
-#labels = ['-'.join(x.replace('.img','').replace('-','/',1).split('-')[:-1]) for x in diffs.index.tolist()]
+# VISUALIZATION, interactive and static
+
+from singularity.views.trees import (
+    make_package_tree, 
+    make_interactive_tree
+)
+
+# Static
 labels = ['-'.join(x.split('-')[1:-1]) for x in diffs.index.tolist()]
 fig = make_package_tree(matrix=diffs,labels=labels,title="Singularity Hub Replication Scores")
 fig.savefig('%s/replicate_hubdiffs_dfs.png' %base)
 
 # Interactive tree
 tree = make_interactive_tree(matrix=diffs,labels=labels)
+
 
 #############################################################################
 # Task 3: Assess levels of reproducibility

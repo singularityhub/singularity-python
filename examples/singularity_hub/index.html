@@ -1,1 +1,340 @@
-namechildren
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node {
+  cursor: pointer;
+}
+
+.node circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+</style>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 20, right: 120, bottom: 20, left: 120},
+    width = 960 - margin.right - margin.left,
+    height = 800 - margin.top - margin.bottom;
+
+var i = 0,
+    duration = 750,
+    root;
+
+var tree = d3.layout.tree()
+    .size([height, width]);
+
+var diagonal = d3.svg.diagonal()
+    .projection(function(d) { return [d.y, d.x]; });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.right + margin.left)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  root = {'children': [{'children': [{'children': [{'children': [{'children': [{'children': [],
+           'name': 'singularity-images'},
+          {'children': [], 'name': 'nginx'}],
+         'name': 'nginx|||singularity-images'},
+        {'children': [{'children': [{'children': [],
+             'name': 'singularity-fsl5'},
+            {'children': [{'children': [], 'name': 'neurodebian'},
+              {'children': [], 'name': 'neurodebian'}],
+             'name': 'neurodebian|||neurodebian'}],
+           'name': 'neurodebian|||neurodebian|||singularity-fsl5'},
+          {'children': [{'children': [], 'name': 'singularity_containers'},
+            {'children': [{'children': [], 'name': 'redis'},
+              {'children': [{'children': [], 'name': 'mongo'},
+                {'children': [{'children': [], 'name': 'debian'},
+                  {'children': [{'children': [], 'name': 'debian'},
+                    {'children': [], 'name': 'neurodebian'}],
+                   'name': 'debian|||neurodebian'}],
+                 'name': 'debian|||debian|||neurodebian'}],
+               'name': 'debian|||debian|||mongo|||neurodebian'}],
+             'name': 'debian|||debian|||mongo|||neurodebian|||redis'}],
+           'name': 'debian|||debian|||mongo|||neurodebian|||redis|||singularity_containers'}],
+         'name': 'debian|||debian|||mongo|||neurodebian|||neurodebian|||neurodebian|||redis|||singularity-fsl5|||singularity_containers'}],
+       'name': 'debian|||debian|||mongo|||neurodebian|||neurodebian|||neurodebian|||nginx|||redis|||singularity-fsl5|||singularity-images|||singularity_containers'},
+      {'children': [{'children': [{'children': [], 'name': 'om-images'},
+          {'children': [{'children': [], 'name': 'jupyter'},
+            {'children': [], 'name': 'rnaseq'}],
+           'name': 'jupyter|||rnaseq'}],
+         'name': 'jupyter|||om-images|||rnaseq'},
+        {'children': [{'children': [], 'name': 'fasta-utilities'},
+          {'children': [{'children': [], 'name': 'tensorflow'},
+            {'children': [], 'name': 'abruijn-container'}],
+           'name': 'abruijn-container|||tensorflow'}],
+         'name': 'abruijn-container|||fasta-utilities|||tensorflow'}],
+       'name': 'abruijn-container|||fasta-utilities|||jupyter|||om-images|||rnaseq|||tensorflow'}],
+     'name': 'abruijn-container|||debian|||debian|||fasta-utilities|||jupyter|||mongo|||neurodebian|||neurodebian|||neurodebian|||nginx|||om-images|||redis|||rnaseq|||singularity-fsl5|||singularity-images|||singularity_containers|||tensorflow'},
+    {'children': [{'children': [{'children': [{'children': [],
+           'name': 'neurodebian'},
+          {'children': [{'children': [], 'name': 'neurodebian'},
+            {'children': [], 'name': 'debian'}],
+           'name': 'debian|||neurodebian'}],
+         'name': 'debian|||neurodebian|||neurodebian'},
+        {'children': [{'children': [], 'name': 'neurodebian'},
+          {'children': [{'children': [], 'name': 'singularity-hello'},
+            {'children': [{'children': [{'children': [],
+                 'name': 'singularity-images'},
+                {'children': [], 'name': 'ubuntu'}],
+               'name': 'singularity-images|||ubuntu'},
+              {'children': [{'children': [{'children': [],
+                   'name': 'singularity-hello-world'},
+                  {'children': [], 'name': 'singularity-near'}],
+                 'name': 'singularity-hello-world|||singularity-near'},
+                {'children': [{'children': [], 'name': 'singularity-builds'},
+                  {'children': [{'children': [], 'name': 'singularity-builds'},
+                    {'children': [{'children': [], 'name': 'neurodebian'},
+                      {'children': [], 'name': 'shubtest'}],
+                     'name': 'neurodebian|||shubtest'}],
+                   'name': 'neurodebian|||shubtest|||singularity-builds'}],
+                 'name': 'neurodebian|||shubtest|||singularity-builds|||singularity-builds'}],
+               'name': 'neurodebian|||shubtest|||singularity-builds|||singularity-builds|||singularity-hello-world|||singularity-near'}],
+             'name': 'neurodebian|||shubtest|||singularity-builds|||singularity-builds|||singularity-hello-world|||singularity-images|||singularity-near|||ubuntu'}],
+           'name': 'neurodebian|||shubtest|||singularity-builds|||singularity-builds|||singularity-hello|||singularity-hello-world|||singularity-images|||singularity-near|||ubuntu'}],
+         'name': 'neurodebian|||neurodebian|||shubtest|||singularity-builds|||singularity-builds|||singularity-hello|||singularity-hello-world|||singularity-images|||singularity-near|||ubuntu'}],
+       'name': 'debian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||shubtest|||singularity-builds|||singularity-builds|||singularity-hello|||singularity-hello-world|||singularity-images|||singularity-near|||ubuntu'},
+      {'children': [{'children': [{'children': [{'children': [],
+             'name': 'singularity_images'},
+            {'children': [], 'name': 'CiTAR-Containers'}],
+           'name': 'CiTAR-Containers|||singularity_images'},
+          {'children': [{'children': [], 'name': 'scientific-linux'},
+            {'children': [{'children': [{'children': [],
+                 'name': 'singularity-docker-centos7-tensorflow'},
+                {'children': [{'children': [], 'name': 'singularity-STAR'},
+                  {'children': [], 'name': 'singularity-easybuild'}],
+                 'name': 'singularity-STAR|||singularity-easybuild'}],
+               'name': 'singularity-STAR|||singularity-docker-centos7-tensorflow|||singularity-easybuild'},
+              {'children': [{'children': [], 'name': 'singularity'},
+                {'children': [{'children': [], 'name': 'centos'},
+                  {'children': [{'children': [], 'name': 'first_project'},
+                    {'children': [], 'name': 'singularity-builds'}],
+                   'name': 'first_project|||singularity-builds'}],
+                 'name': 'centos|||first_project|||singularity-builds'}],
+               'name': 'centos|||first_project|||singularity|||singularity-builds'}],
+             'name': 'centos|||first_project|||singularity|||singularity-STAR|||singularity-builds|||singularity-docker-centos7-tensorflow|||singularity-easybuild'}],
+           'name': 'centos|||first_project|||scientific-linux|||singularity|||singularity-STAR|||singularity-builds|||singularity-docker-centos7-tensorflow|||singularity-easybuild'}],
+         'name': 'CiTAR-Containers|||centos|||first_project|||scientific-linux|||singularity|||singularity-STAR|||singularity-builds|||singularity-docker-centos7-tensorflow|||singularity-easybuild|||singularity_images'},
+        {'children': [{'children': [{'children': [{'children': [{'children': [],
+                 'name': 'ubuntu'},
+                {'children': [], 'name': 'test-ubuntu14'}],
+               'name': 'test-ubuntu14|||ubuntu'},
+              {'children': [{'children': [{'children': [{'children': [],
+                     'name': 'singularity-containers'},
+                    {'children': [], 'name': 'linuxbrew'}],
+                   'name': 'linuxbrew|||singularity-containers'},
+                  {'children': [{'children': [],
+                     'name': 'singularity-scientific-example'},
+                    {'children': [], 'name': 'handler-poretools'}],
+                   'name': 'handler-poretools|||singularity-scientific-example'}],
+                 'name': 'handler-poretools|||linuxbrew|||singularity-containers|||singularity-scientific-example'},
+                {'children': [{'children': [], 'name': 'graspit'},
+                  {'children': [], 'name': 'polysolver'}],
+                 'name': 'graspit|||polysolver'}],
+               'name': 'graspit|||handler-poretools|||linuxbrew|||polysolver|||singularity-containers|||singularity-scientific-example'}],
+             'name': 'graspit|||handler-poretools|||linuxbrew|||polysolver|||singularity-containers|||singularity-scientific-example|||test-ubuntu14|||ubuntu'},
+            {'children': [{'children': [{'children': [],
+                 'name': 'om-images-tensorflow'},
+                {'children': [], 'name': 'om-tensorflow'}],
+               'name': 'om-images-tensorflow|||om-tensorflow'},
+              {'children': [{'children': [], 'name': 'tensorflow'},
+                {'children': [{'children': [], 'name': 'singularity_images'},
+                  {'children': [], 'name': 'tensorflow'}],
+                 'name': 'singularity_images|||tensorflow'}],
+               'name': 'singularity_images|||tensorflow|||tensorflow'}],
+             'name': 'om-images-tensorflow|||om-tensorflow|||singularity_images|||tensorflow|||tensorflow'}],
+           'name': 'graspit|||handler-poretools|||linuxbrew|||om-images-tensorflow|||om-tensorflow|||polysolver|||singularity-containers|||singularity-scientific-example|||singularity_images|||tensorflow|||tensorflow|||test-ubuntu14|||ubuntu'},
+          {'children': [{'children': [{'children': [{'children': [{'children': [],
+                   'name': 'optitype'},
+                  {'children': [{'children': [], 'name': 'samtools'},
+                    {'children': [], 'name': 'bamtools'}],
+                   'name': 'bamtools|||samtools'}],
+                 'name': 'bamtools|||optitype|||samtools'},
+                {'children': [{'children': [], 'name': 'vg'},
+                  {'children': [], 'name': 'singularity-fastqc'}],
+                 'name': 'singularity-fastqc|||vg'}],
+               'name': 'bamtools|||optitype|||samtools|||singularity-fastqc|||vg'},
+              {'children': [{'children': [{'children': [],
+                   'name': 'neumann-slamdunk'},
+                  {'children': [], 'name': 'slamdunk'}],
+                 'name': 'neumann-slamdunk|||slamdunk'},
+                {'children': [{'children': [{'children': [],
+                     'name': 'singularity'},
+                    {'children': [], 'name': 'singularity'}],
+                   'name': 'singularity|||singularity'},
+                  {'children': [{'children': [], 'name': 'singularity'},
+                    {'children': [], 'name': 'singularity-fenics-dev-env'}],
+                   'name': 'singularity|||singularity-fenics-dev-env'}],
+                 'name': 'singularity|||singularity|||singularity|||singularity-fenics-dev-env'}],
+               'name': 'neumann-slamdunk|||singularity|||singularity|||singularity|||singularity-fenics-dev-env|||slamdunk'}],
+             'name': 'bamtools|||neumann-slamdunk|||optitype|||samtools|||singularity|||singularity|||singularity|||singularity-fastqc|||singularity-fenics-dev-env|||slamdunk|||vg'},
+            {'children': [{'children': [{'children': [],
+                 'name': 'slash-busybox'},
+                {'children': [{'children': [], 'name': 'busybox'},
+                  {'children': [], 'name': 'slash-busybox'}],
+                 'name': 'busybox|||slash-busybox'}],
+               'name': 'busybox|||slash-busybox|||slash-busybox'},
+              {'children': [{'children': [{'children': [{'children': [],
+                     'name': 'om-images-bids'},
+                    {'children': [{'children': [], 'name': 'om-images'},
+                      {'children': [], 'name': 'om-images'}],
+                     'name': 'om-images|||om-images'}],
+                   'name': 'om-images|||om-images|||om-images-bids'},
+                  {'children': [{'children': [], 'name': 'pe-predictive'},
+                    {'children': [{'children': [], 'name': 'compile-beamer'},
+                      {'children': [], 'name': 'singularity-google-chrome'}],
+                     'name': 'compile-beamer|||singularity-google-chrome'}],
+                   'name': 'compile-beamer|||pe-predictive|||singularity-google-chrome'}],
+                 'name': 'compile-beamer|||om-images|||om-images|||om-images-bids|||pe-predictive|||singularity-google-chrome'},
+                {'children': [{'children': [{'children': [],
+                     'name': 'opensees'},
+                    {'children': [{'children': [], 'name': 'neurodebian'},
+                      {'children': [], 'name': 'neurodebian'}],
+                     'name': 'neurodebian|||neurodebian'}],
+                   'name': 'neurodebian|||neurodebian|||opensees'},
+                  {'children': [{'children': [], 'name': 'edd'},
+                    {'children': [{'children': [], 'name': 'io-rnatoy'},
+                      {'children': [], 'name': 'quantum_state_diffusion'}],
+                     'name': 'io-rnatoy|||quantum_state_diffusion'}],
+                   'name': 'edd|||io-rnatoy|||quantum_state_diffusion'}],
+                 'name': 'edd|||io-rnatoy|||neurodebian|||neurodebian|||opensees|||quantum_state_diffusion'}],
+               'name': 'compile-beamer|||edd|||io-rnatoy|||neurodebian|||neurodebian|||om-images|||om-images|||om-images-bids|||opensees|||pe-predictive|||quantum_state_diffusion|||singularity-google-chrome'}],
+             'name': 'busybox|||compile-beamer|||edd|||io-rnatoy|||neurodebian|||neurodebian|||om-images|||om-images|||om-images-bids|||opensees|||pe-predictive|||quantum_state_diffusion|||singularity-google-chrome|||slash-busybox|||slash-busybox'}],
+           'name': 'bamtools|||busybox|||compile-beamer|||edd|||io-rnatoy|||neumann-slamdunk|||neurodebian|||neurodebian|||om-images|||om-images|||om-images-bids|||opensees|||optitype|||pe-predictive|||quantum_state_diffusion|||samtools|||singularity|||singularity|||singularity|||singularity-fastqc|||singularity-fenics-dev-env|||singularity-google-chrome|||slamdunk|||slash-busybox|||slash-busybox|||vg'}],
+         'name': 'bamtools|||busybox|||compile-beamer|||edd|||graspit|||handler-poretools|||io-rnatoy|||linuxbrew|||neumann-slamdunk|||neurodebian|||neurodebian|||om-images|||om-images|||om-images-bids|||om-images-tensorflow|||om-tensorflow|||opensees|||optitype|||pe-predictive|||polysolver|||quantum_state_diffusion|||samtools|||singularity|||singularity|||singularity|||singularity-containers|||singularity-fastqc|||singularity-fenics-dev-env|||singularity-google-chrome|||singularity-scientific-example|||singularity_images|||slamdunk|||slash-busybox|||slash-busybox|||tensorflow|||tensorflow|||test-ubuntu14|||ubuntu|||vg'}],
+       'name': 'CiTAR-Containers|||bamtools|||busybox|||centos|||compile-beamer|||edd|||first_project|||graspit|||handler-poretools|||io-rnatoy|||linuxbrew|||neumann-slamdunk|||neurodebian|||neurodebian|||om-images|||om-images|||om-images-bids|||om-images-tensorflow|||om-tensorflow|||opensees|||optitype|||pe-predictive|||polysolver|||quantum_state_diffusion|||samtools|||scientific-linux|||singularity|||singularity|||singularity|||singularity|||singularity-STAR|||singularity-builds|||singularity-containers|||singularity-docker-centos7-tensorflow|||singularity-easybuild|||singularity-fastqc|||singularity-fenics-dev-env|||singularity-google-chrome|||singularity-scientific-example|||singularity_images|||singularity_images|||slamdunk|||slash-busybox|||slash-busybox|||tensorflow|||tensorflow|||test-ubuntu14|||ubuntu|||vg'}],
+     'name': 'CiTAR-Containers|||bamtools|||busybox|||centos|||compile-beamer|||debian|||edd|||first_project|||graspit|||handler-poretools|||io-rnatoy|||linuxbrew|||neumann-slamdunk|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||om-images|||om-images|||om-images-bids|||om-images-tensorflow|||om-tensorflow|||opensees|||optitype|||pe-predictive|||polysolver|||quantum_state_diffusion|||samtools|||scientific-linux|||shubtest|||singularity|||singularity|||singularity|||singularity|||singularity-STAR|||singularity-builds|||singularity-builds|||singularity-builds|||singularity-containers|||singularity-docker-centos7-tensorflow|||singularity-easybuild|||singularity-fastqc|||singularity-fenics-dev-env|||singularity-google-chrome|||singularity-hello|||singularity-hello-world|||singularity-images|||singularity-near|||singularity-scientific-example|||singularity_images|||singularity_images|||slamdunk|||slash-busybox|||slash-busybox|||tensorflow|||tensorflow|||test-ubuntu14|||ubuntu|||ubuntu|||vg'}],
+   'name': 'CiTAR-Containers|||abruijn-container|||bamtools|||busybox|||centos|||compile-beamer|||debian|||debian|||debian|||edd|||fasta-utilities|||first_project|||graspit|||handler-poretools|||io-rnatoy|||jupyter|||linuxbrew|||mongo|||neumann-slamdunk|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||neurodebian|||nginx|||om-images|||om-images|||om-images|||om-images-bids|||om-images-tensorflow|||om-tensorflow|||opensees|||optitype|||pe-predictive|||polysolver|||quantum_state_diffusion|||redis|||rnaseq|||samtools|||scientific-linux|||shubtest|||singularity|||singularity|||singularity|||singularity|||singularity-STAR|||singularity-builds|||singularity-builds|||singularity-builds|||singularity-containers|||singularity-docker-centos7-tensorflow|||singularity-easybuild|||singularity-fastqc|||singularity-fenics-dev-env|||singularity-fsl5|||singularity-google-chrome|||singularity-hello|||singularity-hello-world|||singularity-images|||singularity-images|||singularity-near|||singularity-scientific-example|||singularity_containers|||singularity_images|||singularity_images|||slamdunk|||slash-busybox|||slash-busybox|||tensorflow|||tensorflow|||tensorflow|||test-ubuntu14|||ubuntu|||ubuntu|||vg'}],
+ 'name': 'root'};
+  root.x0 = height / 2;
+  root.y0 = 0;
+
+  function collapse(d) {
+    if (d.children) {
+      d._children = d.children;
+      d._children.forEach(collapse);
+      d.children = null;
+    }
+  }
+
+  root.children.forEach(collapse);
+  update(root);
+
+d3.select(self.frameElement).style("height", "800px");
+
+function update(source) {
+
+  // Compute the new tree layout.
+  var nodes = tree.nodes(root).reverse(),
+      links = tree.links(nodes);
+
+  // Normalize for fixed-depth.
+  nodes.forEach(function(d) { d.y = d.depth * 180; });
+
+  // Update the nodes…
+  var node = svg.selectAll("g.node")
+      .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+  // Enter any new nodes at the parent's previous position.
+  var nodeEnter = node.enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "translate(" + source.y0 + "," + source.x0 + ")"; })
+      .on("click", click);
+
+  nodeEnter.append("circle")
+      .attr("r", 1e-6)
+      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+  nodeEnter.append("text")
+      .attr("x", function(d) { return d.children || d._children ? -10 : 10; })
+      .attr("dy", ".35em")
+      .attr("text-anchor", function(d) { return d.children || d._children ? "end" : "start"; })
+      .text(function(d) { return d.name; })
+      .style("fill-opacity", 1e-6);
+
+  // Transition nodes to their new position.
+  var nodeUpdate = node.transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+
+  nodeUpdate.select("circle")
+      .attr("r", 4.5)
+      .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+  nodeUpdate.select("text")
+      .style("fill-opacity", 1);
+
+  // Transition exiting nodes to the parent's new position.
+  var nodeExit = node.exit().transition()
+      .duration(duration)
+      .attr("transform", function(d) { return "translate(" + source.y + "," + source.x + ")"; })
+      .remove();
+
+  nodeExit.select("circle")
+      .attr("r", 1e-6);
+
+  nodeExit.select("text")
+      .style("fill-opacity", 1e-6);
+
+  // Update the links…
+  var link = svg.selectAll("path.link")
+      .data(links, function(d) { return d.target.id; });
+
+  // Enter any new links at the parent's previous position.
+  link.enter().insert("path", "g")
+      .attr("class", "link")
+      .attr("d", function(d) {
+        var o = {x: source.x0, y: source.y0};
+        return diagonal({source: o, target: o});
+      });
+
+  // Transition links to their new position.
+  link.transition()
+      .duration(duration)
+      .attr("d", diagonal);
+
+  // Transition exiting nodes to the parent's new position.
+  link.exit().transition()
+      .duration(duration)
+      .attr("d", function(d) {
+        var o = {x: source.x, y: source.y};
+        return diagonal({source: o, target: o});
+      })
+      .remove();
+
+  // Stash the old positions for transition.
+  nodes.forEach(function(d) {
+    d.x0 = d.x;
+    d.y0 = d.y;
+  });
+}
+
+// Toggle children on click.
+function click(d) {
+  if (d.children) {
+    d._children = d.children;
+    d.children = null;
+  } else {
+    d.children = d._children;
+    d._children = null;
+  }
+  update(d);
+}
+
+</script>
