@@ -246,23 +246,12 @@ var node = g.selectAll(".node")
              $("#container_set").text("");
              var list = '<ul>'
              $.each(containers, function( index, container ) {
-                 parts = container.split('|')
-                 container_id = parts[0];
-                 container_name = parts[1];
-                 list = list + "<li><a href='/containers/" + container_id + "/'> " + container_name +"</a></li>"
+                 list = list + "<li><a href='#'/>" + container +"</a></li>"
              })
              list = list + "</ul>"
              $("#container_set").append($(list))
            }
           })
-       .on('click',function(d){ 
-         var containers = d.data.name.split("|||")
-         if (containers.length===1){
-             parts = containers[0].split('|')
-             container_id = parts[0];
-             container_name = parts[1];
-             document.location = "/containers/" + container_id + "/"
-         }
       }) 
       .on('mouseout',function(d){
           $("#" + d.data.name.hashCode()).hide();
@@ -371,171 +360,10 @@ $(document).ready(function(){
 }
 </style>
 
-<!-- Bottom bar to hint that tools are there... -->
-<div id="containerbox">
-<button class="btn btn-default" id="show_container_set"><i id='show_container_set_icon' class="fa fa-3x fa-plus-square"></i></a></li></button>
-<nav id="controls" class="navbar navbar-fixed-bottom hidden" style="background-color:#F7F7F7;margin-left:15%;margin-right:15%">
-  <div class="navbar-brand notransition" id="tool-toggle" style="color:rgb(227, 41, 41)" href="#">Container Snacks
-      <i style="padding-left:10px;float:right" id="tool_direction" class="fa fa-chevron-up"></i>
-      </div>
-  <br>
-  <div id="tools" style='display:none'>
-       <p id="full_message" class="alert alert-info hidden">This is a working set of containers for comparing, and visualizing (under development).</p>
-       <!-- Containers will be appended here-->
-       <div id="containers"></div>
-       <hr>
-       <div id="container-operations" class="hidden">
-           <button id="reset_container_box" class="save btn btn-default btn-sm">Empty Container Box</button>
-           <button id="compare_containers" class="save btn btn-default btn-sm">Intersect Containers</button>
-           <button id="subtract_containers" class="save btn btn-default btn-sm">Subtract Containers</button>
-       </div> 
-       <p id="empty_message" class="alert alert-info hidden">You don't have any snacks in your container box! Try a <a href="/search">search</a> to add some.</p>
-       <p id="message_box" class="alert alert-info hidden"></p>
-  </div>
-</nav>
-</div>
-
-
 <script>
 
 // Enable tooltips
 $('[data-toggle="tooltip"]').tooltip()
-
-// Allow the user to reset tags
-$("#reset_container_box").click(function(){
-    localStorage.removeItem('containers');
-    console.log("Container box emptied.");
-    $("#containers").empty();
-    update_box();
-})
-
-
-// Function to populate box with containers from local storage
-function populate_box(div,contents){
-    var contents = JSON.parse(contents);
-    $(div).empty();
-    $.each(contents,function(container_id,container){      
-        var new_box = '<div class="input-group container-box"><span class="input-group-addon"><input class="container-input" type="checkbox" aria-label="' + container_id +'"></span><div class="container-button">'+ container +'</div></div>'
-        $(div).append(new_box);
-    })
-}
-
-// If we have containers saved in local storage
-function update_box() {
-    var tags = localStorage.getItem('containers')
-    
-    if (tags != null) {
-        populate_box("#containers",tags);
-    }
-
-    // If tags are empty, hide box
-    if (tags == null) {
-        $("#container-operations").addClass('hidden');
-        $("#full_message").addClass('hidden');
-        $("#empty_message").removeClass('hidden');
-        console.log("No saved containers in box.");
-    } else {
-        $("#full_message").removeClass('hidden');
-        $("#empty_message").addClass('hidden');
-        $("#container-operations").removeClass('hidden');
-        console.log("You have saved containers in your box!");
-    }
-
-   // Make sure no more than two checkboxes are selected
-    $('.container-input').on('change', function(evt) {
-    var total = $(".container-input:checked").length;
-    if(total > 2) {
-       // Tell the user
-       $("#message_box").text("You can only have a maximum of two images for any comparison.");
-       $("#message_box").removeClass("hidden");
-       this.checked = false;
-   }
-});
-
-}
-
-// Toggle box function controls changing icon, showing and hiding box
-function toggle_box(){
-
-    if ($("#controls").hasClass('hidden')){
-        $("#controls").removeClass('hidden');
-        $("#show_container_set_icon").removeClass('fa-plus-square');
-        $("#show_container_set_icon").addClass('fa-minus-square');
-    } else {
-        $("#controls").addClass('hidden');
-        $("#show_container_set_icon").removeClass('fa-minus-square');
-        $("#show_container_set_icon").addClass('fa-plus-square');
-    }
-}
-
-
-// Save container when the user clicks save
-$(".save_container").click(function(){
-   var container_set = localStorage.getItem('containers');
-   var container_id = $(this).attr("data-id").replace('container_','');
-   var container_name = $(this).attr("data-name");
-   if (container_set != null){
-       container_set = JSON.parse(container_set);
-   } else {
-       container_set = {};
-   }
-   container_set[container_id] = container_name;
-   localStorage.setItem('containers', JSON.stringify(container_set));
-   console.log("Container saved to box.")
-   update_box();
-   $("#controls").removeClass("hidden");
-})
-
-// General function to compare containers
-function compare_containers(comparison_operation){
-    var total = $(".container-input:checked").length;
-    if (total < 2) {
-       $("#message_box").text("You must select two containers for comparison");
-       $("#message_box").removeClass("hidden");
-    } else {
-       var container_ids = $(".container-input:checked").map(function(){return $(this).attr("aria-label");}).get();
-       var url = "https://singularity-hub.org/tools/compare/" + container_ids[0] + "/" + comparison_operation + "/" + container_ids[1];
-       document.location = url;
-    }
-}
-
-// Compare containers
-$("#compare_containers").click(function(){
-    compare_containers('intersect');
-})
-
-// Subtract containers
-// Compare containers
-$("#subtract_containers").click(function(){
-    compare_containers('subtract');
-})
-
-</script>
-
-
-<script>
-$(document).ready(function(){
-
-    $("#tool-toggle").click(function(){
-        if ($("#tool_direction").hasClass("fa-chevron-up")){
-            $("#tool_direction").removeClass("fa-chevron-up")
-            $("#tool-toggle").css("padding-top","3px")
-            $("#tool_direction").addClass("fa-chevron-down")
-        } else {
-            $("#tool-toggle").css("padding-top","20px")
-            $("#tool_direction").removeClass("fa-chevron-down")
-            $("#tool_direction").addClass("fa-chevron-up")
-        }
-        $("#tools").toggle();
-    })
-
-    // Show or hide container set
-    $("#show_container_set").click(function(){
-        toggle_box();
-    })
-
-    // update container box on page start
-    update_box();
 
 });
 </script>
