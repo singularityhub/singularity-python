@@ -19,9 +19,9 @@ container_name = 'vsoch/singularity-hello-world'
 base = "/home/vanessa/Documents/Work/singularity/hub"
 storage = "%s/containers" %base
 clones = "%s/clones" %storage # same image downloaded multiple times
-replicates = "%s/replicates" %storage # these are quasi replicates
+replicates = "%s/replicates" %storage # these are replicates from singularity hub
                                       # had to change runscripts to commit
-replication = "%s/quasi_replicates" %storage # these are exact replicates, from same
+replication = "%s/quasi_replicates" %storage # these are replicates produced on same host
 hub = "%s/collections" %storage 
 
 # Create all folders for images
@@ -97,7 +97,7 @@ From: ubuntu:latest
 exec "Hello World!"
 '''
 
-os.chdir(replication)
+os.chdir(replicates)
 with open('Singularity','w') as filey:
     filey.writelines(runscript)
 
@@ -109,8 +109,6 @@ for num in range(0,100):
     cli.create(container_name)
     cli.bootstrap(container_name,'Singularity')
     
-    container_uri = '%s-%s' %(container_name,manifest['version'])
-   containers[container_uri] = manifest
 
 
 # ALL SINGULARITY HUB
@@ -119,9 +117,14 @@ os.chdir(hub)
 for container_name,container in containers.items():
     for branch, manifest in container.items():        
        name = manifest['name'].replace('/','-')
-       image = shub.pull_container(manifest,
-                                   download_folder=hub,
-                                   name="%s-%s.img.gz" %(name,branch))       
+       uncompressed = "%s-%s.img" %(name,branch)
+       if not os.path.exists(uncompressed):
+           try:
+               image = shub.pull_container(manifest,
+                                           download_folder=hub,
+                                           name="%s-%s.img.gz" %(name,branch))       
+           except:
+               print("error downloading %s" %name)
 
 pickle.dump(containers,open('%s/container_manifests.pkl' %(hub),'wb'))
 
@@ -130,42 +133,90 @@ pickle.dump(containers,open('%s/container_manifests.pkl' %(hub),'wb'))
 # Task 2: Develop levels of reproducibility
 #############################################################################
 
+from singularity.utils import write_json, write_file
 from singularity.reproduce import (
     assess_differences,
-    get_content_hashes,
-    get_image_hash,
     get_levels
 )
 
 levels = get_levels()
-result_file = '%s/results-%s.pkl' %(base,container_name.replace('/','-'))
-results = pickle.load(open(result_file,'rb'))
 
 
 # Let's assess what files are identical across pairs of images in different sets
 
-# Quasi Replicate: meaning same base os, different build host, slightly different runscript
+# Singularity Hub (replicate): meaning same base os, different build host
+# These should be equal for base, environment, runscript, replicate, but
+# not identical.
 os.chdir(replication)
 image_files = glob('*.img')
 diffs = assess_differences(image_files[0],image_files[1],levels=levels)
-pickle.dump(diffs,open('%s/diff_quasi_replicate_pair.pkl' %base,'wb'))
+print("SINGULARITY HUB REPLICATES")
+print(diffs)
+write_json(diffs,'%s/diff_hub_replicates_pair.json' %base)
 
-# Replicate: if we produce an equivalent image at a different time, we might have
-#            variance in package directories (anything involving variable with mirrors, etc)
+# Local Replicate: if we produce an equivalent image at a different time, we might have
+# variance in package directories (anything involving variable with mirrors, etc)
+# these images should also be assessed as equivalent on the level of runscript,
+# environment, base, replicate, labels, but not identical. They should be MORE
+# identical than the Singularity Hub replicate by way of being produced on the same host.
 
 os.chdir(replicates)
 image_files = glob('*.img')
 diffs = assess_differences(image_files[0],image_files[1],levels=levels)
-pickle.dump(diffs,open('%s/diff_replicate_pair.pkl' %base,'wb'))
+print("LOCAL REPLICATES")
+print(diffs)
+write_json(diffs,'%s/diff_local_replicates_pair.json' %base)
 
 # Identical: all files are the same
 
 os.chdir(clones)
 image_files = glob('*.img')
 diffs = assess_differences(image_files[0],image_files[1],levels=levels)
-pickle.dump(diffs,open('%s/diff_clone_pair.pkl' %base,'wb'))
+print("CLONES")
+print(diffs)
+write_json(diffs,'%s/diff_clone_pair.json' %base)
 
-# Different images, same OS
+
+# Singularity Hub
+# This is the real world use case, because these are real images on Singularity Hub
+# Let's compare each image on the level of REPLICATE
+os.chdir(hub)
+image_files = glob('*.img')
+
+# len(image_files) 
+# 79
+
+total = len(image_files)*len(image_files)
+counter = 1
+diffs = pandas.DataFrame(0,columns=image_files,index=image_files)
+diff_files = dict()
+replicate_level = {'REPLICATE':levels['REPLICATE']}
+
+for image_file1 in image_files:
+    for image_file2 in image_files:
+        print("%s of %s" %(counter,total))
+        diff_id = [image_file1,image_file2]
+        diff_id.sort()
+        diff_id = '-'.join(diff_id)
+        if diff_id not in diff_files:
+            report = assess_differences(image_file1,image_file2,levels=replicate_level)
+            diffs.loc[image_file1,image_file2] = report['scores']['REPLICATE']
+            diffs.loc[image_file2,image_file1] = report['scores']['REPLICATE']
+            print(diff_id)
+            print(report['scores'])
+            diff_files[diff_id] = report
+        counter+=1
+
+pickle.dump(diffs,open('%s/replicate_hubdiffs_dfs.pkl' %base,'wb'))
+
+from singularity.views.trees import make_package_tree
+#labels = ['-'.join(x.replace('.img','').replace('-','/',1).split('-')[:-1]) for x in diffs.index.tolist()]
+labels = ['-'.join(x.split('-')[1:-1]) for x in diffs.index.tolist()]
+fig = make_package_tree(matrix=diffs,labels=labels,title="Singularity Hub Replication Scores")
+fig.savefig('%s/replicate_hubdiffs_dfs.png' %base)
+
+# Interactive tree
+tree = make_interactive_tree(matrix=diffs,labels=labels)
 
 #############################################################################
 # Task 3: Assess levels of reproducibility
@@ -173,13 +224,19 @@ pickle.dump(diffs,open('%s/diff_clone_pair.pkl' %base,'wb'))
 
 # The first thing we want to do is evaluate our metrics for reproducibility.
 dfs = dict()
+levels = get_levels()
+
+from singularity.reproduce import (
+    get_content_hashes,
+    get_image_hashes,
+    get_image_hash
+)
+
 
 # ASSESS IDENTICAL IMAGES ACROSS ALL LEVELS
 
 os.chdir(clones)
 image_files = glob("*.img")
-levels = get_levels(version=2.2)
-
 hashes = pandas.DataFrame(columns=list(levels.keys()))
 
 for image_file in image_files:
@@ -188,22 +245,27 @@ for image_file in image_files:
     hashes.loc[image_file,:] = hashy
 
 
+# HERE
 dfs['IDENTICAL'] = hashes
 for col in hashes.columns.tolist():
     print("%s: %s" %(col,hashes[col].unique().tolist()))
 
-# IDENTICAL: ['364715054c17c29338787bd231e58d90caff154b']
-# RUNSCRIPT: ['da39a3ee5e6b4b0d3255bfef95601890afd80709']
-# ENVIRONMENT: ['22ff3c5c5fa63d3f08a48669d90fcb1459e6e74b']
-# RECIPE: ['0e0efcb05fb4727f77b999d135c8a58a8ce468d5']
+
+# REPLICATE: ['2776174919187e7007619ac74f082b90']
+# ENVIRONMENT: ['2060c7583adf2545494bf76113f5d594']
+# BASE: ['345d1d687fd0bed73528969d82dd5aa4']
+# RUNSCRIPT: ['272844f479bfd9f83e7caf27e40146ea']
+# IDENTICAL: ['8a2f03e6d846a1979b694b28c125a852']
+# LABELS: ['d41d8cd98f00b204e9800998ecf8427e']
+# RECIPE: ['89b5f94c70b261b463c914a4fbe628c5']
 
 
-# Question 2: What files are consistent across the same image, different builds?
-# An image that is a replicate should be assessed as identical using the "REPLICATE"
-# criteria, but not identical
+# SINGULARITY HUB "REPLICATES"
 
-# RECIPES
-
+# These images, if compared pairwise, would be assessed as equivalent on all
+# levels except for identical. This example will show differences on level
+# of replicate and base, and this shows that these levels should not
+# be calculated in advance.
 os.chdir(replication)
 image_files = glob('*.img')
 hashes = pandas.DataFrame(columns=list(levels.keys()))
@@ -213,26 +275,17 @@ for image_file in image_files:
     hashy = get_image_hashes(image_file,levels=levels)
     hashes.loc[image_file,:] = hashy
 
+# REPLICATE: 101
+# ENVIRONMENT: 1
+# BASE: 101
+# RUNSCRIPT: 2
+# IDENTICAL: 101
+# LABELS: 1
+# RECIPE: 85
 
-dfs['RECIPES'] = hashes
-for col in hashes.columns.tolist():
-    print("%s: %s" %(col,len(hashes[col].unique().tolist())))
-
-
-
-# QUASI REPLICATES
-# These have the same base, but different metadata folders.
-
-os.chdir(replicates)
-image_files = glob("*.img")
-levels = get_levels(version=2.2)
-
-hashes = pandas.DataFrame(columns=list(levels.keys()))
-
-for image_file in image_files:
-    print('Processing %s' %(image_file))
-    hashy = get_image_hashes(image_file,levels=levels)
-    hashes.loc[image_file,:] = hashy
+# The above confirms our prediction - the levels (hashes alone) should not be used
+# to assess an image beyond environment, labels, and runscript. Since these images were
+# produced by trivially changing the runscript, we also see that reflected in this result.
 
 dfs['QUASI_REPLICATE'] = hashes
 for col in hashes.columns.tolist():
@@ -240,52 +293,50 @@ for col in hashes.columns.tolist():
 
 
 
-pickle.dump(dfs,open('reproducibility_dfs.pkl','wb'))
+# REPLICATES
+# These were built from the same spec file, same host, but different times
+# Again, we will see differences on most levels.
 
+os.chdir(replicates)
+image_files = glob("*.img")
+hashes = pandas.DataFrame(columns=list(levels.keys()))
 
-# Let's assess what files are identical across the images. We can use this to develop
-# our subsequent levels.
-# Here we will use the 100 files in the folder, and find files/folders consistent across
-# we will not include the runscript, since we know this was changed.
-
-
-
-def generate_replication_df(level_name,image_files,version,skip_files=None):
-
-    print("CALCULATING COMPARISONS FOR LEVEL %s" %level_name)
-    df = pandas.DataFrame(0,index=image_files,columns=image_files)
-    for image_file1 in image_files:
-        for image_file2 in image_files:
-            hash1 = get_image_hash(image_file1,level=level_name,version=version)
-            hash2 = get_image_hash(image_file2,level=level_name,version=version)
-            if hash1 == hash2:
-                df.loc[image_file1,image_file2] = 1
-                df.loc[image_file2,image_file1] = 1
-    return df
-
-
-dfs['IDENTICAL'] = generate_replication_df('IDENTICAL',image_files,version=2.2)
-dfs['REPLICATE'] = generate_replication_df('REPLICATE',image_files,version=2.2, skip_files=['/singularity'])
-
-
-# Outputs:
-# A function that exports, reads tarfile into memory (or disk?) and generates a list of
-# key (file) and value (sha1 sum)
- 0) I'll first experiment with different patterns of files/folders and figure out which are consistent across images. I'll probably do this by doing a content hash of all individual files, and then finding the set that is consistent across 1) the same exact image, and 2) different images but same builds, and 3) different images different builds. We could even give each some kind of score to determine the right set it belongs in.
- 1) at the highest level of reproduciblity (eg same file) we get equivalent hashes - to do this I'll just download exactly the same image
- 2) at a "working" (aka, reasonable to use) level of reproducibility, we should get equivalent hashes given the same build, but different files (eg, I built my thing twice from the same spec)
- 3) at the lowest level of reproducibility (eg, base operating system) we should see some identicalness if the operating systems base are largely the same.
- 
-We can then allow the user to use our functions, and go a bit deeper into image comparison and asses, given equal file paths, which are actually equal in content across two images. The user could even save a definition of "how they are assessing reproducibility" of the image by way of a list of regular expressions, and a hash for their image generated from it. I think it would be interesting, given this algorithm, to parse all singularity hub public images and assess the total level of redundancy!
-
-
-
-from glob import glob
-image_files=glob('*.img')    
-sums = []
 for image_file in image_files:
-   os.system('sudo singularity export %s > tmp.tar' %(image_file))
-   summy = tarsum('tmp.tar')
-   print(summy)
-   sums.append(summy)
+    print('Processing %s' %(image_file))
+    hashy = get_image_hashes(image_file,levels=levels)
+    hashes.loc[image_file,:] = hashy
 
+# REPLICATE: 100
+# ENVIRONMENT: 100
+# BASE: 100
+# RUNSCRIPT: 1
+# IDENTICAL: 100
+# LABELS: 1
+# RECIPE: 100
+
+
+dfs['REPLICATES'] = hashes
+for col in hashes.columns.tolist():
+    print("%s: %s" %(col,len(hashes[col].unique().tolist())))
+
+
+
+# Singularity Hub
+# Are there any files that are identical across all images?
+# Can we assess the level of reproducibility of each path?
+
+os.chdir(hub)
+image_files = glob("*.img")
+hashes = pandas.DataFrame(columns=list(levels.keys()))
+
+for image_file in image_files:
+    print('Processing %s' %(image_file))
+    hashy = get_image_hashes(image_file,levels=levels)
+    hashes.loc[image_file,:] = hashy
+
+dfs['HUB_COLLECTIONS'] = hashes
+for col in hashes.columns.tolist():
+    print("%s: %s" %(col,len(hashes[col].unique().tolist())))
+
+
+pickle.dump(dfs,open('%s/reproducibility_dfs.pkl' %base,'wb'))

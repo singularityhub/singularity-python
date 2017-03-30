@@ -14,36 +14,17 @@ import datetime
 import hashlib
 import tarfile
 import sys
+import gc
 import os
 import re
 import io
 
 
-def assess_replication(image_file1,image_file2,version=None):
-    '''assess_replications will compare two images on each level of 
-    reproducibility,
-    '''
-    levels = get_levels(version=version)
-    report = dict()
-    for level_name, values in levels.items():
-        hash1 = get_image_hash(image_path=image_file1,
-                               level=level_name)
-        hash2 = get_image_hash(image_path=image_file2,
-                               level=level_name)
-        if hash1 == hash2:
-            report[level_name] = True
-        else:
-            report[level_name] = False
-    return report
-
-
-def assess_differences(image_file1,image_file2,levels=None,version=None,include_same=False):
+def assess_differences(image_file1,image_file2,levels=None,version=None):
     '''assess_differences will compare two images on each level of 
     reproducibility, returning for each level a dictionary with files
     that are the same, different, and an overall score.
-    :param include_same: if True, also include list of intersect_same files (default False)
     '''
-
     if levels is None:
         levels = get_levels(version=version)
 
@@ -51,39 +32,75 @@ def assess_differences(image_file1,image_file2,levels=None,version=None,include_
     scores = dict()
 
     for level_name, level_filter in levels.items():
+        contenders = []
         different = []
-        same = []
         setdiff = []
+        same = 0
 
-        # Compare the dictionary of file:hash between two images
-        hashes1 = get_content_hashes(image_path=image_file1,level_filter=level_filter)
-        hashes2 = get_content_hashes(image_path=image_file2,level_filter=level_filter)        
-        files = list(set(list(hashes1.keys()) + list(hashes2.keys())))
+        # Compare the dictionary of file:hash between two images, and get root owned lookup
+        result1 = get_content_hashes(image_path=image_file1,
+                                     level_filter=level_filter,
+                                     tag_root=True,
+                                     include_sizes=True)
+        
+        result2 = get_content_hashes(image_path=image_file2,
+                                     level_filter=level_filter,
+                                     tag_root=True,
+                                     include_sizes=True)
+      
+        files = list(set(list(result1['hashes'].keys()) + list(result2['hashes'].keys())))
 
         for file_name in files:
 
             # If it's not in one or the other
-            if file_name not in hashes1 or file_name not in hashes2:
+            if file_name not in result1['hashes'] or file_name not in result2['hashes']:
                 setdiff.append(file_name)
 
             else:
-                if hashes2[file_name] == hashes1[file_name]:
-                    same.append(file_name)
+                if result1['hashes'][file_name] == result2['hashes'][file_name]:
+                    same+=1
                 else:
-                    different.append(file_name)
+
+                    # If the file is root owned, we compare based on size
+                    if result1['root_owned'][file_name] or result2['root_owned'][file_name]:
+                        if result1['sizes'][file_name] == result2['sizes'][file_name]:    
+                            same+=1
+                        else:
+                            different.append(file_name)
+                    else:
+                        # Otherwise, we can assess the bytes content by reading it
+                        contenders.append(file_name)
+
+        # If the user wants identical (meaning extraction order and timestamps)
+        if level_name == "IDENTICAL":
+            different = different + contenders
+
+        # Otherwise we need to check based on byte content
+        else:        
+            if len(contenders) > 0:
+                cli = Singularity()
+                for rogue in contenders:
+                    hashy1 = extract_content(image_file1,rogue,cli,return_hash=True)
+                    hashy2 = extract_content(image_file2,rogue,cli,return_hash=True)
+                    if hashy1 != hashy2:
+                        different.append(rogue)
+                    else:
+                        same+=1
 
         report = {'difference': setdiff,
                   'intersect_different': different}
 
-        if include_same == True:
-            report['intersect_same'] = same
-
-        # Calculated score is number of same / total
-        if len(files) == 0:
+        # We use a similar Jacaard coefficient, twice the shared information in the numerator 
+        # (the intersection, same), as a proportion of the total summed files
+        union = len(result1['hashes']) + len(result2['hashes'])
+     
+        if union == 0:
             scores[level_name] = 0
         else:
-            scores[level_name] = len(same)/float(len(files)) 
+            scores[level_name] = 2*(same) / union
         reports[level_name] = report
+
+    gc.collect()
     reports['scores'] = scores
     return reports
 
@@ -191,11 +208,14 @@ def get_levels(version=None):
     return levels
 
 
-def include_file(member_path,file_filter):
+def include_file(member,file_filter):
     '''include_file will look at a path and determine
     if it matches a regular expression from a level
     '''
-    member_path = member_path.replace('.','',1)
+    member_path = member.name.replace('.','',1)
+
+    if len(member_path) == 0:
+        return False
 
     # Does the filter skip it explicitly?
     if "skip_files" in file_filter:
@@ -214,12 +234,29 @@ def include_file(member_path,file_filter):
     return False
 
 
-def assess_content(member_path,file_filter):
+def is_root_owned(member):
+    '''assess if a file is root owned, meaning "root" or user/group 
+    id of 0'''
+    if member.uid == 0 or member.gid == 0:
+        return True
+    elif member.uname == 'root' or member.gname == 'root':
+        return True
+    return False
+    
+
+def assess_content(member,file_filter):
     '''Determine if the filter wants the file to be read for content.
     In the case of yes, we would then want to add the content to the
     hash and not the file object.
     '''
-    member_path = member_path.replace('.','',1)
+    member_path = member.name.replace('.','',1)
+
+    # We can't assess content of root owned files
+    if is_root_owned(member):
+        return False
+
+    if len(member_path) == 0:
+        return False
 
     if "assess_content" in file_filter:
         if member_path in file_filter['assess_content']:
@@ -227,7 +264,7 @@ def assess_content(member_path,file_filter):
     return False
 
 
-def get_image_hashes(image_path,version=None,levels=None,verbose=False):
+def get_image_hashes(image_path,version=None,levels=None):
     '''get_image_hashes returns the hash for an image across all levels. This is the quickest,
     easiest way to define a container's reproducibility on each level.
     '''
@@ -236,12 +273,11 @@ def get_image_hashes(image_path,version=None,levels=None,verbose=False):
     hashes = dict()
     for level_name,level_filter in levels.items():
         hashes[level_name] = get_image_hash(image_path,
-                                            level_filter=level_filter,
-                                            verbose=verbose)
+                                            level_filter=level_filter)
     return hashes
 
 
-def get_image_hash(image_path,level=None,level_filter=None,verbose=False,
+def get_image_hash(image_path,level=None,level_filter=None,
                    include_files=None,skip_files=None,version=None):
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
@@ -250,7 +286,6 @@ def get_image_hash(image_path,level=None,level_filter=None,verbose=False,
     expression to match particular files/folders in the image. Choices are in notes.
     :param skip_files: an optional list of files to skip
     :param include_files: an optional list of files to keep (only if level not defined)
-    :param verbose: print out files that are included, default False
     :param version: the version to use. If not defined, default is 2.3
 
     ::notes
@@ -277,29 +312,52 @@ def get_image_hash(image_path,level=None,level_filter=None,verbose=False,
                                 include_files=include_files)
                 
     cli = Singularity()
-    tar = get_memory_tar(image_path)
+    file_obj,tar = get_memory_tar(image_path)
     hasher = hashlib.md5()
+
     for member in tar:
-        if member.isfile() or member.islnk() or member.issym():
-            if assess_content(member.name,file_filter):
-                if verbose == True:
-                    print('Including %s' %(member.name))
-                member_name = member.name.replace('.','',1)
-                content = cli.execute(image_path,'cat %s' %(member_name))
-                if not isinstance(content,bytes):
-                    content = bytes(content)
-                hasher.update(content) 
-            elif include_file(member.name,file_filter):
-                buf = member.tobuf()
-                hasher.update(buf)
-    return hasher.hexdigest()
+        member_name = member.name.replace('.','',1)
+
+        # For files, we either assess content, or include the file
+        if member.isdir() or member.issym():
+            continue
+        elif assess_content(member,file_filter):
+            content = extract_content(image_path,member.name,cli)
+            hasher.update(content)
+        elif include_file(member,file_filter):
+            buf = member.tobuf()
+            hasher.update(buf)
+
+    digest = hasher.hexdigest()
+    file_obj.close()
+    return digest
 
 
-def get_content_hashes(image_path,level=None,regexp=None,include_files=None,
-                       level_filter=None,skip_files=None,version=None,verbose=False):
+def extract_content(image_path,member_name,cli=None,return_hash=False):
+    '''extract_content will extract content from an image using cat.
+    If hash=True, a hash sum is returned instead
+    '''
+    if member_name.startswith('./'):
+        member_name = member_name.replace('.','',1)
+    if return_hash:
+        hashy = hashlib.md5()
+    if cli == None:
+        cli = Singularity()
+    content = cli.execute(image_path,'cat %s' %(member_name))
+    if not isinstance(content,bytes):
+        content = bytes(content)
+    if return_hash:
+        hashy.update(content)
+        return hashy.hexdigest()
+    return content
+
+
+def get_content_hashes(image_path,level=None,regexp=None,include_files=None,tag_root=True,
+                       level_filter=None,skip_files=None,version=None,include_sizes=True):
     '''get_content_hashes is like get_image_hash, but it returns a complete dictionary 
     of file names (keys) and their respective hashes (values). This function is intended
-    for more research purposes and was used to generate the levels in the first place
+    for more research purposes and was used to generate the levels in the first place.
+    If include_sizes is True, we include a second data structure with sizes
     '''    
     if level_filter is not None:
         file_filter = level_filter
@@ -314,28 +372,43 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
-    tar = get_memory_tar(image_path)
-    chunk_size = 100*1024
+    file_obj,tar = get_memory_tar(image_path)
     cli = Singularity()
+    results = dict()
     digest = dict()
+
+    if tag_root:
+        roots = dict()
+
+    if include_sizes: 
+        sizes = dict()
+
     for member in tar:
-        if member.isfile() or member.islnk() or member.issym():
-            if assess_content(member.name,file_filter):
-                hasher = hashlib.md5()
-                if verbose == True:
-                    print('Including %s' %(member.name))
-                member_name = member.name.replace('.','',1)
-                content = cli.execute(image_path,'cat %s' %(member_name))
-                if not isinstance(content,bytes):
-                    content = bytes(content)
-                hasher.update(content) 
-                digest[member.name] = hasher.hexdigest()
-            elif include_file(member.name,file_filter):
-                hasher = hashlib.md5()
-                buf = member.tobuf()
-                hasher.update(buf)
-                digest[member.name] = hasher.hexdigest()
-    return digest
+        included = False
+        if member.isdir() or member.issym():
+            continue
+        elif assess_content(member,file_filter):
+            digest[member.name] = extract_content(image_path,member.name,cli,return_hash=True)
+            included = True
+        elif include_file(member,file_filter):
+            hasher = hashlib.md5()
+            buf = member.tobuf()
+            hasher.update(buf)
+            digest[member.name] = hasher.hexdigest()
+            included = True
+        if included:
+            if include_sizes:
+                sizes[member.name] = member.size
+            if tag_root:
+                roots[member.name] = is_root_owned(member)
+
+    file_obj.close()
+    results['hashes'] = digest
+    if include_sizes:
+        results['sizes'] = sizes
+    if tag_root:
+        results['root_owned'] = roots
+    return results
 
 
 def get_image_file_hash(image_path):
@@ -351,18 +424,9 @@ def get_image_file_hash(image_path):
 
 
 def get_memory_tar(image_path):
-    '''get an in memory tar of an image (does not require sudo!'''
+    '''get an in memory tar of an image (does not require sudo!)'''
     cli = Singularity()
     byte_array = cli.export(image_path,pipe=True)
     file_object = io.BytesIO(byte_array)
-    return tarfile.open(mode="r|*", fileobj=file_object) 
-
-
-def read_image_content(image_path,file_path):
-    '''read_tar_content will read the content of a tar file,
-    and return as a bytes array. This is intended for adding content
-    of files to the hash, and not the files themselves.
-    '''
-    cli = Singularity()
-    content = cli.execute(image_path,'cat %s' %(file_path))
-
+    tar = tarfile.open(mode="r|*", fileobj=file_object)
+    return (file_object,tar)

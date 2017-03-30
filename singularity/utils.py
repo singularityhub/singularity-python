@@ -106,7 +106,7 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
             if error.errno == os.errno.ENOENT:
                 bot.logger.error(error_message)
             else:
-                bot.logger.error(err)
+                bot.logger.error(error)
             return None
     
     return output
