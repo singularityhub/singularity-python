@@ -11,6 +11,10 @@ import os
 import re
 import requests
 from singularity.logman import bot
+from singularity.utils import (
+    get_installdir,
+    read_file
+)
 
 from singularity.package import (
     load_package,
@@ -20,6 +24,23 @@ from singularity.package import (
 import shutil
 import sys
 import tempfile
+
+
+def get_template(template_name,fields=None):
+    '''get_template will return a template in the template folder,
+    with some substitutions (eg, {'{{ graph | safe }}':"fill this in!"}
+    '''
+    template = None
+    if not template_name.endswith('.html'):
+        template_name = "%s.html" %(template_name)
+    here = "%s/templates" %(get_installdir())
+    template_path = "%s/%s" %(here,template_name)
+    if os.path.exists(template_path):
+        template = ''.join(read_file(template_path))
+    if fields is not None:
+        for tag,sub in fields.items():
+            template = template.replace(tag,sub)
+    return template
 
 
 def get_container_contents(container=None,gets=None,split_delim=None,image_package=None):

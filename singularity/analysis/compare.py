@@ -15,6 +15,7 @@ from singularity.logman import bot
 from singularity.utils import get_installdir
 from singularity.analysis.utils import get_packages
 from singularity.views.utils import get_container_contents
+from singularity.reproduce import get_memory_tar
 
 from singularity.package import (
     load_package,
@@ -75,6 +76,42 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     return comparisons
 
 
+def compare_singularity_images(image_paths1,image_paths2=None):
+    '''compare_singularity_images is a wrapper for compare_containers to compare
+    singularity containers. If image_paths2 is not defined, pairwise comparison is done
+    with image_paths1
+    '''
+    repeat = False
+    if image_paths2 is None:
+        image_paths2 = image_paths1
+        repeat = True
+
+    dfs = pandas.DataFrame(index=image_paths1,columns=image_paths2)
+
+    comparisons_done = []
+    for image1 in image_paths1:
+        fileobj1,tar1 = get_memory_tar(image1)
+        members1 = [x.name for x in tar1]
+        for image2 in image_paths2:
+            comparison_id = [image1,image2]
+            comparison_id.sort()
+            comparison_id = "".join(comparison_id)
+            if comparison_id not in comparisons_done:
+                if image1 == image2:
+                    sim = 1.0
+                else:
+                    fileobj2,tar2 = get_memory_tar(image2)
+                    members2 = [x.name for x in tar2]
+                    c = compare_lists(members1,members2)
+                    sim = information_coefficient(c['total1'],c['total2'],c['intersect'])
+                    fileobj2.close()
+                dfs.loc[image1,image2] = sim
+                if repeat:
+                    dfs.loc[image2,image1] = sim
+                comparisons_done.append(comparison_id)
+        fileobj1.close()
+    return dfs
+
 
 def compare_containers(container1=None,container2=None,by=None,
                        image_package1=None,image_package2=None):
@@ -132,7 +169,8 @@ def compare_lists(list1,list2):
     
 
 def calculate_similarity(container1=None,container2=None,image_package1=None,
-                         image_package2=None,by="files.txt",comparison=None):
+                         image_package2=None,by="files.txt",comparison=None,
+                         metric=None):
     '''calculate_similarity will calculate similarity of two containers by files content, default will calculate
     2.0*len(intersect) / total package1 + total package2
     :param container1: container 1
@@ -140,12 +178,17 @@ def calculate_similarity(container1=None,container2=None,image_package1=None,
     :param image_package1: a zipped package for image 1, created with package
     :param image_package2: a zipped package for image 2, created with package
     :param by: the one or more metrics (eg files.txt) list to use to compare
+    :param metric: a function to take a total1, total2, and intersect count 
+    (we can make this more general if / when more are added)
      valid are currently files.txt or folders.txt
     :param comparison: the comparison result object for the tree. If provided,
     will skip over function to obtain it.
     '''
     if not isinstance(by,list):
         by = [by]
+
+    if metric is None:
+        metric = information_coefficient
 
     if comparison == None:
         comparison = compare_containers(container1=container1,
@@ -156,8 +199,9 @@ def calculate_similarity(container1=None,container2=None,image_package1=None,
     scores = dict()
 
     for b in by:
-        total_files = comparison[b]['total1'] + comparison[b]['total2']
-        scores[b] = 2.0*len(comparison[b]["intersect"]) / total_files
+        scores[b] = metric(total1=comparison[b]['total1'],
+                           total2=comparison[b]['total2'],
+                           intersect=comparison[b]["intersect"])
     return scores
 
 
@@ -210,3 +254,34 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]
         comparisons[b] = df
     return comparisons
+
+
+###################################################################################
+# METRICS #########################################################################
+###################################################################################
+
+
+def information_coefficient(total1,total2,intersect):
+    '''a simple jacaard (information coefficient) to compare two lists of overlaps/diffs
+    '''
+    total = total1 + total2
+    return 2.0*len(intersect) / total
+
+
+
+def RSA(m1,m2):
+    '''RSA analysis will compare the similarity of two matrices
+    '''
+    from scipy.stats import pearsonr
+    import scipy.linalg
+    import numpy
+
+    # This will take the diagonal of each matrix (and the other half is changed to nan) and flatten to vector
+    vectorm1 = m1.mask(numpy.triu(numpy.ones(m1.shape)).astype(numpy.bool)).values.flatten()
+    vectorm2 = m2.mask(numpy.triu(numpy.ones(m2.shape)).astype(numpy.bool)).values.flatten()
+    # Now remove the nans
+    m1defined = numpy.argwhere(~numpy.isnan(numpy.array(vectorm1,dtype=float)))
+    m2defined = numpy.argwhere(~numpy.isnan(numpy.array(vectorm2,dtype=float)))
+    idx = numpy.intersect1d(m1defined,m2defined)
+    return pearsonr(vectorm1[idx],vectorm2[idx])[0]
+

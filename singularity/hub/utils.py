@@ -10,7 +10,32 @@ from singularity.hub.auth import get_headers
 
 import requests
 import os
+import tempfile
 import sys
+
+try:
+    from urllib.error import HTTPError
+except ImportError:
+    from urllib2 import HTTPError
+
+
+def paginate_get(url,headers=None,token=None,data=None,return_json=True,stream_to=None,
+                 start_page=None):
+    '''paginate_get is a wrapper for api_get to get results until there isn't an additional page
+    '''
+    if start_page == None:
+        url = '%s&page=1' %(url)
+    else:
+        url = '%s&page=%s' %(url,start_page)
+
+    results = []
+    while url is not None:
+        result = api_get(url)
+        if 'results' in result:
+            results = results + result['results']
+        url = result['next']
+    return results
+        
 
 
 def api_get(url,headers=None,token=None,data=None, return_json=True, stream_to=None):
@@ -166,3 +191,35 @@ def parse_container_name(image):
               'user':user }
 
     return parsed
+
+
+######################################################################
+# Downloading
+######################################################################
+
+
+def download_atomically(url,file_name,headers=None):
+    '''download atomically will stream to a temporary file, and
+    rename only upon successful completion. This is to ensure that
+    errored downloads are not found as complete in the cache
+    :param file_name: the file name to stream to
+    :param url: the url to stream from
+    :param headers: additional headers to add to the get (default None)
+    '''
+    try:               # file_name.tmp.XXXXXX
+        fd, tmp_file = tempfile.mkstemp(prefix=("%s.tmp." % file_name)) 
+        os.close(fd)
+        response = api_get(url,headers=headers,stream_to=tmp_file)
+        if isinstance(response, HTTPError):
+            bot.logger.error("Error downloading %s, exiting.", url)
+            sys.exit(1)
+        os.rename(tmp_file, file_name)
+    except:
+        download_folder = os.path.dirname(os.path.abspath(file_name))
+        bot.logger.error("Error downloading %s. Do you have permission to write to %s?", url, download_folder)
+        try:
+            os.remove(tmp_file)
+        except:
+            pass
+        sys.exit(1)
+    return file_name

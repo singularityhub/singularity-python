@@ -91,7 +91,7 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
     if sudopw == None:
         sudopw = os.environ.get('pancakes',None)
 
-    if sudopw != None:
+    if sudopw is not None:
         cmd = ' '.join(["echo", sudopw,"|","sudo","-S"] + cmd)
         if suppress == False:
             output = os.popen(cmd).read().strip('\n')
@@ -100,13 +100,13 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
             os.system(cmd)
     else:
         try:
-            process = subprocess.Popen(cmd,stdout=subprocess.PIPE)
+            process = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             output, err = process.communicate()
         except OSError as error: 
             if error.errno == os.errno.ENOENT:
                 bot.logger.error(error_message)
             else:
-                bot.logger.error(err)
+                bot.logger.error(error)
             return None
     
     return output
@@ -186,7 +186,7 @@ def zip_up(file_list,zip_name,output_folder=None):
     # Close the zip file    
     zf.close()
 
-    if output_folder != None:
+    if output_folder is not None:
         shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
         shutil.rmtree(tmpdir)
         output_zip = "%s/%s"%(output_folder,zip_name)
@@ -233,6 +233,7 @@ def read_json(filename,mode='r'):
     with open(filename,mode) as filey:
         data = json.load(filey)
     return data
+
 
 
 ############################################################################

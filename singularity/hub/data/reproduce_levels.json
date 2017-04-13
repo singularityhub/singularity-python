@@ -1,0 +1,69 @@
+{
+  "IDENTICAL": {
+    "description": "The image is exactly the same, meaning the file itself. This is what should be achieved if you download the same image multiple times. The entire contents of the image are used to generate the hash.",
+    "regexp": "."
+  },
+  "REPLICATE": {
+    "description": "replicate assumes equivalence in the core Singularity files, plus the base operating system, but not including files in variable locations (eg, /tmp and /var)",
+    "regexp": "^/bin|^/etc|^/sys|^/usr|^/lib|^/lib64",
+    "skip_files": ["/.singularity.d",
+                   "/etc/hosts"],
+    "assess_content":["/.run",
+                      "/.shell",
+                      "/.exec",
+                      "/environment",
+                      "/singularity",
+                      "/.singularity.d/runscript",
+                      "/.singularity.d/actions/exec",
+                      "/.singularity.d/actions/shell",
+                      "/.singularity.d/actions/run",
+                      "/.singularity.d/labels.json"]
+  },
+  "BASE": {
+    "description": "base ignores the core Singularity files, and focuses on the base operating system, and omits files in variable locations (eg, /tmp and /var)",
+    "regexp": "^/bin|^/etc|^/sys|^/usr|^/lib|^/lib64",
+    "skip_files": ["/.run",
+                   "/.shell",
+                   "/.exec",
+                   "/environment",
+                   "/singularity",
+                   "/etc/hosts",
+                   "/.singularity.d",
+                   "/.singularity.d/runscript",
+                   "/.singularity.d/actions/exec",
+                   "/.singularity.d/actions/shell",
+                   "/.singularity.d/actions/run",
+                   "/.singularity.d/labels.json"]
+  },
+  "LABELS": {
+    "description": "only look at the container labels, if they exist (singularity version 2.3)",
+    "assess_content": ["/.singularity.d/labels.json"],
+    "skip_files": ["/.singularity.d"],
+    "regexp": "$^"
+  },
+  "RUNSCRIPT": {
+    "description": "runscript is a level that assesses only the executable runscript in the  image. This is a fast approach to sniff if the container is broadly doing the same thing",
+   "assess_content":["/singularity",
+                     "/.singularity.d/runscript"],
+   "regexp": "$^"
+  },
+  "ENVIRONMENT": {
+    "description": "only look at the container's environment. This level will only look at the environment files when assessing similarity.",
+    "regexp": "/[.]singularity[.]d[/]env[/]",
+    "assess_content":["/environment"] 
+  },
+  "RECIPE": {
+    "description": "recipe looks at everything on the level of the Singularity image, meaning the runscript, and environment for version 2.2",
+    "regexp": "/[.]singularity[.]d[/]env[/]",
+    "assess_content":["/.run",
+                      "/.shell",
+                      "/.exec",
+                      "/environment",
+                      "/singularity",
+                      "/.singularity.d/actions/exec",
+                      "/.singularity.d/actions/shell",
+                      "/.singularity.d/actions/run",
+                      "/.singularity.d/runscript",
+                      "/.singularity.d/labels.json"]
+  }
+}

@@ -41,8 +41,8 @@ def get_parser():
                         default=False, action='store_true')
 
     # Does the user want to package an image?
-    parser.add_argument('--remove-image', dest="remove_image", 
-                        help="remove image file from the package", 
+    parser.add_argument('--include-image', dest="include_image", 
+                        help="include image file in the package", 
                         default=False, action='store_true')
 
     # Does the user want to estimate the os?
@@ -167,11 +167,12 @@ def main():
            # The user wants to package the image
            elif args.package == True:
                from singularity.package import package
+               remove_image = not args.include_image
                package(image_path=image,
                        output_folder=output_folder,
                        runscript=True,
                        software=True,
-                       remove_image=args.remove_image)
+                       remove_image=remove_image)
            else:
                print("Not sure what to do?")
                parser.print_help()
