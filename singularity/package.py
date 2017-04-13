@@ -134,7 +134,7 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
         else:
             S = Singularity(debug=verbose) # This command will ask the user for sudo
 
-    tar = get_memory_tar(image_path)
+    file_obj,tar = get_memory_tar(image_path)
     members = tar.getmembers()
     image_name = os.path.basename(image_path)
     zip_name = "%s.zip" %(image_name.replace(" ","_"))
@@ -176,6 +176,7 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
     # Do zip up here - let's start with basic structures
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     bot.logger.debug("Package created at %s" %(zipfile))
+    file_obj.close()
     # return package to user
     return zipfile
 

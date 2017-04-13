@@ -20,10 +20,13 @@ import re
 import io
 
 
-def assess_differences(image_file1,image_file2,levels=None,version=None):
+def assess_differences(image_file1,image_file2,levels=None,version=None,size_heuristic=False,
+                       guts1=None,guts2=None):
     '''assess_differences will compare two images on each level of 
     reproducibility, returning for each level a dictionary with files
     that are the same, different, and an overall score.
+    :param size_heuristic: if True, assess root owned files based on size
+    :param guts1,guts2: the result (dict with sizes,roots,etc) from get_content_hashes
     '''
     if levels is None:
         levels = get_levels(version=version)
@@ -38,37 +41,42 @@ def assess_differences(image_file1,image_file2,levels=None,version=None):
         same = 0
 
         # Compare the dictionary of file:hash between two images, and get root owned lookup
-        result1 = get_content_hashes(image_path=image_file1,
-                                     level_filter=level_filter,
-                                     tag_root=True,
-                                     include_sizes=True)
+        if guts1 is None:
+            guts1 = get_content_hashes(image_path=image_file1,
+                                       level_filter=level_filter,
+                                       tag_root=True,
+                                       include_sizes=True)
         
-        result2 = get_content_hashes(image_path=image_file2,
-                                     level_filter=level_filter,
-                                     tag_root=True,
-                                     include_sizes=True)
+        if guts2 is None:
+            guts2 = get_content_hashes(image_path=image_file2,
+                                       level_filter=level_filter,
+                                       tag_root=True,
+                                       include_sizes=True)
       
-        files = list(set(list(result1['hashes'].keys()) + list(result2['hashes'].keys())))
+        files = list(set(list(guts1['hashes'].keys()) + list(guts2['hashes'].keys())))
 
         for file_name in files:
 
             # If it's not in one or the other
-            if file_name not in result1['hashes'] or file_name not in result2['hashes']:
+            if file_name not in guts1['hashes'] or file_name not in guts2['hashes']:
                 setdiff.append(file_name)
 
             else:
-                if result1['hashes'][file_name] == result2['hashes'][file_name]:
+                if guts1['hashes'][file_name] == guts2['hashes'][file_name]:
                     same+=1
                 else:
 
                     # If the file is root owned, we compare based on size
-                    if result1['root_owned'][file_name] or result2['root_owned'][file_name]:
-                        if result1['sizes'][file_name] == result2['sizes'][file_name]:    
-                            same+=1
+                    if size_heuristic == True:
+                        if guts1['root_owned'][file_name] or guts2['root_owned'][file_name]:
+                            if guts1['sizes'][file_name] == guts2['sizes'][file_name]:    
+                                same+=1
+                            else:
+                                different.append(file_name)
                         else:
-                            different.append(file_name)
+                            # Otherwise, we can assess the bytes content by reading it
+                            contenders.append(file_name)
                     else:
-                        # Otherwise, we can assess the bytes content by reading it
                         contenders.append(file_name)
 
         # If the user wants identical (meaning extraction order and timestamps)
@@ -82,17 +90,25 @@ def assess_differences(image_file1,image_file2,levels=None,version=None):
                 for rogue in contenders:
                     hashy1 = extract_content(image_file1,rogue,cli,return_hash=True)
                     hashy2 = extract_content(image_file2,rogue,cli,return_hash=True)
-                    if hashy1 != hashy2:
+                    # If we can't compare, we use size as a heuristic
+                    if len(hashy1) == 0 or len(hashy2) == 0:
+                        if guts1['sizes'][file_name] == guts2['sizes'][file_name]:    
+                            same+=1
+                        else:
+                            different.append(file_name)                    
+                    elif hashy1 != hashy2:
                         different.append(rogue)
                     else:
                         same+=1
 
-        report = {'difference': setdiff,
-                  'intersect_different': different}
-
         # We use a similar Jacaard coefficient, twice the shared information in the numerator 
         # (the intersection, same), as a proportion of the total summed files
-        union = len(result1['hashes']) + len(result2['hashes'])
+        union = len(guts1['hashes']) + len(guts2['hashes'])
+
+        report = {'difference': setdiff,
+                  'intersect_different': different,
+                  'same':same,
+                  'union': union}
      
         if union == 0:
             scores[level_name] = 0
@@ -122,14 +138,14 @@ def get_custom_level(regexp=None,description=None,skip_files=None,include_files=
 
     # Include extra files?
     if include_files is not None:
-        if not isinstance(include_files,list):
-            include_files = [include_files]
+        if not isinstance(include_files,set):
+            include_files = set(include_files)
         custom['include_files'] = include_files
 
     # Skip files?
     if skip_files is not None:
-        if not isinstance(skip_files,list):
-            skip_files = [skip_files]
+        if not isinstance(skip_files,set):
+            skip_files = set(skip_files)
         custom['skip_files'] = skip_files
 
     return custom
@@ -156,6 +172,7 @@ def get_level(level,version=None,include_files=None,skip_files=None):
     if include_files is not None:
         level = modify_level(level,'include_files',include_files)
 
+    level = make_level_set(level)
     return level
 
 
@@ -179,6 +196,9 @@ def modify_level(level,field,values,append=True):
             level[field] = values
     else:
         level[field] = values
+
+    level = make_level_set(level)
+
     return level       
 
 
@@ -205,7 +225,30 @@ def get_levels(version=None):
     if version == "2.2":
         # Labels not added until 2.3
         del levels['LABELS']
+
+    levels = make_levels_set(levels)
+
     return levels
+
+
+def make_levels_set(levels):
+    '''make set efficient will convert all lists of items
+    in levels to a set to speed up operations'''
+    for level_key,level_filters in levels.items():
+        levels[level_key] = make_level_set(level_filters)
+    return levels
+    
+
+def make_level_set(level):
+    '''make level set will convert one level into
+    a set'''
+    new_level = dict()
+    for key,value in level.items():
+        if isinstance(value,list):
+            new_level[key] = set(value)
+        else:
+            new_level[key] = value
+    return new_level 
 
 
 def include_file(member,file_filter):
@@ -251,12 +294,13 @@ def assess_content(member,file_filter):
     '''
     member_path = member.name.replace('.','',1)
 
-    # We can't assess content of root owned files
-    if is_root_owned(member):
-        return False
-
     if len(member_path) == 0:
         return False
+
+    # Does the filter skip it explicitly?
+    if "skip_files" in file_filter:
+        if member_path in file_filter['skip_files']:
+            return False
 
     if "assess_content" in file_filter:
         if member_path in file_filter['assess_content']:
@@ -346,6 +390,9 @@ def extract_content(image_path,member_name,cli=None,return_hash=False):
     content = cli.execute(image_path,'cat %s' %(member_name))
     if not isinstance(content,bytes):
         content = bytes(content)
+    # If permissions don't allow read, return None
+    if len(content) == 0:
+        return None
     if return_hash:
         hashy.update(content)
         return hashy.hexdigest()
@@ -373,6 +420,16 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,tag_
                                 include_files=include_files)
 
     file_obj,tar = get_memory_tar(image_path)
+    results = extract_guts(image_path,tar,file_filter,tag_root,include_sizes)
+    file_obj.close()
+    return results
+
+
+def extract_guts(image_path, tar,file_filter,tag_root=True,include_sizes=True):
+    '''extract_guts will extract the file guts from an in memory tarfile.
+    The file is not closed.
+    '''
+
     cli = Singularity()
     results = dict()
     digest = dict()
@@ -384,25 +441,25 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,tag_
         sizes = dict()
 
     for member in tar:
+        member_name = member.name.replace('.','',1)
         included = False
         if member.isdir() or member.issym():
             continue
         elif assess_content(member,file_filter):
-            digest[member.name] = extract_content(image_path,member.name,cli,return_hash=True)
+            digest[member_name] = extract_content(image_path,member.name,cli,return_hash=True)
             included = True
         elif include_file(member,file_filter):
             hasher = hashlib.md5()
             buf = member.tobuf()
             hasher.update(buf)
-            digest[member.name] = hasher.hexdigest()
+            digest[member_name] = hasher.hexdigest()
             included = True
         if included:
             if include_sizes:
-                sizes[member.name] = member.size
+                sizes[member_name] = member.size
             if tag_root:
-                roots[member.name] = is_root_owned(member)
+                roots[member_name] = is_root_owned(member)
 
-    file_obj.close()
     results['hashes'] = digest
     if include_sizes:
         results['sizes'] = sizes

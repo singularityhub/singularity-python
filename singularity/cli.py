@@ -244,7 +244,11 @@ class Singularity:
         '''
         cmd = ['singularity','exec',image_path,'cat','/.singularity/labels.json']
         labels = self.run_command(cmd)
-        return json.loads(labels.decode('utf-8'))
+        if isinstance(labels,bytes):
+            labels = labels.decode('utf-8')
+        if len(labels) > 0:
+            return json.loads(labels)
+        return labels
         
 
     def get_args(self,image_path):

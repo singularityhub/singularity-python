@@ -100,7 +100,7 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
             os.system(cmd)
     else:
         try:
-            process = subprocess.Popen(cmd,stdout=subprocess.PIPE)
+            process = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             output, err = process.communicate()
         except OSError as error: 
             if error.errno == os.errno.ENOENT:
@@ -186,7 +186,7 @@ def zip_up(file_list,zip_name,output_folder=None):
     # Close the zip file    
     zf.close()
 
-    if output_folder != None:
+    if output_folder is not None:
         shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
         shutil.rmtree(tmpdir)
         output_zip = "%s/%s"%(output_folder,zip_name)

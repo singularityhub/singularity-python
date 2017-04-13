@@ -18,6 +18,7 @@ container_name = 'vsoch/singularity-hello-world'
 
 # Let's keep images in a temporary folder
 base = "/home/vanessa/Documents/Work/singularity/hub"
+oses = "%s/os" %base
 storage = "%s/containers" %base
 clones = "%s/clones" %storage # same image downloaded multiple times
 replicates = "%s/replicates" %storage # these are replicates from singularity hub
@@ -178,6 +179,11 @@ print(diffs)
 write_json(diffs,'%s/diff_clone_pair.json' %base)
 
 
+#############################################################################
+# Task 3: Compare replication level of reproducibility to file metric
+#############################################################################
+
+
 # Singularity Hub
 # This is the real world use case, because these are real images on Singularity Hub
 # Let's compare each image on the level of REPLICATE
@@ -229,7 +235,360 @@ fig.savefig('%s/replicate_hubdiffs_dfs.png' %base)
 tree = make_interactive_tree(matrix=diffs,labels=labels)
 fields = {"{{ graph | safe }}",json.dumps(tree)}
 template = get_template("comparison_tree",fields)
+#http://www.vanessasaur.us/singularity-python/examples/singularity_hub/index.html
 write_file('%s/index.html' %base,template)
+
+# Make a heatmap
+import plotly.plotly as py
+import plotly.graph_objs as go
+from scipy.cluster.hierarchy import linkage, dendrogram
+
+Z = linkage(diffs, 'ward')
+
+d=dendrogram(Z,
+             leaf_rotation=90.,  # rotates the x axis labels
+             leaf_font_size=font_size,  # font size for the x axis l
+             labels=labels)
+
+index = d['leaves']
+D = numpy.array(diffs)
+D=D[index,:]
+D=D[:,index]
+labels = ["-".join(x.replace('.img','').split('-')[:-1]) for x in diffs.index.tolist()]
+labs = [labels[x] for x in index]
+data = [
+    go.Heatmap(
+        z=D,
+        x=labs,
+        y=labs
+    )
+]
+py.iplot(data,filename='replicate_hub_diffs2')
+
+# Generate equivalent file path comparison
+from singularity.analysis.compare import compare_singularity_images, RSA
+
+diffs_files = compare_singularity_images(image_paths1=image_files)
+diffs_files.to_csv('%s/analysis_compare_singularity_images.tsv' %base,sep='\t')
+
+# How do the matrices compare?
+pearsonr_sim = RSA(diffs,diffs_files)
+# 0.74136458648818637
+
+
+
+#############################################################################
+# Task 4: Analyses to assess levels of reproducibility
+#############################################################################
+
+from singularity.utils import write_json, write_file
+from singularity.reproduce import (
+    assess_differences,
+    get_levels
+)
+
+levels = get_levels()
+level_names = list(levels.keys())
+
+# Singularity Hub (replicate): meaning same base os, different build host
+# These should be equal for base, environment, runscript, replicate, but
+# not identical.
+os.chdir(replication)
+print("SINGULARITY HUB REPLICATES")
+image_files = glob('*.img')
+chosen_one = image_files[10]
+diffs = pandas.DataFrame(columns=level_names,index=image_files)
+for i in range(len(image_files)):
+    image_file = image_files[i]
+    print("Processing %s of %s" %(i,len(image_files)))
+    diff = assess_differences(image_file,chosen_one,levels=levels)
+    diffs.loc[image_file,list(diff['scores'].keys())] = list(diff['scores'].values())
+
+
+diffs.to_csv('%s/analysis_hub_replicates.tsv' %base,sep='\t')
+
+
+# Singularity Hub (replicate) for replicate level
+os.chdir(replication)
+print("SINGULARITY HUB REPLICATES -- REPLICATE")
+image_files = glob('*.img')
+replicate_level = {'REPLICATE':levels['REPLICATE']}
+diffs = pandas.DataFrame(columns=image_files,index=image_files)
+done = []
+for i in range(len(image_files)):
+    image_file1 = image_files[i]
+    print("Processing %s of %s" %(i,len(image_files)))
+    for image_file2 in image_files:    
+        identifier = [image_file1,image_file2]
+        identifier.sort()
+        identifier = "-".join(identifier)
+        if identifier not in done:
+            diff = assess_differences(image_file1,image_file2,levels=replicate_level)
+            diffs.loc[image_file1,image_file2] = diff['scores']['REPLICATE']
+            diffs.loc[image_file2,image_file1] = diff['scores']['REPLICATE']
+            done.append(identifier)
+
+diffs.to_csv('%s/analysis_hub_replicates_REPLICATE.tsv' %base,sep='\t')
+
+
+# Identical image (downloaded multiple times from shub)
+
+os.chdir(clones)
+print("SINGULARITY HUB CLONE")
+image_files = glob("*.img")
+chosen_one = image_files[10]
+diffs = pandas.DataFrame(columns=level_names,index=image_files)
+for i in range(len(image_files)):
+    image_file = image_files[i]
+    print("Processing %s of %s" %(i,len(image_files)))
+    diff = assess_differences(image_file,chosen_one,levels=levels)
+    diffs.loc[image_file,list(diff['scores'].keys())] = list(diff['scores'].values())
+
+
+diffs.to_csv('%s/analysis_hub_clones.tsv' %base,sep='\t')
+
+
+# LOCAL REPLICATES
+# These were built from the same spec file, same host, but different times
+# Again, we will see differences on most levels.
+
+os.chdir(replicates)
+image_files = glob("*.img")
+print("LOCAL REPLICATES")
+image_files = glob("*.img")
+chosen_one = image_files[10]
+diffs = pandas.DataFrame(columns=level_names,index=image_files)
+for i in range(len(image_files)):
+    image_file = image_files[i]
+    print("Processing %s of %s" %(i,len(image_files)))
+    diff = assess_differences(image_file,chosen_one,levels=levels)
+    diffs.loc[image_file,list(diff['scores'].keys())] = list(diff['scores'].values())
+
+
+diffs.to_csv('%s/analysis_local_replicates.tsv' %base,sep='\t')
+
+
+#############################################################################
+# Task 5: Assess dimension of reproducibility 
+#############################################################################
+
+# ALGORITHM
+# 1. define a phantom operating system as the intersection of files between the
+# base set of all operating systems  (ubuntu, debian, centos, busybox)
+# 2. For each, calculate the "base" as the entire OS minus this actual
+# 3. Generate an image for the base, calculate it's similarity to
+# itself minus one file
+# 4. show that the score goes from 0 (the phantom) to the OS (1)
+
+from singularity.reproduce import (
+    get_memory_tar,
+    extract_guts
+)
+
+# First extract file objects
+os.chdir(oses)
+os_bases = [x for x in glob("%s/*" %oses) if os.path.isdir(x)]
+bases = dict()
+for os_base in os_bases:
+    os_name = os.path.basename(os_base)
+    if os_name not in bases:
+        image_path = "%s/%s.img" %(os_base,os_name)
+        file_obj,tar = get_memory_tar(image_path)
+        bases[os_name] = {'fileobj':file_obj,'tar':tar,'image_path':image_path}
+    
+results = dict()
+
+# Now get shared files
+shared = [x.name for x in bases['ubuntu']['tar']]
+for os_name,infos in bases.items():
+    members = [x.name for x in bases[os_name]['tar']]
+    shared = [x for x in shared if x in members]
+
+# For each operating system, remove one file randomly, calculate 
+
+# For each operating system, remove one file randomly, calculate 
+# similarity for each level
+skip_file_bases = dict()
+for level_name, level_filter in levels.items():
+    if "skip_files" in level_filter:
+        skip_file_bases[level_name] = level_filter['skip_files']
+    else:
+        skip_file_bases[level_name] = set()
+
+results['shared'] = shared
+
+for os_name,infos in bases.items():
+    levels = get_levels()
+    members = [x for x in bases[os_name]['tar']]
+    # We will sort based on modified date - like an ancestry!
+    mtimes = lambda member: member.mtime
+    sorted_members = list(sorted(members, key=mtimes))
+    scores = pandas.DataFrame(columns=list(levels.keys()))
+    denoms = pandas.DataFrame(columns=list(levels.keys()))
+    # Calculate guts for all levels, all members
+    guts = dict()
+    removed = set()
+    for level_name,level_filter in levels.items():
+        guts[level_name] = extract_guts(bases[os_name]['image_path'],bases[os_name]["tar"],level_filter)
+    while len(sorted_members) > 0:
+        label = "%s_REDUCED" %len(sorted_members)
+        print("Comparing base vs. %s files" %(len(sorted_members)))
+        for level_name,level_filter in levels.items():
+            clone = levels[level_name].copy()
+            custom_level = {label: clone}
+            guts1 = guts[level_name]
+            custom_level[label]['skip_files'] = skip_file_bases[level_name].union(removed)
+            diff = assess_differences(infos['image_path'],infos['image_path'],levels=custom_level,guts1=guts1)
+            scores.loc[label,level_name] = diff['scores'][label]
+            denoms.loc[label,level_name] = diff[label]['union']
+        removed_member = sorted_members.pop()
+        removed_member = removed_member.name.replace('.','',1)
+        removed = removed.union([removed_member])
+        print(scores.loc[label].tolist())
+    # Do for final (this is unelegant, it's ok)
+    label = "%s_REDUCED" %len(sorted_members)
+    #print("Comparing base vs. %s files" %(len(sorted_members)))
+    for level_name,level_filter in levels.items():
+        clone = levels[level_name]
+        custom_level = {label: clone}
+        guts1 = guts[level_name]
+        custom_level[label]['skip_files'] = skip_file_bases[level_name].union(removed)
+        diff = assess_differences(infos['image_path'],infos['image_path'],levels=custom_level,guts1=guts1)
+        scores.loc[label,level_name] = diff['scores'][label]
+        denoms.loc[label,level_name] = diff[label]['union']
+
+
+    results[os_name] = {'scores':scores,'removed':removed,'denoms':denoms}
+    pickle.dump(results,open('%s/analysis_os.pkl' %oses,'wb'))
+
+# Close all file handles
+for os_name,infos in bases.items():
+    infos['file_obj'].close()
+
+
+phantom_results = dict()
+
+del levels['ENVIRONMENT']
+del levels['RUNSCRIPT']
+del levels['LABELS']
+
+# Now we want to calculate the dimension of each os from the phantom base to full
+for os_name,infos in bases.items():
+    print("Starting %s" %(os_name))
+    members = [x for x in bases[os_name]['tar'] if x not in shared]
+    scores = pandas.DataFrame(columns=list(levels.keys()))
+    denoms = pandas.DataFrame(columns=list(levels.keys()))
+    # Calculate guts for all levels, all members
+    guts = dict()
+    removed = []
+    for level_name,level_filter in levels.items():
+        guts[level_name] = extract_guts(bases[os_name]['image_path'],bases[os_name]["tar"],level_filter)
+    while len(members) > 0:
+        label = "%s_REDUCED" %len(members)
+        print("Comparing base vs. %s files" %(len(members)))
+        for level_name,level_filter in levels.items():
+            custom_level = {label: levels[level_name]}
+            guts1 = guts[level_name]
+            custom_level[label]['skip_files'] = skip_file_bases[level_name] + removed + results['shared']
+            diff = assess_differences(infos['image_path'],infos['image_path'],levels=custom_level,guts1=guts1)
+            scores.loc[label,level_name] = diff['scores'][label]
+            denoms.loc[label,level_name] = diff[label]['union']
+        removed_member = members.pop()
+        removed.append(removed_member.replace('.','',1))
+    phantom_results[os_name] = {'scores':scores,'removed':removed}
+    pickle.dump(phantom_results,open('%s/analysis_phantom_os.pkl' %oses,'wb'))
+
+
+# Plotting of results
+results = pickle.load(open('%s/analysis_os.pkl' %oses,'rb'))
+#plotdf = pandas.read_csv("%s/analysis_os_flat.tsv" %oses,sep="\t",index_col=0)
+import seaborn as sns
+
+# Flatten the data
+idx = 0
+plotdf = pandas.DataFrame(columns=['os','score','level','files','idx'])
+for os_name,result in results.items():
+    if os_name in ["centos"]:
+        scores = result['scores']
+        denoms = result['denoms']
+        for row in scores.iterrows():
+            files_present = denoms.loc[row[0]].copy()
+            for level_name in list(row[1].keys()):
+                files_value = files_present[level_name]
+                files_index = int(row[0].split('_')[0])
+                plotdf.loc[idx] = [os_name,row[1][level_name],level_name,files_value,files_index]
+                idx+=1
+
+
+plotdf.to_csv("%s/analysis_os_flat.tsv" %oses,sep="\t")
+#plotdf = pandas.read_csv("%s/analysis_os_flat.tsv" %oses,sep="\t",index_col=0)
+
+debian = plotdf[plotdf.os=='debian']
+debian = debian[debian.level.isin(['BASE', 'IDENTICAL', 'LABELS', 'REPLICATE','RUNSCRIPT'])]
+# Plot the response with standard error
+sns.tsplot(data=debian, time="idx", unit="os",
+                 condition="level", value="score")
+
+sns.plt.show()
+
+
+busybox = plotdf[plotdf.os=='busybox']
+busybox = busybox[busybox.level.isin(['BASE', 'IDENTICAL', 'LABELS', 'REPLICATE','RUNSCRIPT'])]
+# Plot the response with standard error
+sns.tsplot(data=busybox, time="idx", unit="os",
+           condition="level", value="score")
+
+sns.plt.show()
+
+
+centos = plotdf[plotdf.os=='centos']
+centos = centos[centos.level.isin(['BASE', 'IDENTICAL', 'LABELS', 'REPLICATE','RUNSCRIPT'])]
+# Plot the response with standard error
+sns.tsplot(data=centos, time="idx", unit="os",
+           condition="level", value="score")
+
+sns.plt.show()
+
+
+ubuntu = plotdf[plotdf.os=='ubuntu']
+ubuntu = ubuntu[ubuntu.level.isin(['BASE', 'IDENTICAL', 'LABELS', 'REPLICATE','RUNSCRIPT'])]
+# Plot the response with standard error
+sns.tsplot(data=ubuntu, time="idx", unit="os",
+           condition="level", value="score")
+
+sns.plt.show()
+
+
+alpine = plotdf[plotdf.os=='alpine']
+alpine = alpine[alpine.level.isin(['BASE', 'IDENTICAL', 'LABELS', 'REPLICATE','RUNSCRIPT'])]
+# Plot the response with standard error
+sns.tsplot(data=alpine, time="idx", unit="os",
+           condition="level", value="score")
+
+sns.plt.show()
+
+
+
+alpine = plotdf[plotdf.os=='alpine']
+alpine = alpine[alpine.level.isin(['BASE', 'IDENTICAL', 'LABELS', 'REPLICATE','RUNSCRIPT'])]
+
+import matplotlib.pyplot as plt
+fig, axs = plt.subplots(ncols=5,sharey=True)
+
+for l in range(len(alpine.level.unique().tolist())):
+    level = alpine.level.unique().tolist()[l]
+    subset = alpine[alpine.level==level]
+    sns.tsplot(data=subset, time="idx", unit="os",
+               condition="level", value="score",ax=axs[l])
+
+
+g = sns.FacetGrid(alpine, col="level", ylim=(0, 1))
+for level in alpine.level.unique().tolist():
+    subset = alpine[alpine.level==level]
+    g.map(sns.tsplot, data=subset, time="idx", unit="os", condition="level", value="score")
+
+sns.plt.show()
+
 
 #############################################################################
 # Task 3: Assess levels of reproducibility
@@ -271,85 +630,3 @@ for col in hashes.columns.tolist():
 # IDENTICAL: ['8a2f03e6d846a1979b694b28c125a852']
 # LABELS: ['d41d8cd98f00b204e9800998ecf8427e']
 # RECIPE: ['89b5f94c70b261b463c914a4fbe628c5']
-
-
-# SINGULARITY HUB "REPLICATES"
-
-# These images, if compared pairwise, would be assessed as equivalent on all
-# levels except for identical. This example will show differences on level
-# of replicate and base, and this shows that these levels should not
-# be calculated in advance.
-os.chdir(replication)
-image_files = glob('*.img')
-hashes = pandas.DataFrame(columns=list(levels.keys()))
-
-for image_file in image_files:
-    print('Processing %s' %(image_file))
-    hashy = get_image_hashes(image_file,levels=levels)
-    hashes.loc[image_file,:] = hashy
-
-# REPLICATE: 101
-# ENVIRONMENT: 1
-# BASE: 101
-# RUNSCRIPT: 2
-# IDENTICAL: 101
-# LABELS: 1
-# RECIPE: 85
-
-# The above confirms our prediction - the levels (hashes alone) should not be used
-# to assess an image beyond environment, labels, and runscript. Since these images were
-# produced by trivially changing the runscript, we also see that reflected in this result.
-
-dfs['QUASI_REPLICATE'] = hashes
-for col in hashes.columns.tolist():
-    print("%s: %s" %(col,len(hashes[col].unique().tolist())))
-
-
-
-# REPLICATES
-# These were built from the same spec file, same host, but different times
-# Again, we will see differences on most levels.
-
-os.chdir(replicates)
-image_files = glob("*.img")
-hashes = pandas.DataFrame(columns=list(levels.keys()))
-
-for image_file in image_files:
-    print('Processing %s' %(image_file))
-    hashy = get_image_hashes(image_file,levels=levels)
-    hashes.loc[image_file,:] = hashy
-
-# REPLICATE: 100
-# ENVIRONMENT: 100
-# BASE: 100
-# RUNSCRIPT: 1
-# IDENTICAL: 100
-# LABELS: 1
-# RECIPE: 100
-
-
-dfs['REPLICATES'] = hashes
-for col in hashes.columns.tolist():
-    print("%s: %s" %(col,len(hashes[col].unique().tolist())))
-
-
-
-# Singularity Hub
-# Are there any files that are identical across all images?
-# Can we assess the level of reproducibility of each path?
-
-os.chdir(hub)
-image_files = glob("*.img")
-hashes = pandas.DataFrame(columns=list(levels.keys()))
-
-for image_file in image_files:
-    print('Processing %s' %(image_file))
-    hashy = get_image_hashes(image_file,levels=levels)
-    hashes.loc[image_file,:] = hashy
-
-dfs['HUB_COLLECTIONS'] = hashes
-for col in hashes.columns.tolist():
-    print("%s: %s" %(col,len(hashes[col].unique().tolist())))
-
-
-pickle.dump(dfs,open('%s/reproducibility_dfs.pkl' %base,'wb'))
