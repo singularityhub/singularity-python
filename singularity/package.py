@@ -3,6 +3,28 @@
 '''
 package.py: part of singularity package
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from singularity.logman import bot
@@ -18,8 +40,8 @@ from singularity.cli import Singularity
 from singularity.reproduce import (
     get_image_hash,
     get_image_hashes,
-    get_memory_tar
-
+    get_memory_tar,
+    extract_content
 )
 import tempfile
 import tarfile
@@ -146,22 +168,20 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
         to_package = {"files":[image_path]}
 
     # If the specfile is provided, it should also be packaged
-    if spec_path != None:
+    if spec_path is not None:
         singularity_spec = "".join(read_file(spec_path))
         to_package['Singularity'] = singularity_spec
 
-    # Package the image with an sha1, replication standard,  as VERSION
+    # Package the image with an sha1, identical standard, as VERSION
     hashes = get_image_hashes(image_path)
     to_package["VERSION"] = hashes['REPLICATE']
     to_package["HASHES"] = hashes
+
     # Look for runscript
 
-    if runscript == True:
+    if runscript is True:
         try:
-            runscript_member = tar.getmember("./singularity")
-            runscript_file = tar.extractfile("./singularity")
-            runscript = runscript_file.read()
-            to_package["runscript"] = runscript
+            to_package["runscript"] = extract_content(image_path,'./singularity',cli=S)
             bot.logger.debug("Found runscript.")
         except KeyError:
             bot.logger.warning("No runscript found")
