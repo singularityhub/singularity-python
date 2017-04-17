@@ -50,7 +50,7 @@ import re
 class Singularity:
     
 
-    def __init__(self,sudo=False,sudopw=None,debug=False):
+    def __init__(self,sudo=False,sudopw=None,debug=False,quiet=False):
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
@@ -100,6 +100,14 @@ class Singularity:
             return help
 
 
+    def println(self,output):
+        '''print will print the output, given that quiet is not True
+        '''
+        if self.quiet is False:
+            if isinstance(output,bytes):
+                output = output.decode('utf-8')
+            print(output)
+
 
     def create(self,image_path,size=None):
         '''create will create a a new image
@@ -114,7 +122,8 @@ class Singularity:
             cmd = ['singularity','--debug','create','--size',str(size),image_path]
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
-        self.run_command(cmd,sudo=False)
+        output = self.run_command(cmd,sudo=False)
+        self.println(output)        
         if os.path.exists(image_path):
             return image_path
         return None
@@ -129,8 +138,9 @@ class Singularity:
             cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
         else:
             cmd = ['singularity','bootstrap',image_path,spec_path]
-        return self.run_command(cmd,sudo=True)
-
+        output = self.run_command(cmd,sudo=True)
+        self.println(output)        
+        return image_path
 
 
     def execute(self,image_path,command,writable=False,contain=False):
@@ -157,8 +167,6 @@ class Singularity:
             command = command.split(' ')
 
         cmd = cmd + [image_path] + command
-
-        # Run the command
         return self.run_command(cmd,sudo=sudo)
 
 
@@ -183,7 +191,7 @@ class Singularity:
         else:
             _,tmptar = tempfile.mkstemp(suffix=".%s" %export_format)
             os.remove(tmptar)
-            cmd = cmd + ["-f",tmptar,image_path]
+            cmd = cmd + ['-f',tmptar,image_path]
             self.run_command(cmd,sudo=False)
 
             # Was there an error?            
@@ -199,8 +207,9 @@ class Singularity:
                 return tmptar
 
         # Otherwise, return output of pipe    
-        return self.run_command(cmd,sudo=False)
-
+        output = self.run_command(cmd,sudo=False)
+        self.println(output)        
+        return output
 
 
     def importcmd(self,image_path,input_source):
@@ -210,14 +219,18 @@ class Singularity:
         :param import_type: if not specified, imports whatever function is given
         '''
         cmd = ['singularity','import',image_path,input_source]
-        return self.run_command(cmd,sudo=False)
+        output = self.run_command(cmd,sudo=False)
+        self.println(output)        
+        return image_path
 
 
-
-    def pull(self,image_path):
+    def pull(self,image_path,pull_folder=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
         ''' 
+        if pull_folder is not None:
+            os.environ['SINGULARITY_PULL_FOLDER'] = pull_folder
+
         if not image_path.startswith('shub://'):
             bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
             sys.exit(1)           
@@ -226,8 +239,10 @@ class Singularity:
             cmd = ['singularity','--debug','pull',image_path]
         else:
             cmd = ['singularity','pull',image_path]
-        return self.run_command(cmd)
-
+        output = self.run_command(cmd)
+        self.println(output)        
+        return output.split("Container is at:")[-1].strip('\n').strip()
+        
 
 
     def run(self,image_path,args=None,writable=False,contain=False):
@@ -237,7 +252,7 @@ class Singularity:
         :param args: args to include with the run
         '''
         sudo = False
-        cmd = ["singularity","run"]
+        cmd = ["singularity",'--quiet',"run"]
         cmd = self.add_flags(cmd,writable=writable,contain=contain)
         cmd = cmd + [image_path]
 
