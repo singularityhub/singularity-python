@@ -64,7 +64,7 @@ class TestAnalysisClassify(unittest.TestCase):
         print("Testing singularity.analysis.classify.estimate_os")
         from singularity.analysis.classify import estimate_os
         estimated_os = estimate_os(self.container)
-        self.assertEqual(estimated_os,'ubuntu:16.10')
+        self.assertTrue(estimated_os.startswith('ubuntu')
 
 
     def test_get_tags(self):
@@ -73,7 +73,6 @@ class TestAnalysisClassify(unittest.TestCase):
         tags = get_tags(self.container)
 
         print("Case 1: Testing that empty OS (with no additions) returns no relevant tags")
-        self.assertEqual(estimated_os,'ubuntu:16.10')
         self.assertTrue(len(tags)==0)
 
 
