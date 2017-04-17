@@ -136,13 +136,13 @@ Execute assumes that you want the output, and by default returns it.
 
 ## Export
 
-Here you can export an image. The default export_type="tar", pipe=False, and output_file = None. Not specifying an output file will produce file in a temporary directory:
+Here you can export an image. The default export_type="tar", and it must be a pipe.
 
 ```python
-tmptar = S.export(image_path=image)
+S.export(image_path=image)
 ```
 
-You might want an in memory tar to work with, and if this is the case, you want a function from the [reproduce.py](../../singularity/reproduce.py) module:
+This is going to pipe the image into your stdout, which you probably don't want to do. Instead, you might want an in memory tar to work with, and if this is the case, you want a function from the [reproduce.py](../../singularity/reproduce.py) module:
 
 ```python
 from singularity.reproduce import get_memory_tar

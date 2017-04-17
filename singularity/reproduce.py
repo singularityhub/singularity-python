@@ -510,7 +510,7 @@ def get_memory_tar(image_path):
     cli = Singularity()
     if "pancakes" in os.environ:
         del os.environ['pancakes']
-    byte_array = cli.export(image_path,pipe=True)
+    byte_array = cli.export(image_path)
     file_object = io.BytesIO(byte_array)
     tar = tarfile.open(mode="r|*", fileobj=file_object)
     return (file_object,tar)
