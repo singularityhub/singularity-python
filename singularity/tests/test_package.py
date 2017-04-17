@@ -107,7 +107,7 @@ class TestPackage(unittest.TestCase):
         from singularity.package import package
         container = self.cli.create("%s/container.img" %self.tmpdir)
         container = self.cli.importcmd(container,"docker://ubuntu")
-        image_package = package(image_path=container),output_folder=self.tmpdir,S=self.cli)
+        image_package = package(image_path=container,output_folder=self.tmpdir,S=self.cli)
         self.assertTrue(os.path.exists(image_package))
 
 
