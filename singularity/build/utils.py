@@ -48,7 +48,7 @@ def test_container(image_path):
     work in most linux.
     :param image_path: path to the container image
     '''
-    testing_command = ["singularity", "exec", image_path, 'echo pancakemania']
+    testing_command = ["singularity", "exec", image_path, 'ls']
     output = Popen(testing_command,stderr=STDOUT,stdout=PIPE)
     t = output.communicate()[0],output.returncode
     result = {'message':t[0],
@@ -169,3 +169,17 @@ def sniff_extension(file_path,verbose=True):
         bot.logger.info("%s --> %s", file_path, mime_type)
 
     return mime_type
+
+
+def get_script(script_name):
+    '''get_script will return a build script_name, if it is included 
+    in singularity/build/scripts, otherwise will alert the user and return None
+    :param script_name: the name of the script to look for
+    '''
+    install_dir = get_installdir()
+    script_path = "%s/build/scripts/%s" %(install_dir,script_name)
+    if os.path.exists(script_path):
+        return script_path
+    else:
+        bot.logger.error("Script %s is not included in singularity-python!", script_path)
+        return None

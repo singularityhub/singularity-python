@@ -103,7 +103,7 @@ def assess_differences(image_file1,image_file2,levels=None,version=None,size_heu
 
         # If the user wants identical (meaning extraction order and timestamps)
         if level_name == "IDENTICAL":
-            different = different + contenders
+                different = different + contenders
 
         # Otherwise we need to check based on byte content
         else:        
@@ -112,8 +112,11 @@ def assess_differences(image_file1,image_file2,levels=None,version=None,size_heu
                 for rogue in contenders:
                     hashy1 = extract_content(image_file1,rogue,cli,return_hash=True)
                     hashy2 = extract_content(image_file2,rogue,cli,return_hash=True)
+        
                     # If we can't compare, we use size as a heuristic
-                    if len(hashy1) == 0 or len(hashy2) == 0:
+                    if hashy1 is None or hashy2 is None: # if one is symlink, could be None
+                        different.append(file_name)                    
+                    elif len(hashy1) == 0 or len(hashy2) == 0:
                         if guts1['sizes'][file_name] == guts2['sizes'][file_name]:    
                             same+=1
                         else:

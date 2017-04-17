@@ -82,19 +82,6 @@ def get_installdir():
     return os.path.abspath(os.path.dirname(hello.__file__))
 
 
-def get_script(script_name):
-    '''get_script will return a script_name, if it is included in singularity/scripts,
-    otherwise will alert the user and return None
-    :param script_name: the name of the script to look for
-    '''
-    install_dir = get_installdir()
-    script_path = "%s/scripts/%s" %(install_dir,script_name)
-    if os.path.exists(script_path):
-        return script_path
-    else:
-        bot.logger.error("Script %s is not included in singularity-python!", script_path)
-        return None
-
 def getsudo():
     sudopw = input('[sudo] password for %s: ' %(os.environ['USER']))
     os.environ['pancakes'] = sudopw

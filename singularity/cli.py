@@ -55,6 +55,7 @@ class Singularity:
 
        self.sudopw = sudopw
        self.debug = debug
+       self.quiet = quiet
 
        # Try getting from environment
        if self.sudopw == None:
@@ -208,7 +209,8 @@ class Singularity:
 
         # Otherwise, return output of pipe    
         output = self.run_command(cmd,sudo=False)
-        self.println(output)        
+        if pipe is False:
+            self.println(output)        
         return output
 
 

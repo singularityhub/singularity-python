@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 package.py: part of singularity package
 
