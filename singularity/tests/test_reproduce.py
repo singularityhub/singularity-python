@@ -136,7 +136,9 @@ class TestReproduce(unittest.TestCase):
         from singularity.reproduce import get_content_hashes
         print("Testing singularity.reproduce.get_content_hashes")
         hashes = get_content_hashes(self.image1)
-        #TODO: test case when returns empty
+        for key in ['hashes','sizes','root_owned']:
+            self.assertTrue(key in hashes)
+        self.assertEqual(len(hashes),372)
 
 
     def test_extract_guts(self):

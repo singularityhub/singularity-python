@@ -201,23 +201,38 @@ class Singularity:
         return image_path
 
 
-    def pull(self,image_path,pull_folder=None):
+    def pull(self,image_path,pull_folder=None,name_by=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
+        :param name_by: can be one of commit or hash, default is by image name
         ''' 
+        if name_by is None:
+            name_by = "name"
+        name_by = name_by.lower()
+
         if pull_folder is not None:
-            os.environ['SINGULARITY_PULL_FOLDER'] = pull_folder
+            os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
 
         if not image_path.startswith('shub://'):
             bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
             sys.exit(1)           
 
         if self.debug == True:
-            cmd = ['singularity','--debug','pull',image_path]
+            cmd = ['singularity','--debug','pull']
         else:
-            cmd = ['singularity','pull',image_path]
+            cmd = ['singularity','pull']
+
+        if name_by in ['name','commit','hash']:
+            bot.logger.debug("user specified naming pulled image by %s",name_by)
+            name_by = "--%s" %name_by
+            cmd.append(name_by)
+
+        cmd.append(image_path)
+
         output = self.run_command(cmd)
         self.println(output)        
+        if isinstance(output,bytes):
+            output = output.decode('utf-8')
         return output.split("Container is at:")[-1].strip('\n').strip()
         
 
@@ -239,7 +254,7 @@ class Singularity:
         
         if args is not None:        
             if not isinstance(args,list):
-                args = command.split(' ')
+                args = args.split(' ')
             cmd = cmd + args
 
         result = self.run_command(cmd,sudo=sudo)

@@ -435,7 +435,7 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,tag_
         file_filter = level_filter
 
     elif level is None:
-        file_filter = get_level("RECIPE",version=version,
+        file_filter = get_level("REPLICATE",version=version,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
