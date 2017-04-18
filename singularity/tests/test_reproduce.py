@@ -153,7 +153,7 @@ class TestReproduce(unittest.TestCase):
         guts = extract_guts(image_path=self.image1,
                             tar=tar,
                             file_filter=levels['REPLICATE'])
-        for key in ['root_owned','sizes','hashes']
+        for key in ['root_owned','sizes','hashes']:
             self.assertTrue(key in guts)
 
     def test_get_image_file_hash(self):

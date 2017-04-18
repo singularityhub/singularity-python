@@ -66,7 +66,7 @@ class TestAnalysis(unittest.TestCase):
         print("testing singularity.analysis.utils.list_package_families")
         from singularity.analysis.utils import list_package_families
         families = [os.path.basename(x) for x in list_package_families()]
-        for family in ['docker-os','docker-library']
+        for family in ['docker-os','docker-library']:
             self.assertTrue(family in families)    
     
 if __name__ == '__main__':

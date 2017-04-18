@@ -96,7 +96,7 @@ class TestBuildUtils(unittest.TestCase):
         '''
         from singularity.build.utils import get_singularity_version
         version = get_singularity_version()
-        self.assertTrue(len(version)>30)
+        self.assertTrue(len(version)>0)
 
         version = get_singularity_version(2.2)
         self.assertEqual(version,2.2)

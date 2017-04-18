@@ -66,12 +66,12 @@ class TestClient(unittest.TestCase):
         print("Testing client.get_container")
         container = self.cli.get_container(self.collection)
         for key in ['files', 'version', 'id', 'metrics', 'spec',
-                    'image', 'name', 'branch', 'collection']
+                    'image', 'name', 'branch', 'collection']:
             self.assertTrue(key in container)
         metrics = self.cli.load_metrics(container)
         for key in ['build_time_seconds', 'estimated_os', 'os_sims', 
                     'singularity_python_version', 'file_counts', 'size', 
-                    'singularity_version', 'file_ext']
+                    'singularity_version', 'file_ext']:
             self.assertTrue(key in metrics)
 
 

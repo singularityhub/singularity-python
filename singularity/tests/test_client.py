@@ -27,7 +27,7 @@ SOFTWARE.
 
 '''
 
-
+from singularity.utils import get_installdir
 from numpy.testing import (
     assert_array_equal, 
     assert_almost_equal, 

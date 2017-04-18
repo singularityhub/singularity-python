@@ -66,11 +66,11 @@ class TestBuildConverter(unittest.TestCase):
 
         print("Case 1: Testing converter for version 2.2")
         os.environ['SINGULARITY_VERSION'] = "2.2" 
-        self.assertEqual(converter.__name__,"singularity.build.conversion.converter2pt2")
+        self.assertEqual(converter.__name__,"singularity.build.converter")
 
         print("Case 2: Testing converter for version 2.3")
         os.environ['SINGULARITY_VERSION'] = "2.3" 
-        self.assertEqual(converter.__name__,"singularity.build.conversion.converter2pt3")
+        self.assertEqual(converter.__name__,"singularity.build.converter")
 
 
 

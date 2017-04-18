@@ -52,7 +52,7 @@ class TestAnalysisCompare(unittest.TestCase):
         shutil.rmtree(self.tmpdir)
 
 
-    def test_container_similarity_vector():
+    def test_container_similarity_vector(self):
         print("Testing singularity.analysis.compare.container_similarity_vector")
         import pandas
         from singularity.analysis.compare import container_similarity_vector
@@ -80,7 +80,7 @@ class TestAnalysisCompare(unittest.TestCase):
         self.assertTrue('files.txt' in comparison)
         for key in ['total1', 'total2', 'intersect', 'unique2', 'unique1']:
             self.assertTrue(key in comparison['files.txt'])
-        self.assertEqual(len(comparison['files.txt']['intersect']),2566)
+        self.assertEqual(len(comparison['files.txt']['intersect']),2567)
      
 
     def test_calculate_similarity(self):
