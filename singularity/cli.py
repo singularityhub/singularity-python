@@ -192,6 +192,8 @@ class Singularity:
     
         cmd.append(image_path)
         output = self.run_command(cmd,sudo=sudo)
+        if old_version == True:
+            return tmptar
         return output
 
 
