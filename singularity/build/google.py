@@ -27,7 +27,7 @@ SOFTWARE.
 
 '''
 
-from singularity.api import (
+from singularity.build.api import (
     api_get, 
     api_put
 )
@@ -300,13 +300,13 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
         # Did the user specify a specific log file?
         logfile = get_build_metadata(key='logfile')
-        if logfile != None:
+        if logfile is not None:
             response['logfile'] = logfile
 
-        if params['branch'] != None:
+        if params['branch'] is not None:
             response['branch'] = params['branch']
 
-        if params['token'] != None:
+        if params['token'] is not None:
             response['token'] = params['token']
 
         # Send final build data to instance

@@ -110,7 +110,7 @@ class Singularity:
             print(output)
 
 
-    def create(self,image_path,size=None):
+    def create(self,image_path,size=None,sudo=False):
         '''create will create a a new image
         :param image_path: full path to image
         :param size: image sizein MiB, default is 1024MiB
@@ -123,7 +123,7 @@ class Singularity:
             cmd = ['singularity','--debug','create','--size',str(size),image_path]
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
-        output = self.run_command(cmd,sudo=False)
+        output = self.run_command(cmd,sudo=sudo)
         self.println(output)        
         if os.path.exists(image_path):
             return image_path
@@ -172,20 +172,26 @@ class Singularity:
 
 
 
-    def export(self,image_path,export_format="tar"):
+    def export(self,image_path,export_format="tar",old_version=False):
         '''export will export an image, sudo must be used.
         :param image_path: full path to image
         will generate temporary directory.
         :param export_format: the export format (only tar currently supported)
         '''
-        cmd = ['singularity','export']
+        if old_version == True:
+            sudo =True
+            tmptar = "/tmp/tmptar.tar"
+            cmd = ['singularity','export','-f','/tmp/tmptar.tar']
+        else:
+            cmd = ['singularity','export']
+            sudo = False
 
         if export_format is not "tar":
             print("Currently only supported export format is tar.")
             return None
     
         cmd.append(image_path)
-        output = self.run_command(cmd,sudo=False)
+        output = self.run_command(cmd,sudo=sudo)
         return output
 
 
