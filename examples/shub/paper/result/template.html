@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+        <meta charset="utf-8">
+        <title>Singularity Hub Reproducibility Test</title>
+
+        <link rel="stylesheet" media="all" href="//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.css" />
+        <script src='//code.jquery.com/jquery-1.11.1.min.js'></script>
+        <script type='text/javascript' src='//cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js'></script>
+        <script src='//cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.js'></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation/foundation.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/foundation/5.5.2/js/foundation/foundation.tooltip.min.js"></script>  
+        <script src="//cdn.datatables.net/tabletools/2.2.0/js/dataTables.tableTools.min.js"></script>
+        <link rel="stylesheet" media="all" href="//cdn.datatables.net/tabletools/2.2.0/css/dataTables.tableTools.min.css"/>
+
+    <!-- Bootstrap -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+    
+    <!--Fonts and Icons!-->
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,700,900|Arvo:400&subset=latin' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!--Style-->
+    <link rel=stylesheet type=text/css href='style.css'>
+
+</head>
+
+<body class="background">
+
+<div class='wrapper'>
+
+<body>
+<div class="row">
+    <div class="col-md-2" style="z-index:5;margin-right:80px">
+            <div id="wrapper">
+                <nav id="main_nav" style='margin-top:50px'>
+                    <ul>
+                        <li>
+                            <a href="">Select Container</a>
+                            <ul>
+                                {% for category,subcategory in dropdown.iteritems() %}
+                                <li><a href="">{{ lookup[category] }}</a>
+                                <ul>
+                                    <li style="background-color:#4F92AF"><a href="#">SELECT THE SECOND VARIABLE</a></li>
+                                    {% for item in subcategory %}
+                                    <!-- Note - if deployed in subdirectory of server, you must hard code path here-->
+                                    <li><a href="/explore/{{ category }}/{{ item }}">{{ lookup[item] }}</a></li>
+                                    {% endfor %}
+                                                                                                       </ul>
+                                </li>
+                                {% endfor %}
+                           </ul>
+                       </li>
+                   </ul>
+               </nav>
+          </div>
+    </div><!--end column-->
+
+    <div class="col-md-8" style="margin-left: 50px;margin-top: 100px;">
+
+    <!--Download button-->
+    <a href="#" target="_blank" class="btn btn-xs btn-default" style="position: absolute;margin-left: 195px;padding: 5px 10px 5px 10px;z-index:10"><span class="glyphicon glyphicon-circle-arrow-down"></span> Download</a>
+
+    <table id="tabley" class="table table-striped table-bordered" cellspacing="0" width="100%">
+            <thead>
+               <tr>
+
+columns = ['name','build_time_seconds','hash','size','commit','estimated_os']
+                   <th>name</th>
+                   <th>commit</th>
+                   <th type="number">build time (seconds)</th>
+                   <th>Hash <a data-toggle="popover" title="Content hash" data-placement="top" data-content="generated with hashlib module in Python"> <i style="color:white;padding-left:2px"class="fa fa-question-circle"></i></a></th>
+                   <th type="number">size <a data-toggle="popover" title="q-value" data-placement="top" data-content="False discovery rate obtained using Benjamini-Hockberg procedure"> <i style="color:white;padding-left:2px"class="fa fa-question-circle"></i></a></th>
+                   <th type="number" style="width:130px">size</th>
+                   <th>estimated OS</th>
+               </tr>
+           </thead>
+           <tbody>
+                   [[TABLE]]
+           </tbody>
+        </table>
+    </div><!-- end column-->
+    </div><!-- end row-->
+</div>
+</div>
+<script>
+$(document).ready(function() {
+   var tabley = $('#tabley').dataTable();
+
+  // enable popovers
+  $(function () {
+    $('[data-toggle="popover"]').popover()
+  })
+
+} );
+
+</script>
+
+</body>
+</html>

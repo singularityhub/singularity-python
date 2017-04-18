@@ -5,6 +5,28 @@ cli.py: part of singularity package
 
 Last updated: Singularity version 2.1
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from singularity.utils import (
@@ -28,11 +50,12 @@ import re
 class Singularity:
     
 
-    def __init__(self,sudo=False,sudopw=None,debug=False):
+    def __init__(self,sudo=False,sudopw=None,debug=False,quiet=False):
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
        self.debug = debug
+       self.quiet = quiet
 
        # Try getting from environment
        if self.sudopw == None:
@@ -78,8 +101,16 @@ class Singularity:
             return help
 
 
+    def println(self,output):
+        '''print will print the output, given that quiet is not True
+        '''
+        if self.quiet is False:
+            if isinstance(output,bytes):
+                output = output.decode('utf-8')
+            print(output)
 
-    def create(self,image_path,size=None):
+
+    def create(self,image_path,size=None,sudo=False):
         '''create will create a a new image
         :param image_path: full path to image
         :param size: image sizein MiB, default is 1024MiB
@@ -92,7 +123,8 @@ class Singularity:
             cmd = ['singularity','--debug','create','--size',str(size),image_path]
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
-        self.run_command(cmd,sudo=False)
+        output = self.run_command(cmd,sudo=sudo)
+        self.println(output)        
         if os.path.exists(image_path):
             return image_path
         return None
@@ -107,8 +139,9 @@ class Singularity:
             cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
         else:
             cmd = ['singularity','bootstrap',image_path,spec_path]
-        return self.run_command(cmd,sudo=True)
-
+        output = self.run_command(cmd,sudo=True)
+        self.println(output)        
+        return image_path
 
 
     def execute(self,image_path,command,writable=False,contain=False):
@@ -135,50 +168,33 @@ class Singularity:
             command = command.split(' ')
 
         cmd = cmd + [image_path] + command
-
-        # Run the command
         return self.run_command(cmd,sudo=sudo)
 
 
 
-    def export(self,image_path,pipe=False,output_file=None,export_format="tar"):
+    def export(self,image_path,export_format="tar",old_version=False):
         '''export will export an image, sudo must be used.
         :param image_path: full path to image
-        :param pipe: export to pipe and not file (default, False)
-        :param output_file: if pipe=False, export tar to this file. If not specified, 
         will generate temporary directory.
         :param export_format: the export format (only tar currently supported)
         '''
-        cmd = ['singularity','export']
+        if old_version == True:
+            sudo =True
+            tmptar = "/tmp/tmptar.tar"
+            cmd = ['singularity','export','-f','/tmp/tmptar.tar']
+        else:
+            cmd = ['singularity','export']
+            sudo = False
 
         if export_format is not "tar":
             print("Currently only supported export format is tar.")
             return None
     
-        # If the user has specified export to pipe, we don't need a file
-        if pipe == True:
-            cmd.append(image_path)
-        else:
-            _,tmptar = tempfile.mkstemp(suffix=".%s" %export_format)
-            os.remove(tmptar)
-            cmd = cmd + ["-f",tmptar,image_path]
-            self.run_command(cmd,sudo=False)
-
-            # Was there an error?            
-            if not os.path.exists(tmptar):
-                print('Error generating image tar')
-                return None
-
-            # if user has specified output file, move it there, return path
-            if output_file is not None:
-                shutil.copyfile(tmptar,output_file)
-                return output_file
-            else:
-                return tmptar
-
-        # Otherwise, return output of pipe    
-        return self.run_command(cmd,sudo=False)
-
+        cmd.append(image_path)
+        output = self.run_command(cmd,sudo=sudo)
+        if old_version == True:
+            return tmptar
+        return output
 
 
     def importcmd(self,image_path,input_source):
@@ -188,24 +204,45 @@ class Singularity:
         :param import_type: if not specified, imports whatever function is given
         '''
         cmd = ['singularity','import',image_path,input_source]
-        return self.run_command(cmd,sudo=False)
+        output = self.run_command(cmd,sudo=False)
+        self.println(output)        
+        return image_path
 
 
-
-    def pull(self,image_path):
+    def pull(self,image_path,pull_folder=None,name_by=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
+        :param name_by: can be one of commit or hash, default is by image name
         ''' 
+        if name_by is None:
+            name_by = "name"
+        name_by = name_by.lower()
+
+        if pull_folder is not None:
+            os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
+
         if not image_path.startswith('shub://'):
             bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
             sys.exit(1)           
 
         if self.debug == True:
-            cmd = ['singularity','--debug','pull',image_path]
+            cmd = ['singularity','--debug','pull']
         else:
-            cmd = ['singularity','pull',image_path]
-        return self.run_command(cmd)
+            cmd = ['singularity','pull']
 
+        if name_by in ['name','commit','hash']:
+            bot.logger.debug("user specified naming pulled image by %s",name_by)
+            name_by = "--%s " %name_by
+            cmd.append(name_by)
+
+        cmd.append(image_path)
+
+        output = self.run_command(cmd)
+        self.println(output)        
+        if isinstance(output,bytes):
+            output = output.decode('utf-8')
+        return output.split("Container is at:")[-1].strip('\n').strip()
+        
 
 
     def run(self,image_path,args=None,writable=False,contain=False):
@@ -215,7 +252,7 @@ class Singularity:
         :param args: args to include with the run
         '''
         sudo = False
-        cmd = ["singularity","run"]
+        cmd = ["singularity",'--quiet',"run"]
         cmd = self.add_flags(cmd,writable=writable,contain=contain)
         cmd = cmd + [image_path]
 
@@ -225,7 +262,7 @@ class Singularity:
         
         if args is not None:        
             if not isinstance(args,list):
-                args = command.split(' ')
+                args = args.split(' ')
             cmd = cmd + args
 
         result = self.run_command(cmd,sudo=sudo)

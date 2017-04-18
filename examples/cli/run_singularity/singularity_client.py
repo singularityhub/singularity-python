@@ -39,7 +39,7 @@ fi
 S.help(command="exec")
 
 # export an image as a byte array
-byte_array = S.export(image,pipe=True)
+byte_array = S.export(image)
 
 # Get an in memory tar
 from singularity.reproduce import get_memory_tar

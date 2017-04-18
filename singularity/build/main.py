@@ -3,6 +3,28 @@
 '''
 build/main.py: main runner for Singularity Hub builds
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from singularity.version import (
@@ -99,7 +121,7 @@ def run_build(build_dir,params,verbose=True):
         dockerfile = dockerfile_to_singularity(dockerfile_path='Dockerfile', 
                                                output_dir=build_dir)
 
-        if dockerfile != None:
+        if dockerfile is not None:
             bot.logger.info("""\n
                                 --------------------------------------------------------------
                                 Dockerfile
@@ -131,6 +153,7 @@ def run_build(build_dir,params,verbose=True):
                 bot.logger.info("Size estimation didn't work, using default %s",params['size'])  
 
         # START TIMING
+        os.chdir(build_dir)
         start_time = datetime.now()
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 size=params['size'],
@@ -150,6 +173,13 @@ def run_build(build_dir,params,verbose=True):
         # Compress image
         compressed_image = "%s.img.gz" %image
         os.system('gzip -c -9 %s > %s' %(image,compressed_image))
+
+        # Get singularity version
+        singularity_version = get_singularity_version()
+
+        old_version = False
+        if singularity_version.startswith('2.2'):
+            old_version=True
         
         # Package the image metadata (files, folders, etc)
         image_package = package(image_path=image,
@@ -157,13 +187,11 @@ def run_build(build_dir,params,verbose=True):
                                 output_folder=build_dir,
                                 sudopw='',
                                 remove_image=True,
-                                verbose=True)
+                                verbose=True,
+                                old_version=old_version)
 
         # Derive software tags by subtracting similar OS
         diff = get_diff(image_package=image_package)
-
-        # Get singularity version
-        singularity_version = get_singularity_version()
 
         # Get tags for services, executables
         interesting_folders = ['init','init.d','bin','systemd']

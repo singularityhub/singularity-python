@@ -17,6 +17,7 @@ install:
   - python setup.py sdist
   - python setup.py install
   - pylint --version
+  - cd /tmp && git clone -b development https://github.com/singularityware/singularity.git && cd singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
 
 script:
   - python -m unittest discover -s $TRAVIS_BUILD_DIR/singularity/tests/ -p '[t|T]est*.py'

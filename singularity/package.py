@@ -1,7 +1,27 @@
-#!/usr/bin/env python
-
 '''
 package.py: part of singularity package
+
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 '''
 
@@ -16,10 +36,10 @@ from singularity.utils import (
 
 from singularity.cli import Singularity
 from singularity.reproduce import (
-    get_image_hash,
+    get_image_file_hash,
     get_image_hashes,
-    get_memory_tar
-
+    get_memory_tar,
+    extract_content
 )
 import tempfile
 import tarfile
@@ -55,11 +75,11 @@ def estimate_image_size(spec_file,sudopw=None,padding=None):
     bot.logger.debug("Original image size calculated as %s",original_size)
     padded_size = original_size + padding
     bot.logger.debug("Size with padding will be %s",padded_size)
-    shutil.rmtree(image_folder)
     return padded_size
 
 
-def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_folder=False,debug=False):
+def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,
+                    build_folder=False,debug=False):
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec_file: the spec file, called "Singuarity"
     :param sudopw: the sudopw for Singularity, root should provide ''
@@ -100,14 +120,14 @@ def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_fo
         bot.logger.debug("build_folder is true, creating %s",image_path)
         os.mkdir(image_path)
     else:
-        cli.create(image_path,size=size)
+        cli.create(image_path,size=size,sudo=True)
 
     result = cli.bootstrap(image_path=image_path,spec_path=spec_path)
     print(result)
 
     # If image, rename based on hash
     if build_folder == False:
-        version = get_image_hash(image_path)
+        version = get_image_file_hash(image_path)
         final_path = "%s/%s" %(build_dir,version)
         os.rename(image_path,final_path)
         image_path = final_path
@@ -117,7 +137,8 @@ def build_from_spec(spec_file=None,build_dir=None,size=None,sudopw=None,build_fo
 
 
 def package(image_path,spec_path=None,output_folder=None,runscript=True,
-            software=True,remove_image=False,verbose=False,S=None,sudopw=None):
+            software=True,remove_image=False,verbose=False,S=None,sudopw=None,
+            old_version=False):
     '''package will take an image and generate a zip (including the image
     to a user specified output_folder.
     :param image_path: full path to singularity image file
@@ -134,7 +155,15 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
         else:
             S = Singularity(debug=verbose) # This command will ask the user for sudo
 
-    file_obj,tar = get_memory_tar(image_path)
+    # Singularity < version 2.3
+    if old_version == False:
+        file_obj,tar = get_memory_tar(image_path)
+
+    # Singularity 2.3 and up
+    else:
+        tmptar = S.export(image_path=image_path,old_version=True)
+        tar = tarfile.open(tmptar)
+
     members = tar.getmembers()
     image_name = os.path.basename(image_path)
     zip_name = "%s.zip" %(image_name.replace(" ","_"))
@@ -146,22 +175,23 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
         to_package = {"files":[image_path]}
 
     # If the specfile is provided, it should also be packaged
-    if spec_path != None:
+    if spec_path is not None:
         singularity_spec = "".join(read_file(spec_path))
         to_package['Singularity'] = singularity_spec
 
-    # Package the image with an sha1, replication standard,  as VERSION
-    hashes = get_image_hashes(image_path)
-    to_package["VERSION"] = hashes['REPLICATE']
-    to_package["HASHES"] = hashes
-    # Look for runscript
+    # Package the image with an sha1, identical standard, as VERSION
+    if old_version == False:
+        hashes = get_image_hashes(image_path)
+        to_package["HASHES"] = hashes
+        to_package["VERSION"] = hashes['IDENTICAL']
+    else:
+        to_package["VERSION"] = get_image_file_hash(image_path)
+    
 
-    if runscript == True:
+    # Look for runscript
+    if runscript is True:
         try:
-            runscript_member = tar.getmember("./singularity")
-            runscript_file = tar.extractfile("./singularity")
-            runscript = runscript_file.read()
-            to_package["runscript"] = runscript
+            to_package["runscript"] = extract_content(image_path,'./singularity',cli=S)
             bot.logger.debug("Found runscript.")
         except KeyError:
             bot.logger.warning("No runscript found")
@@ -176,7 +206,10 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
     # Do zip up here - let's start with basic structures
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     bot.logger.debug("Package created at %s" %(zipfile))
-    file_obj.close()
+
+    if old_version == False:
+        file_obj.close()
+    
     # return package to user
     return zipfile
 

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''
-Test build functions and utils
+Test analysis classification functions
 
 The MIT License (MIT)
 
@@ -34,44 +34,50 @@ from numpy.testing import (
     assert_equal
 )
 
-from singularity.build.utils import get_build_template
-from singularity.utils import (
-    get_installdir, 
-    read_file
-)
-
+from singularity.cli import get_image
 import unittest
 import tempfile
 import shutil
 import json
 import os
 
-class TestBuildTemplate(unittest.TestCase):
+class TestAnalysisClassify(unittest.TestCase):
 
     def setUp(self):
-        self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
-        self.spec = "%s/tests/data/Singularity" %(self.pwd)
-        print("\n---START----------------------------------------")
+        self.container = get_image('docker://ubuntu:16.04')
+        self.comparator = get_image('docker://ubuntu:12.04')
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-        print("\n---END------------------------------------------")
 
-    def test_read_template(self):
-        '''test_read_template should read in a template script, and
-        return the script as a string, or read to file'''
 
-        # Check content of packages
-        print("Case 1: Test reading of build template")
-        template = get_build_template('singularity-build-latest.sh')        
-        self.assertTrue(isinstance(template,str))
-        self.assertTrue(len(template)>15)
+    def test_get_diff(self):
+        print("Testing singularity.analysis.classify.get_diff")
+        from singularity.analysis.classify import get_diff
+        diff = get_diff(self.container)
+        self.assertTrue(len(diff)>0)
 
-        print("Case 2: Non existing script returns None")
-        template = get_build_template('singularity-build-pizza.sh')        
-        self.assertEqual(template,None)
- 
+
+    def test_estimate_os(self):
+        print("Testing singularity.analysis.classify.estimate_os")
+        from singularity.analysis.classify import estimate_os
+        estimated_os = estimate_os(self.container)
+        self.assertTrue(estimated_os.startswith('ubuntu'))
+
+
+    def test_file_counts(self):
+        print("Testing singularity.analysis.classify.file_counts")
+        from singularity.analysis.classify import file_counts
+        counts = file_counts(self.container)
+
+
+    def test_extension_counts(self):
+        print("Testing singularity.analysis.classify.extension_counts")
+        from singularity.analysis.classify import extension_counts
+        counts = extension_counts(self.container)
+        self.assertTrue(len(counts)>0)
+
 
 
 if __name__ == '__main__':

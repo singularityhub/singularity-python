@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 '''
-Test build functions and utils
+Test build converter functions for generating Singularity spec from Dockerfile
 
 The MIT License (MIT)
 
@@ -27,7 +27,6 @@ SOFTWARE.
 
 '''
 
-
 from numpy.testing import (
     assert_array_equal, 
     assert_almost_equal, 
@@ -46,7 +45,7 @@ import shutil
 import json
 import os
 
-class TestBuildTemplate(unittest.TestCase):
+class TestBuildConverter(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
@@ -58,20 +57,21 @@ class TestBuildTemplate(unittest.TestCase):
         shutil.rmtree(self.tmpdir)
         print("\n---END------------------------------------------")
 
-    def test_read_template(self):
-        '''test_read_template should read in a template script, and
-        return the script as a string, or read to file'''
 
-        # Check content of packages
-        print("Case 1: Test reading of build template")
-        template = get_build_template('singularity-build-latest.sh')        
-        self.assertTrue(isinstance(template,str))
-        self.assertTrue(len(template)>15)
+    def test_converter_version(self):
+        '''Ensure that correct version of converter is loaded depending
+        on user's installed or specified version
+        '''
+        from singularity.build import converter
 
-        print("Case 2: Non existing script returns None")
-        template = get_build_template('singularity-build-pizza.sh')        
-        self.assertEqual(template,None)
- 
+        print("Case 1: Testing converter for version 2.2")
+        os.environ['SINGULARITY_VERSION'] = "2.2" 
+        self.assertEqual(converter.__name__,"singularity.build.converter")
+
+        print("Case 2: Testing converter for version 2.3")
+        os.environ['SINGULARITY_VERSION'] = "2.3" 
+        self.assertEqual(converter.__name__,"singularity.build.converter")
+
 
 
 if __name__ == '__main__':

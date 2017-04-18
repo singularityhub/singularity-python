@@ -2,6 +2,28 @@
 reproduce.py: part of singularity package, functions to assess
   reproducibility of images
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from singularity.cli import Singularity
@@ -81,7 +103,7 @@ def assess_differences(image_file1,image_file2,levels=None,version=None,size_heu
 
         # If the user wants identical (meaning extraction order and timestamps)
         if level_name == "IDENTICAL":
-            different = different + contenders
+                different = different + contenders
 
         # Otherwise we need to check based on byte content
         else:        
@@ -90,8 +112,11 @@ def assess_differences(image_file1,image_file2,levels=None,version=None,size_heu
                 for rogue in contenders:
                     hashy1 = extract_content(image_file1,rogue,cli,return_hash=True)
                     hashy2 = extract_content(image_file2,rogue,cli,return_hash=True)
+        
                     # If we can't compare, we use size as a heuristic
-                    if len(hashy1) == 0 or len(hashy2) == 0:
+                    if hashy1 is None or hashy2 is None: # if one is symlink, could be None
+                        different.append(file_name)                    
+                    elif len(hashy1) == 0 or len(hashy2) == 0:
                         if guts1['sizes'][file_name] == guts2['sizes'][file_name]:    
                             same+=1
                         else:
@@ -410,7 +435,7 @@ def get_content_hashes(image_path,level=None,regexp=None,include_files=None,tag_
         file_filter = level_filter
 
     elif level is None:
-        file_filter = get_level("RECIPE",version=version,
+        file_filter = get_level("REPLICATE",version=version,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
@@ -483,7 +508,9 @@ def get_image_file_hash(image_path):
 def get_memory_tar(image_path):
     '''get an in memory tar of an image (does not require sudo!)'''
     cli = Singularity()
-    byte_array = cli.export(image_path,pipe=True)
+    if "pancakes" in os.environ:
+        del os.environ['pancakes']
+    byte_array = cli.export(image_path)
     file_object = io.BytesIO(byte_array)
     tar = tarfile.open(mode="r|*", fileobj=file_object)
     return (file_object,tar)

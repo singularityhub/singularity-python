@@ -4,6 +4,28 @@
 classify.py: part of singularity package
 functions to tag and classify images
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from glob import glob
@@ -11,6 +33,7 @@ import json
 import os
 import re
 import requests
+from singularity.cli import Singularity
 from singularity.logman import bot
 from singularity.analysis.compare import (
     compare_packages,
@@ -66,6 +89,7 @@ def get_diff(container=None,image_package=None,sudopw=None):
     similar_package = "%s/docker-os/%s.img.zip" %(get_package_base(),most_similar)
 
     comparison = compare_containers(image_package1=image_package,
+                                    container1=container,
                                     image_package2=similar_package,
                                     by='files.txt')['files.txt']
  
@@ -176,34 +200,7 @@ def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,d
 # COUNTING ########################################################################
 ###################################################################################
 
-
-def get_files(container,S=None,tmpdir=None):
-    '''get_files will return a list of files inside a container, sorted by name
-    :param container: the container to use, either shub:// or docker:// or actual
-    '''
-    files = None
-    if tmpdir == None:
-        tmpdir = tempfile.mkdtemp()
-    tmpfile = "%s/files.txt" %tmpdir
-    container_name = remove_uri(container)
-    command = ' ls -LR >> %s 2>/dev/null' %(tmpfile)
-    if S==None:
-        S = Singularity(sudo=None)
-    result = S.execute(container,command)
-    if os.path.exists(tmpfile):
-        os.system("sed -i '/^$/d' %s" %(tmpfile))
-        os.system('sort %s -or %s' %(tmpfile,tmpfile))
-        files = read_file(tmpfile)
-        if len(files) > 0:
-            files = [x for x in files if x.startswith('.')]
-            files = [x.split(container_name)[1:] for x in files]
-            files = [x for x in files if len(x) > 0]
-            files = [x[0] for x in files]    
-    shutil.rmtree(tmpdir)
-    return files
-
         
-
 def file_counts(container=None,patterns=None,image_package=None,sudopw=None,diff=None):
     '''file counts will return a list of files that match one or more regular expressions.
     if no patterns is defined, a default of readme is used. All patterns and files are made
