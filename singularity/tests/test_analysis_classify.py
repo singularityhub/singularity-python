@@ -67,15 +67,6 @@ class TestAnalysisClassify(unittest.TestCase):
         self.assertTrue(estimated_os.startswith('ubuntu'))
 
 
-    def test_get_tags(self):
-        print("Testing singularity.analysis.classify.get_tags")
-        from singularity.analysis.classify import get_tags
-        tags = get_tags(self.container)
-        print(len(tags))
-        print("Case 1: Testing that empty OS (with no additions) returns no relevant tags")
-        self.assertTrue(len(tags)>0)
-
-
     def test_file_counts(self):
         print("Testing singularity.analysis.classify.file_counts")
         from singularity.analysis.classify import file_counts
