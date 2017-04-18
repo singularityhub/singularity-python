@@ -127,8 +127,9 @@ def create_container(container=None,do_import=False):
     '''supporting function to create empty container
     '''
     cli = Singularity()
+    tmpdir = tempfile.mkdtemp()
     if container is None:
-        container = "%s/container.img" %(self.tmpdir)
+        container = "%s/container.img" %(tmpdir)
     if do_import is True:
         cli.importcmd(container,'docker://ubuntu')
     return cli.create(container)

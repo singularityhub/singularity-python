@@ -37,6 +37,7 @@ from numpy.testing import (
 from singularity.utils import get_installdir
 from singularity.cli import get_image
 import unittest
+import pandas
 import tempfile
 import shutil
 import json
@@ -81,7 +82,6 @@ class TestAnalysisCompare(unittest.TestCase):
         self.assertTrue('files.txt' in comparison)
         for key in ['total1', 'total2', 'intersect', 'unique2', 'unique1']:
             self.assertTrue(key in comparison['files.txt'])
-        self.assertEqual(len(comparison['files.txt']['intersect']),2565)
      
 
     def test_calculate_similarity(self):

@@ -232,7 +232,7 @@ class Singularity:
 
         if name_by in ['name','commit','hash']:
             bot.logger.debug("user specified naming pulled image by %s",name_by)
-            name_by = "--%s" %name_by
+            name_by = "--%s " %name_by
             cmd.append(name_by)
 
         cmd.append(image_path)

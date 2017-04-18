@@ -71,7 +71,7 @@ class TestAnalysisClassify(unittest.TestCase):
         print("Testing singularity.analysis.classify.get_tags")
         from singularity.analysis.classify import get_tags
         tags = get_tags(self.container)
-
+        print(len(tags))
         print("Case 1: Testing that empty OS (with no additions) returns no relevant tags")
         self.assertTrue(len(tags)==0)
 

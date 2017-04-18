@@ -113,8 +113,6 @@ class TestUtils(unittest.TestCase):
         from singularity.utils import calculate_folder_size
         size_truncated = calculate_folder_size(self.tmpdir)
         self.assertTrue(isinstance(size_truncated,int))
-        size = calculate_folder_size(self.tmpdir,truncate=False)
-        self.assertTrue(isinstance(size,float))
 
 
     def test_remove_uri(self):
