@@ -34,6 +34,7 @@ from numpy.testing import (
     assert_equal
 )
 
+from singularity.utils import get_installdir
 from singularity.cli import get_image
 import unittest
 import tempfile
@@ -56,7 +57,7 @@ class TestAnalysisCompare(unittest.TestCase):
         print("Testing singularity.analysis.compare.container_similarity_vector")
         import pandas
         from singularity.analysis.compare import container_similarity_vector
-        from.singularity.analysis.utils import get_packages
+        from singularity.analysis.utils import get_packages
         packages_set = get_packages('docker-os')[0:2]
         vector = container_similarity_vector(container1=self.container,
                                              custom_set=packages_set)
@@ -70,7 +71,7 @@ class TestAnalysisCompare(unittest.TestCase):
         from singularity.analysis.compare import compare_singularity_images
         sim = compare_singularity_images(self.container,self.comparator)
         self.assertTrue(isinstance(sim,pandas.DataFrame))
-        self.assertTrue(sim.loc[container,comparator] - 0.4803262269280298 < 0.01)
+        self.assertTrue(sim.loc[self.container,self.comparator] - 0.4803262269280298 < 0.01)
 
 
     def test_compare_containers(self):
@@ -80,7 +81,7 @@ class TestAnalysisCompare(unittest.TestCase):
         self.assertTrue('files.txt' in comparison)
         for key in ['total1', 'total2', 'intersect', 'unique2', 'unique1']:
             self.assertTrue(key in comparison['files.txt'])
-        self.assertEqual(len(comparison['files.txt']['intersect']),2567)
+        self.assertEqual(len(comparison['files.txt']['intersect']),2565)
      
 
     def test_calculate_similarity(self):

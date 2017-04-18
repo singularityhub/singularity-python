@@ -107,35 +107,25 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(whereami.endswith('singularity'))
 
 
-    def test_zip_up(self):
-        '''zip up should create a zip file from a specified directory
-        '''
-        from singularity.utils import zip_up
-        zip_dir = tempfile.mkdtemp()
-        zip_name = "beetlejuice.zip"
-        zip_file = zip_dir(zip_dir, zip_name, output_folder=self.tmpdir)
-        self.assertTrue(os.path.exists(zip_file))
-
-
     def test_calculate_folder_size(self):
         '''ensure that calculation of folder size is accurate
         '''
         from singularity.utils import calculate_folder_size
         size_truncated = calculate_folder_size(self.tmpdir)
-        self.assertTrue(isinstance(size,int))
+        self.assertTrue(isinstance(size_truncated,int))
         size = calculate_folder_size(self.tmpdir,truncate=False)
         self.assertTrue(isinstance(size,float))
 
 
     def test_remove_uri(self):
         from singularity.utils import remove_uri
-        self.assertEqual('docker://ubuntu','ubuntu')
-        self.assertEqual('shub://vanessa/singularity-images','vanessa/singularity-images')
+        self.assertEqual(remove_uri('docker://ubuntu'),'ubuntu')
+        self.assertEqual(remove_uri('shub://vanessa/singularity-images'),'vanessa/singularity-images')
 
 
     def test_download_repo(self):
         from singularity.utils import download_repo
-        download_repo('https://github.com/singularityware/singularity',destination=self.tmpdir)
+        download_repo('https://github.com/singularityware/singularity',destination="%s/singularity" %self.tmpdir)
         self.assertTrue(os.path.exists("%s/singularity" %self.tmpdir))
 
 

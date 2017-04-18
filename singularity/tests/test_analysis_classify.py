@@ -64,7 +64,7 @@ class TestAnalysisClassify(unittest.TestCase):
         print("Testing singularity.analysis.classify.estimate_os")
         from singularity.analysis.classify import estimate_os
         estimated_os = estimate_os(self.container)
-        self.assertTrue(estimated_os.startswith('ubuntu')
+        self.assertTrue(estimated_os.startswith('ubuntu'))
 
 
     def test_get_tags(self):

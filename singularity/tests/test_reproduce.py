@@ -71,7 +71,7 @@ class TestReproduce(unittest.TestCase):
         file_obj.close()                
 
     def test_get_image_hashes(self):
-        from singularity.reproduce import get_image_hashes
+        from singularity.reproduce import get_image_hashes, get_image_hash
 
         print("Case 1: No specification of version returns latest")
         hashes = get_image_hashes(self.image1)
@@ -116,7 +116,7 @@ class TestReproduce(unittest.TestCase):
         for key in ['assess_content','skip_files','regexp','description']:
             self.assertTrue(key in level)
 
-    def test_get_levels(version=None):
+    def test_get_levels(self):
         from singularity.reproduce import get_levels
         print("Testing singularity.reproduce.get_levels")
 
@@ -138,7 +138,7 @@ class TestReproduce(unittest.TestCase):
         hashes = get_content_hashes(self.image1)
         for key in ['hashes','sizes','root_owned']:
             self.assertTrue(key in hashes)
-        self.assertEqual(len(hashes),372)
+        self.assertEqual(len(hashes['hashes']),372)
 
 
     def test_extract_guts(self):
