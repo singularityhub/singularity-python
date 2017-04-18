@@ -4,12 +4,36 @@
 script.py: part of singularity command line tool
 Runtime executable, "shub"
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from glob import glob
+import singularity
 import argparse
 import sys
 import os
+
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -19,6 +43,10 @@ def get_parser():
     parser.add_argument("--image", dest='image', 
                         help="full path to singularity image (for use with --package and --tree)", 
                         type=str, default=None)
+
+    parser.add_argument("--version", dest='version', 
+                        help="show software version", 
+                        default=False, action='store_true')
 
     # Two images, for similarity function
     parser.add_argument("--images", dest='images', 
@@ -41,8 +69,8 @@ def get_parser():
                         default=False, action='store_true')
 
     # Does the user want to package an image?
-    parser.add_argument('--remove-image', dest="remove_image", 
-                        help="remove image file from the package", 
+    parser.add_argument('--include-image', dest="include_image", 
+                        help="include image file in the package", 
                         default=False, action='store_true')
 
     # Does the user want to estimate the os?
@@ -106,8 +134,12 @@ def main():
     os.environ['SINGULARITY_HUB'] = "False"
 
     # if environment logging variable not set, make silent
-    if args.debug == False:
+    if args.debug is False:
         os.environ['MESSAGELEVEL'] = "CRITICAL"
+
+    if args.version is True:
+        print(singularity.__version__)
+        sys.exit(0)
 
     # Initialize the message bot, with level above
     from singularity.logman import bot
@@ -115,69 +147,70 @@ def main():
     from singularity.cli import get_image
 
     # Output folder will be pwd if not specified
-    if args.outfolder == None:
+    if args.outfolder is None:
         output_folder = os.getcwd()
     else:
         output_folder = args.outfolder
 
     # We can only continue if singularity is installed
-    if check_install() == True:
+    if check_install() is True:
 
        # If we are given an image, ensure full path
-       if args.image != None:
+       if args.image is not None:
 
            image,existed = get_image(args.image,
                                      return_existed=True,
                                      size=args.size)
 
-           if image == None:
+           if image is None:
                bot.logger.error("Cannot find image. Exiting.")
                sys.exit(1)
 
            # the user wants to make a tree
-           if args.tree == True:
+           if args.tree is True:
                from singularity.app import make_tree
                make_tree(image)
                clean_up(image,existed)
 
            # The user wants to estimate the os
-           elif args.os == True:
+           elif args.os is True:
                from singularity.analysis.classify import estimate_os
                estimated_os = estimate_os(container=image)
                print(estimated_os)
 
            # The user wants to get a list of all os
-           elif args.oscalc == True:
+           elif args.oscalc is True:
                from singularity.analysis.classify import estimate_os
                estimated_os = estimate_os(container=image,return_top=False)
                print(estimated_os["SCORE"].to_dict())
 
            # The user wants to get a list of tags
-           elif args.tags == True:
+           elif args.tags is True:
                from singularity.analysis.classify import get_tags
                tags = get_tags(container=image)
                print(tags)
 
            # The user wants to plot image vs. the docker os
-           elif args.osplot == True:
+           elif args.osplot is True:
                from singularity.app import plot_os_sims
                plot_os_sims(image)
                clean_up(image,existed)
 
            # The user wants to package the image
-           elif args.package == True:
+           elif args.package is True:
                from singularity.package import package
+               remove_image = not args.include_image
                package(image_path=image,
                        output_folder=output_folder,
                        runscript=True,
                        software=True,
-                       remove_image=args.remove_image)
+                       remove_image=remove_image)
            else:
                print("Not sure what to do?")
                parser.print_help()
 
        # If we are given two image, we probably want a similar tree
-       elif args.images != None:
+       elif args.images is not None:
 
            image1,image2 = args.images.split(',')
            bot.logger.debug("Image1: %s",image1)
@@ -189,22 +222,21 @@ def main():
                                        return_existed=True,
                                        size=args.size)
 
-           if image1 == None or image2 == None:
+           if image1 is None or image2 is None:
                bot.logger.error("Cannot find image. Exiting.")
                sys.exit(1)
 
            # the user wants to make a similarity tree
-           if args.simtree == True:
+           if args.simtree is True:
                from singularity.app import make_sim_tree
                make_sim_tree(image1,image2)
 
            # the user wants to make a difference tree
-           if args.subtract == True:
+           if args.subtract is True:
                from singularity.app import make_diff_tree
                make_diff_tree(image1,image2)
 
-
-           if args.simcalc == True:
+           if args.simcalc is True:
                from singularity.analysis.compare import calculate_similarity
                score = calculate_similarity(image1,image2,by="files.txt")
                print(score["files.txt"])

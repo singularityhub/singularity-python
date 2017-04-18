@@ -3,7 +3,30 @@
 '''
 singularity views/trees.py: part of singularity package
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
+
 from functools import reduce
 import json
 
@@ -187,7 +210,7 @@ def make_container_tree(folders,files,path_delim="/",parse_files=True):
 ###################################################################################
 
 
-def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None):
+def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None,font_size=None):
     '''make package tree will make a dendrogram comparing a matrix of packages
     :param matrix: a pandas df of packages, with names in index and columns
     :param labels: a list of labels corresponding to row names, will be
@@ -200,6 +223,9 @@ def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None):
         dendrogram, 
         linkage
     )
+
+    if font_size is None:
+        font_size = 8.
 
     from scipy.cluster.hierarchy import cophenet
     from scipy.spatial.distance import pdist
@@ -224,7 +250,7 @@ def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None):
     plt.ylabel('distance')
     dendrogram(Z,
                leaf_rotation=90.,  # rotates the x axis labels
-               leaf_font_size=8.,  # font size for the x axis labels
+               leaf_font_size=font_size,  # font size for the x axis labels
                labels=labels)
     return plt
 

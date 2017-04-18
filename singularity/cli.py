@@ -5,6 +5,28 @@ cli.py: part of singularity package
 
 Last updated: Singularity version 2.1
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 from singularity.utils import (
@@ -28,11 +50,12 @@ import re
 class Singularity:
     
 
-    def __init__(self,sudo=False,sudopw=None,debug=False):
+    def __init__(self,sudo=False,sudopw=None,debug=False,quiet=False):
        '''upon init, store user password to not ask for it again'''
 
        self.sudopw = sudopw
        self.debug = debug
+       self.quiet = quiet
 
        # Try getting from environment
        if self.sudopw == None:
@@ -68,12 +91,23 @@ class Singularity:
             cmd.append(command)
         help = self.run_command(cmd)
 
+        if isinstance(help,bytes):
+            help = help.decode('utf-8')
+
         # Print to console, or return string to user
         if stdout == True:
             print(help)
         else:
             return help
 
+
+    def println(self,output):
+        '''print will print the output, given that quiet is not True
+        '''
+        if self.quiet is False:
+            if isinstance(output,bytes):
+                output = output.decode('utf-8')
+            print(output)
 
 
     def create(self,image_path,size=None):
@@ -89,8 +123,11 @@ class Singularity:
             cmd = ['singularity','--debug','create','--size',str(size),image_path]
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
-        self.run_command(cmd,sudo=True)
-
+        output = self.run_command(cmd,sudo=False)
+        self.println(output)        
+        if os.path.exists(image_path):
+            return image_path
+        return None
 
 
     def bootstrap(self,image_path,spec_path):
@@ -102,8 +139,9 @@ class Singularity:
             cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
         else:
             cmd = ['singularity','bootstrap',image_path,spec_path]
-        return self.run_command(cmd,sudo=True)
-
+        output = self.run_command(cmd,sudo=True)
+        self.println(output)        
+        return image_path
 
 
     def execute(self,image_path,command,writable=False,contain=False):
@@ -126,129 +164,134 @@ class Singularity:
         if writable == True:
             sudo = True
 
-        cmd = cmd + [image_path,command]
+        if not isinstance(command,list):
+            command = command.split(' ')
 
-        # Run the command
+        cmd = cmd + [image_path] + command
         return self.run_command(cmd,sudo=sudo)
 
 
 
-    def export(self,image_path,pipe=False,output_file=None,command=None,export_format="tar"):
+    def export(self,image_path,export_format="tar"):
         '''export will export an image, sudo must be used.
         :param image_path: full path to image
-        :param pipe: export to pipe and not file (default, False)
-        :param output_file: if pipe=False, export tar to this file. If not specified, 
         will generate temporary directory.
         :param export_format: the export format (only tar currently supported)
         '''
-        sudo = True
         cmd = ['singularity','export']
 
-        if export_format != "tar":
+        if export_format is not "tar":
             print("Currently only supported export format is tar.")
             return None
     
-        # If the user has specified export to pipe, we don't need a file
-        if pipe == True:
-            cmd.append(image_path)
-        else:
-            _,tmptar = tempfile.mkstemp(suffix=".%s" %export_format)
-            os.remove(tmptar)
-            cmd = cmd + ["-f",tmptar,image_path]
-            self.run_command(cmd,sudo=sudo)
-
-            # Was there an error?            
-            if not os.path.exists(tmptar):
-                print('Error generating image tar')
-                return None
-
-            # if user has specified output file, move it there, return path
-            if output_file != None:
-                shutil.copyfile(tmptar,output_file)
-                return output_file
-            else:
-                return tmptar
-
-        # Otherwise, return output of pipe    
-        return self.run_command(cmd,sudo=sudo)
+        cmd.append(image_path)
+        output = self.run_command(cmd,sudo=False)
+        return output
 
 
-
-    def importcmd(self,image_path,input_source,import_type=None,command=None):
+    def importcmd(self,image_path,input_source):
         '''import will import (stdin) to the image
         :param image_path: path to image to import to. 
         :param input_source: input source or file
         :param import_type: if not specified, imports whatever function is given
-        :param command: replace "tar" command
         '''
-        sudo = True
-        if import_type == "tar":
-            cmd = ['singularity','import','--file',input_source]
-            if command != None:
-                cmd = cmd + ["--command",command]
-            cmd.append(image_path)
-            return self.run_command(cmd,sudo=sudo)
-        else:
-            cmd = ['singularity','import',image_path,input_source]
-            return self.run_command(cmd,sudo=sudo)
-
-        return None
+        cmd = ['singularity','import',image_path,input_source]
+        output = self.run_command(cmd,sudo=False)
+        self.println(output)        
+        return image_path
 
 
-    def pull(self,image_path):
+    def pull(self,image_path,pull_folder=None,name_by=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
+        :param name_by: can be one of commit or hash, default is by image name
         ''' 
-        if not image_path.startswit('shub://'):
+        if name_by is None:
+            name_by = "name"
+        name_by = name_by.lower()
+
+        if pull_folder is not None:
+            os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
+
+        if not image_path.startswith('shub://'):
             bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
             sys.exit(1)           
 
         if self.debug == True:
-            cmd = ['singularity','--debug','pull',image_path]
+            cmd = ['singularity','--debug','pull']
         else:
-            cmd = ['singularity','pull',image_path]
-        return self.run_command(cmd)
+            cmd = ['singularity','pull']
+
+        if name_by in ['name','commit','hash']:
+            bot.logger.debug("user specified naming pulled image by %s",name_by)
+            name_by = "--%s" %name_by
+            cmd.append(name_by)
+
+        cmd.append(image_path)
+
+        output = self.run_command(cmd)
+        self.println(output)        
+        if isinstance(output,bytes):
+            output = output.decode('utf-8')
+        return output.split("Container is at:")[-1].strip('\n').strip()
+        
 
 
-
-    def run(self,image_path,command,writable=False,contain=False):
-        '''run will run a command inside the container, probably not intended for within python
+    def run(self,image_path,args=None,writable=False,contain=False):
+        '''run will run the container, with or withour arguments (which
+        should be provided in a list)
         :param image_path: full path to singularity image
-        :param command: command to send to container
+        :param args: args to include with the run
         '''
         sudo = False
-        cmd = ["singularity","run"]
+        cmd = ["singularity",'--quiet',"run"]
         cmd = self.add_flags(cmd,writable=writable,contain=contain)
+        cmd = cmd + [image_path]
 
         # Conditions for needing sudo
         if writable == True:
             sudo = True
+        
+        if args is not None:        
+            if not isinstance(args,list):
+                args = args.split(' ')
+            cmd = cmd + args
 
-        cmd = cmd + [image_path,command]
+        result = self.run_command(cmd,sudo=sudo)
+        if isinstance(result,bytes):
+            result = result.decode('utf-8')
+        result = result.strip('\n')
+        try:
+            result = json.loads(result)
+        except:
+            pass
+        return result
 
-        # Run the command
-        return self.run_command(cmd,sudo=sudo)
 
-
-    def start(self,image_path,writable=False,contain=False):
-        '''start will start a container
+    def get_labels(self,image_path):
+        '''get_labels will return all labels defined in the image
         '''
-        sudo = False
-        cmd = ['singularity','start']
-        cmd = self.add_flags(cmd,writable=writable,contain=contain)
-        if writable == True:
-            sudo = True
+        cmd = ['singularity','exec',image_path,'cat','/.singularity/labels.json']
+        labels = self.run_command(cmd)
+        if isinstance(labels,bytes):
+            labels = labels.decode('utf-8')
+        if len(labels) > 0:
+            return json.loads(labels)
+        return labels
+        
 
-        cmd.append(image_path)
-        return self.run_command(cmd,sudo=sudo)
-
-
-    def stop(self,image_path):
-        '''stop will stop a container
+    def get_args(self,image_path):
+        '''get_args will return the subset of labels intended to be arguments
+        (in format SINGULARITY_RUNSCRIPT_ARG_*
         '''
-        cmd = ['singularity','stop',image_path]
-        return self.run_command(cmd)
-
+        labels = self.get_labels(image_path)
+        args = dict()
+        for label,values in labels.items():
+            if re.search("^SINGULARITY_RUNSCRIPT_ARG",label):
+                vartype = label.split('_')[-1].lower()
+                if vartype in ["str","float","int","bool"]:
+                    args[vartype] = values.split(',')
+        return args
 
 
     def add_flags(self,cmd,writable,contain):
@@ -267,11 +310,13 @@ class Singularity:
         return cmd
 
 
-######################################################################################################
-# HELPER FUNCTIONS
-######################################################################################################
 
-def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
+
+#################################################################################
+# HELPER FUNCTIONS
+#################################################################################
+
+def get_image(image,return_existed=False,size=None,debug=False):
     '''get_image will return the file, if it exists, or if it's docker or
     shub, will use the Singularity command line tool to generate a temporary image
     :param image: the image file or path (eg, docker://)
@@ -284,14 +329,7 @@ def get_image(image,return_existed=False,sudopw=None,size=None,debug=False):
     # Is the image a docker image?
     if re.search('^docker://',image):
         existed = False
-        if sudopw == None:
-            sudopw = os.environ.get('pancakes',None)
-
-        if sudopw != None:
-            cli = Singularity(sudopw=sudopw,debug=debug)
-        else:
-            cli = Singularity(debug=debug) # This command will ask the user for sudo
-
+        cli = Singularity(debug=debug)
         tmpdir = tempfile.mkdtemp()
         image_name = "%s.img" %image.replace("docker://","").replace("/","-")
         bot.logger.info("Found docker image %s, creating and importing...",image_name)

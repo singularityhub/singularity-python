@@ -1,0 +1,372 @@
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Singularity Hub Comparison Tree</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="singularity container and workflow management" />
+        <meta name="keywords" content="singularity, containers" />
+        <meta name="author" content="vsoch" />
+
+        <link rel="icon" type="image/ico" href="/static/img/favicon.ico"/>
+
+        <!-- Facebook and Twitter integration -->
+        <meta property="og:title" content="singularity-hub"/>
+        <meta property="og:image" content=""/>
+        <meta property="og:url" content=""/>
+        <meta property="og:site_name" content="Singularity Hub"/>
+        <meta property="og:description" content="singularity container and workflow management"/>
+        <meta name="twitter:title" content="SingularityApp" />
+        <meta name="twitter:image" content="" />
+        <meta name="twitter:url" content="https://www.twitter.com/SingularityApp" />
+        <meta name="twitter:card" content="" />
+
+        <!-- Google Webfonts -->
+        <link href='https://fonts.googleapis.com/css?family=Roboto:400,300,100,500' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Roboto+Slab:400,300,100,500' rel='stylesheet' type='text/css'>
+        <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet">
+        
+
+        
+
+<style>
+.btn-sm {
+  margin-top:20px !important;
+}
+.container-fluid {
+  margin: 5px;
+}
+
+#tree {
+  z-index:10;
+}
+
+.node circle {
+  fill: none;
+  stroke: none;
+}
+
+.node text {
+  font: 20px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 1.5px;
+}
+
+.node circle {
+  fill: #e32929;
+}
+
+.node text {
+  font: 10px sans-serif;
+}
+
+.node--internal circle {
+  fill: #555;
+}
+
+.node--internal text {
+  text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+}
+
+.link {
+  fill: none;
+  stroke: #555;
+  stroke-opacity: 0.4;
+  stroke-width: 1.5px;
+}
+
+label {
+  display: block;
+}
+
+</style>
+
+
+        <!-- Animate.css -->
+        <link rel="stylesheet" href="https://singularity-hub.org/static/css/animate.css">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+        <!-- Theme Style -->
+        <link rel="stylesheet" href="https://singularity-hub.org/static/css/style.css">
+        <!-- Modernizr JS -->
+        <script src="https://singularity-hub.org/static/js/modernizr-2.6.2.min.js"></script>
+        <!-- FOR IE9 below -->
+        <!--[if lt IE 9]>
+        <script src="/static/js/respond.min.js"></script>
+        <![endif]-->
+
+
+    </head>
+
+    
+    <body>
+
+    <header>
+    
+
+
+        <nav class="navbar navbar-default" role="navigation">
+        <a class="navbar-brand" href="/">Singularity</a>
+        
+          <ul class="nav navbar-nav">
+            <li><a href="https://singularity-hub.org/collections">Containers</a></li>
+            <li><a href="https://singularity-hub.org/about">About</a></li>
+            <li><a href="https://singularity-hub.org/faq">User Guide</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+              Tools
+              <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li><a href="https://singularity-hub.org/tools/compare">Container Similarity Tree</a></li>
+                <li><a href="https://singularity-hub.org/tools/converter/dockerfile">Dockerfile Converter</a></li>
+                <!--<li role="separator" class="divider"></li>-->
+              </ul>
+            </li>
+            <li><a href="https://singularity-hub.org/search"><i class="fa fa-search"></i></a></li>
+          </ul>
+
+          <ul class="nav navbar-nav navbar-right" style="margin-right:20px">
+            
+            <li><a href="https://singularity-hub.org/login/">Login</a></li>
+            
+            <!-- Search Icon -->
+            <!--<li><a href=""><i class="fa fa-search"></i></a></li>-->
+          </ul>
+
+    </nav>
+
+    </header>
+    
+    
+    <div class="container-fluid" style="margin:30px">
+    
+
+<!-- Error messages for builds will be added here-->
+
+
+<div class="row">
+    <div class="col-md-12">
+       <h2>Singularity Hub Replication Analysis</h2>
+    <br>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+        <label class="radio-inline"><input type="radio" name="mode" value="cluster" checked> Dendrogram</label>
+        <label class="radio-inline"><input type="radio" name="mode" value="tree"> Tree</label>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-9" id="tree">
+        <!-- Visualization tree will be appended here-->
+        <svg width="960" height="900"></svg>
+    </div>
+    <div class="col-md-3" id="files">
+        <h3>Containers  <i style="color:#999" id="helpme" class='fa fa-question-circle'></i></h3>
+            <div id="container_set">
+            <!-- Containers will be shown here-->
+            </div>
+            <div id="aboutit" style="display:none">
+             <p>This tree shows similarity of the latest container of each public collection, and unlike the live version in Singularity Hub, this version was generated using content hashes for a more robust metric. The other version (quick, generated on a nightly basis) has a <a href="https://github.com/singularityware/singularity-python/blob/master/singularity/analysis/compare.py#L134" target="_blank">metric</a> that is based on the number of common folder paths between the containers, so containers with similar software will be shown closer together in the tree. We use hierarchical clustering from <a href="https://github.com/singularityware/singularity-python/blob/master/singularity/views/trees.py#L236" target="_blank">scipy</a> to generate clusters, and <a href="https://d3js.org/" target="_blank">d3.js</a> to render the tree.</p>
+            </div>
+    </div>
+</div>
+
+    </div>
+
+    
+
+    <script src="https://singularity-hub.org/static/js/jquery.min.js"></script>
+    <script src="https://singularity-hub.org/static/js/jquery.easing.1.3.js"></script>
+    <script src="https://singularity-hub.org/static/js/bootstrap.min.js"></script>
+    <script src="https://singularity-hub.org/static/js/jquery.waypoints.min.js"></script>
+    <script src="https://singularity-hub.org/static/js/main.js"></script>
+    <script src="https://singularity-hub.org/static/js/bootstrap-checkbox-radio.js"></script>
+    <script src="https://singularity-hub.org/static/js/bootstrap-notify.js"></script>
+    <script src="https://singularity-hub.org/static/js/paper-dashboard.js"></script>
+    
+<script src="https://singularity-hub.org/static/js/d3.v4.min.js"></script>
+<script>
+
+String.prototype.hashCode = function() {
+  var hash = 0, i, chr, len;
+  if (this.length === 0) return hash;
+  for (i = 0, len = this.length; i < len; i++) {
+    chr   = this.charCodeAt(i);
+    hash  = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+};
+
+var svg = d3.select("svg"),
+    width = +svg.attr("width"),
+    height = +svg.attr("height"),
+    g = svg.append("g").attr("transform", "translate(40,0)");
+
+var tree = d3.tree()
+    .size([height - 400, width - 160]);
+
+var cluster = d3.cluster()
+    .size([height, width - 160]);
+
+var data = {{ graph | safe }}
+
+const root = d3.hierarchy(data);
+tree(root);
+cluster(root);
+
+var link = g.selectAll(".link")
+    .data(root.descendants().slice(1))
+    .enter().append("path")
+      .attr("class", "link")
+      .attr("d", diagonal);
+
+var node = g.selectAll(".node")
+      .data(root.descendants())
+  .enter().append("g")
+      .attr("class", function(d) { return "node" + (d.children ? " node--internal" : " node--leaf"); })
+      .attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; })
+      .style('cursor',function(d){
+           if (d.data.name.split('|||').length==1){
+              return 'pointer';
+           } else {
+              return 'click';
+           }
+       })
+      .on('mouseover',function(d){ 
+         if (d.data.name!="root") {
+             var containers = d.data.name.split("|||")
+             $("#" + d.data.name.hashCode()).show();
+             $("#container_set").text("");
+             var list = '<ul>'
+             $.each(containers, function( index, container ) {
+                 list = list + "<li><a href='#'/>" + container +"</a></li>"
+             })
+             list = list + "</ul>"
+             $("#container_set").append($(list))
+           }
+       }) 
+      .on('mouseout',function(d){
+          $("#" + d.data.name.hashCode()).hide();
+      });
+
+node.append("circle")
+      .attr("r", 5);
+
+node.append("text")
+      .attr("dy", 3)
+      .attr("id", function(d) { return d.data.name.hashCode() })
+      .attr("x", function(d) { return d.children ? -8 : 8; })
+      .style("text-anchor", function(d) { return d.children ? "end" : "start"; })
+      .style('display','none')
+      .style('font-size',16)
+      .text(function(d) { return d.data.name.split('|||').length; });
+
+d3.selectAll("input")
+      .on("change", changed);
+
+var timeout = setTimeout(function() {
+    d3.select("input[value=\"tree\"]")
+        .property("checked", true)
+        .dispatch("change");
+}, 1000);
+
+function changed() {
+    timeout = clearTimeout(timeout);
+    (this.value === "tree" ? tree : cluster)(root);
+    var t = d3.transition().duration(750);
+    node.transition(t).attr("transform", function(d) { return "translate(" + d.y + "," + d.x + ")"; });
+    link.transition(t).attr("d", diagonal);
+}
+
+function diagonal(d) {
+  return "M" + d.y + "," + d.x
+      + "C" + (d.parent.y + 100) + "," + d.x
+      + " " + (d.parent.y + 100) + "," + d.parent.x
+      + " " + d.parent.y + "," + d.parent.x;
+}
+
+$(document).ready(function(){
+    $("#helpme").click(function(){
+        $("#aboutit").toggle();
+    })
+    $('.icons').remove()
+});
+</script>
+
+    
+<style>
+.btn:active, .btn:hover {
+  border: 1px solid transparent !important;
+  border-color: #ccc !important;
+  background: #CCC !important;
+}
+#tools {
+  min-height:180px;
+  margin-top:20px;
+  background-color:#F7F7F7;
+  padding:20px;
+}
+#containers {
+  padding-bottom:20px;
+}
+#tool-toggle {
+    padding-left: 10px;
+    padding-top: 20px;
+    max-height:20px;
+}
+#controls {
+  margin-bottom:0px;
+  padding-bottom:0px;
+}
+.container-button {
+  width:300px;
+  padding:10px;
+  background:skyblue;
+  color:white;
+  font-weight:500;
+}
+.container-box {
+  float:left;
+}
+#show_container_set {
+  position: absolute;
+  bottom:0px;
+  left:0px;
+  background: none !important;
+  border:none !important;
+  box-shadow:none !important;
+}
+
+#show_container_set:hover,
+#show_container_set:focus,
+#show_container_set:active,
+ {
+  border:none !important;
+  box-shadow:none !important;
+}
+.notransition {
+  -webkit-transition: none !important;
+  -moz-transition: none !important;
+  -o-transition: none !important;
+  transition: none !important;
+}
+</style>
+
+
+<script>
+// Enable tooltips
+$('[data-toggle="tooltip"]').tooltip()
+
+</script>
+
+    
+    </body>
+    
+</html>

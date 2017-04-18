@@ -1,0 +1,41 @@
+{
+  "IDENTICAL": {
+    "description": "The image is exactly the same, meaning the file itself. This is what should be achieved if you download the same image multiple times. The entire contents of the image are used to generate the hash.",
+    "regexp": "."
+  },
+
+  "REPLICATE": {
+    "description": "the image is generated from the same build file, but at different timepoints. This is what you would achieve if you built an image, and then built an equivalent one right after.",
+    "regexp": "^/usr|^/bin|^/boot|^/lib64|/proc|^/run|^/dev|^/opt|^/sbin|^/srv|^/sys",
+    "skip_files":["/etc/resolv.conf",
+                  "/etc/hosts",
+                  "/singularity.d/labels.json"
+                  "/singularity.d/actions/exec",
+                  "/singularity.d/actions/run",
+                  "/singularity.d/actions/shell",
+                  "/singularity.d/runscript",
+                  "/etc/mtab"]
+  },
+
+  "RUNSCRIPT": {
+    "description": "runscript is a level that assesses only the executable runscript in the  image. This is a fast approach to sniff if the container is broadly doing the same thing",
+   "include_files":["/singularity",
+                    "/singularity.d/runscript"] 
+  },
+  "ENVIRONMENT": {
+    "description": "only look at the container's environment. This level will only look at the environment files when assessing similarity.",
+   "regexp": "/singularity.d/env" 
+  },
+  "LABELS": {
+    "description": "only look at the container labels, if they exist (singularity version 2.3)",
+    "include_files": "/singularity.d/labels.json"
+  },
+  "RECIPE": {
+    "description": "singularity looks at everything on the level of the Singularity image, meaning the runscript, environment, and labels.",
+    "regexp": "/singularity.d/env",
+    "include_files":["/singularity.d/actions/exec",
+                     "/singularity.d/actions/run",
+                     "/singularity.d/actions/shell",
+                     "/singularity.d/labels.json"]
+  }
+}

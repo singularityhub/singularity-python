@@ -3,6 +3,28 @@
 '''
 build/utils.py: general building util functions
 
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 '''
 
 import os
@@ -48,7 +70,7 @@ def test_container(image_path):
     work in most linux.
     :param image_path: path to the container image
     '''
-    testing_command = ["singularity", "exec", image_path, 'echo pancakemania']
+    testing_command = ["singularity", "exec", image_path, 'ls']
     output = Popen(testing_command,stderr=STDOUT,stdout=PIPE)
     t = output.communicate()[0],output.returncode
     result = {'message':t[0],
@@ -169,3 +191,17 @@ def sniff_extension(file_path,verbose=True):
         bot.logger.info("%s --> %s", file_path, mime_type)
 
     return mime_type
+
+
+def get_script(script_name):
+    '''get_script will return a build script_name, if it is included 
+    in singularity/build/scripts, otherwise will alert the user and return None
+    :param script_name: the name of the script to look for
+    '''
+    install_dir = get_installdir()
+    script_path = "%s/build/scripts/%s" %(install_dir,script_name)
+    if os.path.exists(script_path):
+        return script_path
+    else:
+        bot.logger.error("Script %s is not included in singularity-python!", script_path)
+        return None

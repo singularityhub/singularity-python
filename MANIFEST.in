@@ -1,5 +1,7 @@
 include README.md
 include LICENSE
+recursive-include singularity/tests *
+recursive-include singularity/hub *
 recursive-include singularity/templates *
 recursive-include singularity/static *
 recursive-include singularity/build *
