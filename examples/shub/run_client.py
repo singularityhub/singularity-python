@@ -1,7 +1,7 @@
-# Compare Singularity Hub containers
+# Download a Singularity Hub Container
 
-# This is a simple script to use the singularity command line tool to obtain manifests
-# and compare build specs (using Singularity Hub API) 
+# This is a simple script to use the singularity command line tool to 
+# obtain a manifest and download an image
 
 from singularity.hub.client import Client
 
