@@ -47,8 +47,6 @@ class TestClient(unittest.TestCase):
         self.pwd = get_installdir()
         self.cli = Singularity()
         self.tmpdir = tempfile.mkdtemp()
-        self.image1 = "%s/tests/data/busybox-2016-02-16.img" %(self.pwd)
-        self.image2 = "%s/tests/data/cirros-2016-01-04.img" %(self.pwd)
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -92,6 +90,32 @@ class TestClient(unittest.TestCase):
         #self.assertTrue(len(result)>0)
 
 
+    def test_inspect(self):
+        print("Testing client.inspect command")
+        container = create_container(do_import=True)
+        result = self.cli.inspect(container,quiet=True)
+        labels = json.loads(result)
+        self.assertTrue('data' in labels)     
+
+
+    def test_run(self):
+        print("Testing client.run command")
+        container = create_container(do_import=True)
+        result = self.cli.run(container)
+        self.assertEqual(result,'')
+
+
+    def test_exec(self):
+        print('Testing client.execute command')
+        container = create_container(do_import=True) 
+        result = self.cli.execute(container,'ls /')
+        print(result)
+        #if isinstance(result,bytes):
+        #    result = result.decode('utf-8')
+        #self.assertTrue(len(result)>0)
+
+
+
     def test_pull(self):
         print("Testing client.pull command")
 
@@ -125,9 +149,10 @@ def create_container(container=None,do_import=False):
     tmpdir = tempfile.mkdtemp()
     if container is None:
         container = "%s/container.img" %(tmpdir)
+    container = cli.create(container)
     if do_import is True:
         cli.importcmd(container,'docker://ubuntu')
-    return cli.create(container)
+    return container
 
 
 if __name__ == '__main__':

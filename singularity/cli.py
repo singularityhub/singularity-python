@@ -101,13 +101,41 @@ class Singularity:
             return help
 
 
-    def println(self,output):
-        '''print will print the output, given that quiet is not True
+    def println(self,output,quiet=False):
+        '''print will print the output, given that quiet is not True. This
+        function also serves to convert output in bytes to utf-8
         '''
-        if self.quiet is False:
-            if isinstance(output,bytes):
-                output = output.decode('utf-8')
+        if isinstance(output,bytes):
+            output = output.decode('utf-8')
+
+        if self.quiet is False and quiet is False:
             print(output)
+        return output
+
+
+    def bootstrap(self,image_path,spec_path):
+        '''create will bootstrap an image using a spec
+        :param image_path: full path to image
+        :param spec_path: full path to the spec file (Singularity)
+        ''' 
+        if self.debug == True:
+            cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
+        else:
+            cmd = ['singularity','bootstrap',image_path,spec_path]
+        output = self.run_command(cmd,sudo=True)
+        output = self.println(output)     
+        return image_path
+
+
+    def compress(self,image_path):
+        '''compress will (properly) compress an image'''
+        if os.path.exists(image_path):
+            compressed_image = "%s.gz" %image_path
+            os.system('gzip -c -9 %s > %s' %(image_path,compressed_image))
+            return compressed_image
+        else:
+            bot.logger.error("Cannot find image %s",image_path)
+        return None
 
 
     def create(self,image_path,size=None,sudo=False):
@@ -124,24 +152,21 @@ class Singularity:
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
         output = self.run_command(cmd,sudo=sudo)
-        self.println(output)        
+        output = self.println(output)        
         if os.path.exists(image_path):
             return image_path
         return None
 
 
-    def bootstrap(self,image_path,spec_path):
-        '''create will bootstrap an image using a spec
-        :param image_path: full path to image
-        :param spec_path: full path to the spec file (Singularity)
-        ''' 
-        if self.debug == True:
-            cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
+
+    def decompress(self,image_path):
+        '''decompress will (properly) decompress an image'''
+        if os.path.exists(image_path):
+            extracted_file = image_path.replace('.gz','')
+            os.system('gzip -d -f %s' %image_path)
+            return extracted_file
         else:
-            cmd = ['singularity','bootstrap',image_path,spec_path]
-        output = self.run_command(cmd,sudo=True)
-        self.println(output)        
-        return image_path
+            bot.logger.error("Cannot find image %s",image_path)
 
 
     def execute(self,image_path,command,writable=False,contain=False):
@@ -205,24 +230,50 @@ class Singularity:
         '''
         cmd = ['singularity','import',image_path,input_source]
         output = self.run_command(cmd,sudo=False)
-        self.println(output)        
+        output = self.println(output)        
         return image_path
 
 
-    def pull(self,image_path,pull_folder=None,name_by=None):
+    def inspect(self,image_path,json=True,labels=True,
+                runscript=True,test=True,deffile=True,
+                environment=True,quiet=False):
+        '''inspect will show labels, defile, runscript, and tests for an image
+        :param image_path: path of image to inspect
+        :param json: print json instead of raw text (default True)
+        :param labels: show labels (default True):
+        :param runscript: show runscript (default True)
+        :param test: show test file (default True)
+        :param environment: show environment (default True)
+        '''
+        cmd = ['singularity','--quiet','inspect']
+        options = locals()
+        acceptable = ['environment','json','deffile','labels','runscript','test']
+        for key,option in options.items():
+            if key in acceptable:
+                if option is True:
+                    cmd.append('--%s' %(key))
+
+        cmd.append(image_path)
+        output = self.run_command(cmd)
+        output = self.println(output,quiet=quiet)    
+        return output
+
+
+    def pull(self,image_path,pull_folder=None,name_by=None,image_name=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
         :param name_by: can be one of commit or hash, default is by image name
         ''' 
-        if name_by is None:
-            name_by = "name"
-        name_by = name_by.lower()
+        if image_name is not None:
+            name_by = None
+        if name_by is not None:
+            name_by = name_by.lower()
 
         if pull_folder is not None:
             os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
 
-        if not image_path.startswith('shub://'):
-            bot.logger.error("pull is only valid for the shub://uri, %s is invalid.",image_name)
+        if not image_path.startswith('shub://') or not image_path.startswith('docker://'):
+            bot.logger.error("pull is only valid for docker and shub, %s is invalid.",image_name)
             sys.exit(1)           
 
         if self.debug == True:
@@ -230,17 +281,23 @@ class Singularity:
         else:
             cmd = ['singularity','pull']
 
-        if name_by in ['name','commit','hash']:
-            bot.logger.debug("user specified naming pulled image by %s",name_by)
-            name_by = "--%s " %name_by
-            cmd.append(name_by)
+        if image_path.startswith('shub://'):
+            if name_by in ['commit','hash']:
+                bot.logger.debug("user specified naming pulled image by %s",name_by)
+                name_by = "--%s " %name_by
+                cmd.append(name_by)
+            elif image_name is not None:
+                name_by = "--name %s" %(image_name)
+
+        elif image_path.startswith('docker://'):
+            if image_name is not None:
+                bot.logger.debug("user specified name of image as %s",image_name)
+                name_by = "--name %s" %(image_name)
 
         cmd.append(image_path)
 
         output = self.run_command(cmd)
-        self.println(output)        
-        if isinstance(output,bytes):
-            output = output.decode('utf-8')
+        output = self.println(output,quiet=True)        
         return output.split("Container is at:")[-1].strip('\n').strip()
         
 
@@ -266,8 +323,7 @@ class Singularity:
             cmd = cmd + args
 
         result = self.run_command(cmd,sudo=sudo)
-        if isinstance(result,bytes):
-            result = result.decode('utf-8')
+        result = self.println(result,quiet=True)
         result = result.strip('\n')
         try:
             result = json.loads(result)
@@ -281,8 +337,7 @@ class Singularity:
         '''
         cmd = ['singularity','exec',image_path,'cat','/.singularity/labels.json']
         labels = self.run_command(cmd)
-        if isinstance(labels,bytes):
-            labels = labels.decode('utf-8')
+        labels = self.println(labels,quiet=True)
         if len(labels) > 0:
             return json.loads(labels)
         return labels
@@ -302,13 +357,11 @@ class Singularity:
         return args
 
 
-    def add_flags(self,cmd,writable,contain):
+    def add_flags(self,cmd,writable=False,contain=False):
         '''check_args is a general function for adding flags to a command list
         :param writable: adds --writable
         :param contain: adds --contain
-        '''
-
-        # Does the user want to make the container writeable?
+        ''' 
         if writable == True:
             cmd.append('--writable')       
 
