@@ -73,18 +73,22 @@ class TestClient(unittest.TestCase):
         self.cli.importcmd(container,'docker://ubuntu')
         result = test_container(container)
         self.assertEqual(result['return_code'],0)
+        os.remove(container)
 
     def test_run(self):
         print("Testing client.run command")
         container = create_container(do_import=True)
         result = self.cli.run(container)
         self.assertEqual(result,'')
+        os.remove(container)
+
 
     def test_exec(self):
         print('Testing client.execute command')
         container = create_container(do_import=True) 
         result = self.cli.execute(container,'ls /')
         print(result)
+        os.remove(container)
         #if isinstance(result,bytes):
         #    result = result.decode('utf-8')
         #self.assertTrue(len(result)>0)
@@ -96,6 +100,7 @@ class TestClient(unittest.TestCase):
         result = self.cli.inspect(container,quiet=True)
         labels = json.loads(result)
         self.assertTrue('data' in labels)     
+        os.remove(container)
 
 
     def test_run(self):
@@ -103,6 +108,7 @@ class TestClient(unittest.TestCase):
         container = create_container(do_import=True)
         result = self.cli.run(container)
         self.assertEqual(result,'')
+        os.remove(container)
 
 
     def test_exec(self):
@@ -110,6 +116,8 @@ class TestClient(unittest.TestCase):
         container = create_container(do_import=True) 
         result = self.cli.execute(container,'ls /')
         print(result)
+        os.remove(container)
+
         #if isinstance(result,bytes):
         #    result = result.decode('utf-8')
         #self.assertTrue(len(result)>0)
@@ -121,15 +129,27 @@ class TestClient(unittest.TestCase):
 
         print("Case 1: Testing naming pull by image name")
         image = self.cli.pull("shub://vsoch/singularity-images")
+        self.assertTrue(os.path.exists(image))
         print(image)
+        os.remove(image)
 
         print("Case 2: Testing naming pull by image commit")
-        image = self.cli.pull("shub://vsoch/singularity-images",name_by="commit")
+        image = self.cli.pull("shub://vsoch/singularity-images",name_by_commit=True)
+        self.assertTrue(os.path.exists(image))
         print(image)
+        os.remove(image)
         
         print("Case 3: Testing naming pull by image hash")
-        image = self.cli.pull("shub://vsoch/singularity-images",name_by="hash")
+        image = self.cli.pull("shub://vsoch/singularity-images",name_by_hash=True)
+        self.assertTrue(os.path.exists(image))
         print(image)
+        os.remove(image)
+
+        print("Case 3: Testing docker pull")
+        image = self.cli.pull("docker://ubuntu:14.04")
+        print(image)
+        self.assertTrue(os.path.exists(image))
+        os.remove(image)
         
 
     def test_get_image(self):

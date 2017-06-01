@@ -44,6 +44,7 @@ import subprocess
 import tempfile
 import shutil
 import json
+import sys
 import os
 import re
 
@@ -259,20 +260,22 @@ class Singularity:
         return output
 
 
-    def pull(self,image_path,pull_folder=None,name_by=None,image_name=None):
+    def pull(self,image_path,pull_folder=None,
+                             name_by_hash=False,
+                             name_by_commit=False,
+                             image_name=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
         :param name_by: can be one of commit or hash, default is by image name
         ''' 
         if image_name is not None:
-            name_by = None
-        if name_by is not None:
-            name_by = name_by.lower()
+            name_by_hash=False
+            name_by_commit=False
 
         if pull_folder is not None:
             os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
 
-        if not image_path.startswith('shub://') or not image_path.startswith('docker://'):
+        if not image_path.startswith('shub://') and not image_path.startswith('docker://'):
             bot.logger.error("pull is only valid for docker and shub, %s is invalid.",image_name)
             sys.exit(1)           
 
@@ -282,20 +285,22 @@ class Singularity:
             cmd = ['singularity','pull']
 
         if image_path.startswith('shub://'):
-            if name_by in ['commit','hash']:
-                bot.logger.debug("user specified naming pulled image by %s",name_by)
-                name_by = "--%s " %name_by
-                cmd.append(name_by)
-            elif image_name is not None:
-                name_by = "--name %s" %(image_name)
-
+            if image_name is not None:
+                bot.logger.debug("user specified naming pulled image %s",image_name)
+                cmd = cmd +["--name",image_name]
+            elif name_by_commit is True:
+                bot.logger.debug("user specified naming by commit.")
+                cmd.append("--commit")
+            elif name_by_hash is True:
+                bot.logger.debug("user specified naming by hash.")
+                cmd.append("--hash")
+ 
         elif image_path.startswith('docker://'):
             if image_name is not None:
                 bot.logger.debug("user specified name of image as %s",image_name)
-                name_by = "--name %s" %(image_name)
+                cmd = cmd + ["--name",image_name]
 
         cmd.append(image_path)
-
         output = self.run_command(cmd)
         output = self.println(output,quiet=True)        
         return output.split("Container is at:")[-1].strip('\n').strip()
