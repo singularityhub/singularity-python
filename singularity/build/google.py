@@ -27,7 +27,7 @@ SOFTWARE.
 
 '''
 
-from singularity.build.api import (
+from singularity.hub.utils import (
     api_get, 
     api_put
 )
