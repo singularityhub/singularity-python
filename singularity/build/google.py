@@ -27,11 +27,6 @@ SOFTWARE.
 
 '''
 
-from singularity.hub.utils import (
-    api_get, 
-    api_put
-)
-
 from singularity.build.utils import sniff_extension
 
 from singularity.build.main import (
@@ -363,8 +358,7 @@ def get_build_metadata(key):
     '''
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
-    response = api_get(url=url,headers=headers)
-
+    response = requests.get(url=url,headers=headers)
     # Successful query returns the result
     if response.status_code == 200:
         return response.text
