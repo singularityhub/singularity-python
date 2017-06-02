@@ -75,14 +75,6 @@ class TestClient(unittest.TestCase):
         self.assertEqual(result['return_code'],0)
         os.remove(container)
 
-    def test_run(self):
-        print("Testing client.run command")
-        container = create_container(do_import=True)
-        result = self.cli.run(container)
-        self.assertEqual(result,'')
-        os.remove(container)
-
-
     def test_exec(self):
         print('Testing client.execute command')
         container = create_container(do_import=True) 
