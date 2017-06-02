@@ -33,6 +33,23 @@ import os
 import sys
 
 
+def basic_auth_header(username, password):
+    '''basic_auth_header will return a base64 encoded header object to
+    generate a token
+    :param username: the username
+    :param password: the password
+    '''
+    s = "%s:%s" % (username, password)
+    if sys.version_info[0] >= 3:
+        s = bytes(s, 'utf-8')
+        credentials = base64.b64encode(s).decode('utf-8')
+    else:
+        credentials = base64.b64encode(s)
+    auth = {"Authorization": "Basic %s" % credentials}
+    return auth
+
+
+
 def get_headers(token=None):
     '''get_headers will return a simple default header for a json
     post. This function will be adopted as needed.

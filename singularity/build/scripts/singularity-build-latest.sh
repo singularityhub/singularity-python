@@ -5,6 +5,7 @@ sudo apt-get -y install git \
                    build-essential \
                    libtool \
                    autotools-dev \
+                   debootstrap \
                    automake \
                    autoconf \
                    python3-pip >> /tmp/.install-log

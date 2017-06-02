@@ -178,13 +178,6 @@ def package(image_path,spec_path=None,output_folder=None,runscript=True,
     if spec_path is not None:
         singularity_spec = "".join(read_file(spec_path))
         to_package['Singularity'] = singularity_spec
-
-    # Package the image with an sha1, identical standard, as VERSION
-    if old_version == False:
-        hashes = get_image_hashes(image_path)
-        to_package["HASHES"] = hashes
-        to_package["VERSION"] = hashes['IDENTICAL']
-    else:
         to_package["VERSION"] = get_image_file_hash(image_path)
     
 
