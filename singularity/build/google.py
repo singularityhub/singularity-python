@@ -363,8 +363,8 @@ def get_build_metadata(key):
     if response.status_code == 200:
         return response.text
     else:
-        bot.logger.error("Error retrieving metadata %s, returned response %s", key,
-                                                                               response.status_code)
+        bot.logger.debug("Metadata %s not present, returned response %s", key,
+                                                                          response.status_code)
     return None
 
 
