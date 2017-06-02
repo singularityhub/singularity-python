@@ -176,10 +176,6 @@ def run_build(build_dir,params,verbose=True):
 
         # Get singularity version
         singularity_version = get_singularity_version()
-
-        old_version = False
-        if singularity_version.startswith('2.2'):
-            old_version=True
         
         # Package the image metadata (files, folders, etc)
         image_package = package(image_path=image,
@@ -188,7 +184,7 @@ def run_build(build_dir,params,verbose=True):
                                 sudopw='',
                                 remove_image=True,
                                 verbose=True,
-                                old_version=old_version)
+                                old_version=True)
 
         # Derive software tags by subtracting similar OS
         diff = get_diff(image_package=image_package)
