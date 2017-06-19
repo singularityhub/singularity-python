@@ -30,7 +30,7 @@ SOFTWARE.
 from functools import reduce
 import json
 
-from singularity.logman import bot
+from singularity.logger import bot
 
 from singularity.views.utils import get_container_contents
 from singularity.analysis.compare import (
@@ -231,7 +231,7 @@ def make_package_tree(matrix=None,labels=None,width=25,height=10,title=None,font
     from scipy.spatial.distance import pdist
 
     if not isinstance(matrix,pandas.DataFrame):
-        bot.logger.info("No pandas DataFrame (matrix) of similarities defined, will use default.")
+        bot.info("No pandas DataFrame (matrix) of similarities defined, will use default.")
         matrix = compare_packages()['files.txt']
         title = 'Docker Library Similarity to Base OS'
 
@@ -288,7 +288,7 @@ def make_interactive_tree(matrix=None,labels=None):
         add_node(T, d3)
         label_tree(d3["children"][0],lookup)
     else:
-        bot.logger.warning('Please provide data as pandas Data Frame.')
+        bot.warning('Please provide data as pandas Data Frame.')
     return d3
 
 

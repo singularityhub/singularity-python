@@ -37,7 +37,7 @@ from singularity.utils import (
     write_file
 )
 
-from singularity.logman import bot
+from singularity.logger import bot
 
 from glob import glob
 import subprocess
@@ -135,7 +135,7 @@ class Singularity:
             os.system('gzip -c -9 %s > %s' %(image_path,compressed_image))
             return compressed_image
         else:
-            bot.logger.error("Cannot find image %s",image_path)
+            bot.error("Cannot find image %s" %image_path)
         return None
 
 
@@ -167,7 +167,7 @@ class Singularity:
             os.system('gzip -d -f %s' %image_path)
             return extracted_file
         else:
-            bot.logger.error("Cannot find image %s",image_path)
+            bot.error("Cannot find image %s" %image_path)
 
 
     def execute(self,image_path,command,writable=False,contain=False):
@@ -263,7 +263,8 @@ class Singularity:
     def pull(self,image_path,pull_folder=None,
                              name_by_hash=False,
                              name_by_commit=False,
-                             image_name=None):
+                             image_name=None,
+                             size=None):
         '''pull will pull a singularity hub image
         :param image_path: full path to image
         :param name_by: can be one of commit or hash, default is by image name
@@ -276,7 +277,7 @@ class Singularity:
             os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
 
         if not image_path.startswith('shub://') and not image_path.startswith('docker://'):
-            bot.logger.error("pull is only valid for docker and shub, %s is invalid.",image_name)
+            bot.error("pull is only valid for docker and shub, %s is invalid." %image_name)
             sys.exit(1)           
 
         if self.debug == True:
@@ -286,18 +287,20 @@ class Singularity:
 
         if image_path.startswith('shub://'):
             if image_name is not None:
-                bot.logger.debug("user specified naming pulled image %s",image_name)
+                bot.debug("user specified naming pulled image %s" %image_name)
                 cmd = cmd +["--name",image_name]
             elif name_by_commit is True:
-                bot.logger.debug("user specified naming by commit.")
+                bot.debug("user specified naming by commit.")
                 cmd.append("--commit")
             elif name_by_hash is True:
-                bot.logger.debug("user specified naming by hash.")
+                bot.debug("user specified naming by hash.")
                 cmd.append("--hash")
  
         elif image_path.startswith('docker://'):
+            if size is not None:
+                cmd = cmd + ["--size",size]
             if image_name is not None:
-                bot.logger.debug("user specified name of image as %s",image_name)
+                bot.debug("user specified name of image as %s" %image_name)
                 cmd = cmd + ["--name",image_name]
 
         cmd.append(image_path)
@@ -392,18 +395,29 @@ def get_image(image,return_existed=False,size=None,debug=False):
     '''
     existed = True
 
-    # Is the image a docker image?
-    if re.search('^docker://',image):
+    # Is the image a docker or singularity hub image?
+    if image.startswith('^docker://') or image.startswith('shub'):
         existed = False
         cli = Singularity(debug=debug)
         tmpdir = tempfile.mkdtemp()
-        image_name = "%s.img" %image.replace("docker://","").replace("/","-")
-        bot.logger.info("Found docker image %s, creating and importing...",image_name)
+
+        if image.startswith('docker://'):
+            image_name = "%s.img" %image.replace("docker://","").replace("/","-")
+            bot.info("Found docker image %s, creating and importing..." %image_name)
+
+        elif image.startswith('shub://'):
+            image_name = "%s.img" %image.replace("shub://","").replace("/","-")
+            bot.info("Found shub image %s, creating and importing..." %image_name)
+
+
         image_path = "%s/%s" %(tmpdir,image_name)
-        cli.create(image_path,size=size)
-        cli.importcmd(image_path=image_path,
-                      input_source=image)
+        cli.pull(image_path=image,
+                 pull_folder=tmpdir,
+                 image_name=image_name,
+                 size=size)
+
         image = image_path
+
 
     if os.path.exists(image):
         image = os.path.abspath(image)

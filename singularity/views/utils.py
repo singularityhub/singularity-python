@@ -32,7 +32,7 @@ import json
 import os
 import re
 import requests
-from singularity.logman import bot
+from singularity.logger import bot
 from singularity.utils import (
     get_installdir,
     read_file
@@ -75,7 +75,7 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
     :param image_package: if defined, user has provided an image_package
     '''
     if container == None and image_package == None:
-        bot.logger.error("You must define an image package or container.")
+        bot.error("You must define an image package or container.")
         sys.exit(1)
 
     # Default returns are the list of files and folders

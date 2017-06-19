@@ -63,7 +63,7 @@ import zipfile
 shub_api = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
-from singularity.logman import bot
+from singularity.logger import bot
 
 ##########################################################################################
 # GOOGLE GENERAL API #####################################################################
@@ -203,14 +203,14 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     enable_debug = get_build_metadata(key='debug')
     if enable_debug == None:
         debug = False
-    bot.logger.info('DEBUG %s', debug)
+    bot.info('DEBUG %s' %debug)
 
     # If no build directory is specified, make a temporary one
     if build_dir == None:
         build_dir = tempfile.mkdtemp()
-        bot.logger.warning('Build directory not set, using %s',build_dir)
+        bot.warning('Build directory not set, using %s' %build_dir)
     else:
-        bot.logger.info('Build directory set to %s', build_dir)
+        bot.info('Build directory set to %s' %build_dir)
 
     # Get variables from the instance metadata API
     metadata = [{'key': 'repo_url', 'value': repo_url },
@@ -252,7 +252,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
     # Upload image package files to Google Storage
     if os.path.exists(image_package):
-        bot.logger.info("Package %s successfully built",image_package)
+        bot.info("Package %s successfully built" %image_package)
         dest_dir = "%s/build" %(build_dir)
         os.mkdir(dest_dir)
         with zipfile.ZipFile(image_package) as zf:
@@ -263,7 +263,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
 
         build_files = glob("%s/*" %(dest_dir))
         build_files.append(compressed_image)
-        bot.logger.info("Sending build files %s to storage",'\n'.join(build_files))
+        bot.info("Sending build files %s to storage",'\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
         storage_service = get_google_service() # default is "storage" "v1"
@@ -363,8 +363,8 @@ def get_build_metadata(key):
     if response.status_code == 200:
         return response.text
     else:
-        bot.logger.debug("Metadata %s not present, returned response %s", key,
-                                                                          response.status_code)
+        bot.debug("Metadata %s not present, returned response %s" %(key,
+                                                                    response.status_code))
     return None
 
 
@@ -386,5 +386,5 @@ def get_build_params(metadata):
             item['value'] = response
         params[item['key']] = item['value']
         if item['key'] != 'credential':
-            bot.logger.info('%s is set to %s',item['key'],item['value'])        
+            bot.info('%s is set to %s' %(item['key'],item['value']))        
     return params

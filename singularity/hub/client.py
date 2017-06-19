@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 client.py: simple client for singularity hub api
 
@@ -27,65 +25,84 @@ SOFTWARE.
 
 '''
 
-from singularity.hub.auth import (
-    get_headers
-)
-
-from singularity.logman import bot
-from singularity.hub.base import (
-    api_base,
-    get_template,
+from singularity.logger import bot
+from singularity.utils import clean_up
+from singularity.hub import ApiConnection
+from singularity.hub.utils import (
+    prepare_url,
     download_image
 )
 
-from singularity.hub.utils import paginate_get
-
-
 import demjson
+import json
+import sys
 
-class Client(object):
+from .auth import (
+    authenticate,
+    refresh_access_token
+)
 
+api_base = "https://singularity-hub.org/api"
 
-    def __init__(self, token=None):
+class Client(ApiConnection):
+
+    def __init__(self, **kwargs):
+        super(ApiConnection, self).__init__(**kwargs)
  
-        if token is not None:
-            self.token = token
-        # currently not used
-        self.headers = get_headers(token=token)
+        self.headers = None
+        if self.token is None:
+            self.token = authenticate()
+        self.update_headers()
+        
 
-
-    def update_headers(self, headers):
-        '''update_headers will add headers to the client
-        :param headers: should be a dictionary of key,value to update/add to header
+    def get_manifest(self,container_name):
+        '''get manifest
         '''
-        for key,value in headers.items():
-            self.client.headers[key] = item
+        url = prepare_url(container_name,"container")
+        manifest = self.get(url)
+        if manifest is not None:      
+            manifest['metrics'] = demjson.decode(manifest['metrics'])
+        return manifest
 
-    def load_metrics(self,manifest):
-        '''load metrics about a container build from the manifest
+
+    def get_container(self,container_id,download_folder=None,extract=True,name=None):
+        '''download singularity image from singularity hub to a download_folder, 
+        named based on the image version (commit id)
         '''
-        return demjson.decode(manifest['metrics'])
+        manifest = self.get_manifest(container_id)
 
+        image_file = get_image_name(manifest)
+        if name is not None:
+            image_file = name
+ 
+        print("Found image %s:%s" %(manifest['name'],manifest['branch']))
+        print("Downloading image... %s" %(image_file))
 
-    def get_container(self,container_name):
-        '''get a container or return None.
-        '''
-        return get_template(container_name,"container")
+        if download_folder is not None:
+            image_file = "%s/%s" %(download_folder,image_file)
+        url = manifest['image']
 
+        image_file = self.download(url,file_name=image_file)
+    
+        if extract == True:
+            if not bot.is_quiet():
+                print("Decompressing %s" %image_file)
+            output = run_command(['gzip','-d','-f',image_file])
+            image_file = image_file.replace('.gz','')
 
-    def pull_container(self,manifest,download_folder=None,extract=True,name=None):
-        '''pull a container to the local machine'''
-        return download_image(manifest=manifest,
-                              download_folder=download_folder,
-                              extract=extract,
-                              name=name)
+            # Any error in extraction (return code not 0) will return None
+            if output is None:
+                bot.error('Error extracting image, cleaning up.')
+                clean_up([image_file,"%s.gz" %image_file])
 
+    return image_file
 
 
     def get_collection(self,container_name):
         '''get a container collection or return None.
         '''
-        return get_template(container_name,"collection")
+        url = prepare_url(container_name,"collection")
+        return self.get(url)
 
 
     def get_collections(self):

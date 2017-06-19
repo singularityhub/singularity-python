@@ -35,25 +35,9 @@ import requests
 import shutil
 import json
 import simplejson
-import singularity.__init__ as hello
-from singularity.logman import bot
-import sys
-
+from singularity.logger import bot
 import subprocess
-
-import tempfile
-import zipfile
-
-
-# Python less than version 3 must import OSError
-if sys.version_info[0] < 3:
-    from exceptions import OSError
-
-# raw_input renamed to input in python 3
-try:
-    input = raw_input
-except NameError:
-    pass
+import sys
 
 
 ######################################################################################
@@ -70,7 +54,7 @@ def check_install(software=None):
     cmd = [software,'--version']
     version = run_command(cmd,error_message="Cannot find %s. Is it installed?" %software)
     if version != None:
-        bot.logger.info("Found %s version %s",software.upper(),version)
+        bot.info("Found %s version %s" %(software.upper(),version))
         return True
     else:
         return False
@@ -79,7 +63,7 @@ def check_install(software=None):
 def get_installdir():
     '''get_installdir returns the installation directory of the application
     '''
-    return os.path.abspath(os.path.dirname(hello.__file__))
+    return os.path.abspath(os.path.dirname(__file__))
 
 
 def getsudo():
@@ -111,11 +95,8 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
         try:
             process = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             output, err = process.communicate()
-        except OSError as error: 
-            if error.errno == os.errno.ENOENT:
-                bot.logger.error(error_message)
-            else:
-                bot.logger.error(error)
+        except: 
+            bot.error(error)
             return None
     
     return output
@@ -124,84 +105,6 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
 ############################################################################
 ## FILE OPERATIONS #########################################################
 ############################################################################
-
-def zip_dir(zip_dir, zip_name, output_folder=None):
-    '''zip_dir will zip up and entire zip directory
-    :param folder_path: the folder to zip up
-    :param zip_name: the name of the zip to return
-    :output_folder:
-    '''
-    tmpdir = tempfile.mkdtemp()
-    output_zip = "%s/%s" %(tmpdir,zip_name)
-    zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED, allowZip64=True)
-    for root, dirs, files in os.walk(zip_dir):
-        for file in files:
-            zf.write(os.path.join(root, file))
-    zf.close()
-    if output_folder != None:
-        shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
-        shutil.rmtree(tmpdir)
-        output_zip = "%s/%s"%(output_folder,zip_name)
-    return output_zip
-
-
-def zip_up(file_list,zip_name,output_folder=None):
-    '''zip_up will zip up some list of files into a package (.zip)
-    :param file_list: a list of files to include in the zip.
-    :param output_folder: the output folder to create the zip in. If not 
-    :param zip_name: the name of the zipfile to return.
-    specified, a temporary folder will be given.
-    '''
-    tmpdir = tempfile.mkdtemp()
-   
-    # Make a new archive    
-    output_zip = "%s/%s" %(tmpdir,zip_name)
-    zf = zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED, allowZip64=True)
-
-    # Write files to zip, depending on type
-    for filename,content in file_list.items():
-
-        bot.logger.debug("Adding %s to package...", filename)
-
-        # If it's the files list, move files into the archive
-        if filename.lower() == "files":
-            if not isinstance(content,list): 
-                content = [content]
-            for copyfile in content:
-                zf.write(copyfile,os.path.basename(copyfile))
-        # If it's a list, write to new file, and save
-        elif isinstance(content,list):
-            filey = write_file("%s/%s" %(tmpdir,filename),"\n".join(content))
-            zf.write(filey,filename)
-            os.remove(filey)
-        # If it's a dict, save to json
-        elif isinstance(content,dict):
-            filey = write_json(content,"%s/%s" %(tmpdir,filename))
-            zf.write(filey,filename)
-            os.remove(filey)
-        # If it's a string, do the same
-        elif isinstance(content,str):
-            filey = write_file("%s/%s" %(tmpdir,filename),content)
-            zf.write(filey,filename)
-            os.remove(filey)
-        # Otherwise, just write the content into a new archive
-        elif isinstance(content,bytes):
-            filey = write_file("%s/%s" %(tmpdir,filename),content.decode('utf-8'))
-            zf.write(filey,filename)
-            os.remove(filey)
-        else: 
-            zf.write(content,filename)
-
-    # Close the zip file    
-    zf.close()
-
-    if output_folder is not None:
-        shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
-        shutil.rmtree(tmpdir)
-        output_zip = "%s/%s"%(output_folder,zip_name)
-
-    return output_zip
-
 
 def write_file(filename,content,mode="w"):
     '''write_file will open a file, "filename" and write content, "content"
@@ -244,28 +147,17 @@ def read_json(filename,mode='r'):
     return data
 
 
-
-############################################################################
-## OTHER MISC. #############################################################
-############################################################################
-
-
-def calculate_folder_size(folder_path,truncate=True):
-    '''calculate_folder size recursively walks a directory to calculate
-    a total size (in MB)
-    :param folder_path: the path to calculate size for
-    :param truncate: if True, converts size to an int
+def clean_up(files):
+    '''clean up will delete a list of files, only if they exist
     '''
-    total_size = 0
-    for dirpath, dirnames, filenames in os.walk(folder_path):
-        for filey in filenames:
-            file_path = os.path.join(dirpath, filey)
-            if os.path.isfile(file_path) and not os.path.islink(file_path):
-                total_size += os.path.getsize(file_path) # this is bytes
-    size_mb = total_size / 1000000
-    if truncate == True:
-        size_mb = int(size_mb)
-    return size_mb
+    if not isinstance(files,list):
+        files = [files]
+
+    for f in files:
+        if os.path.exists(f):
+            bot.verbose3("Cleaning up %s" %f)
+            os.remove(f)
+
 
 
 def remove_unicode_dict(input_dict):
@@ -292,6 +184,7 @@ def update_dict(input_dict,key,value):
     else:
         input_dict[key] = [value]
     return input_dict
+
 
 
 def update_dict_sum(input_dict,key,increment=None,initial_value=None):
@@ -338,4 +231,3 @@ def download_repo(repo_url,destination,commit=None):
     command = "git clone %s %s" %(repo_url,destination)
     os.system(command)
     return destination
-

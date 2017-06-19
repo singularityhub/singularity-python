@@ -21,11 +21,11 @@ container_ids = collection['container_set']
 container_id = container_ids.pop()
 
 # The container manifest has all information about container
-manifest = shub.get_container(container_id)
+manifest = shub.get_manifest(container_id)
 
 # Default will download to present working directory, 
 # but we can also set download_folder to something:
-image = shub.pull_container(manifest)
+image = shub.get_container(container_id)
 
 # You can also set the download_folder or name, eg:
 image = shub.pull_container(manifest,

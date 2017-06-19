@@ -74,7 +74,7 @@ import time
 
 shub_api = "http://www.singularity-hub.org/api"
 
-from singularity.logman import bot
+from singularity.logger import bot
 
 def run_build(build_dir,params,verbose=True):
     '''run_build takes a build directory and params dictionary, and does the following:
@@ -97,18 +97,18 @@ def run_build(build_dir,params,verbose=True):
 
     os.chdir(build_dir)
     if params['branch'] != None:
-        bot.logger.info('Checking out branch %s',params['branch'])
+        bot.info('Checking out branch %s',params['branch'])
         os.system('git checkout %s' %(params['branch']))
 
     # Commit
     if params['commit'] not in [None,'']:
-        bot.logger.info('Checking out commit %s',params['commit'])
+        bot.info('Checking out commit %s',params['commit'])
         os.system('git checkout %s .' %(params['commit']))
 
     # From here on out commit is used as a unique id, if we don't have one, we use current
     else:
         params['commit'] = os.popen('git log -n 1 --pretty=format:"%H"').read()
-        bot.logger.warning("commit not specified, setting to current %s", params['commit'])
+        bot.warning("commit not specified, setting to current %s" %params['commit'])
 
     # Dump some params for the builder, in case it fails after this
     passing_params = "/tmp/params.pkl"
@@ -116,13 +116,13 @@ def run_build(build_dir,params,verbose=True):
 
     # If there is not a specfile, but is a Dockerfile, try building that
     if not os.path.exists(params['spec_file']) and os.path.exists('Dockerfile'):
-        bot.logger.warning("Build file %s not found in repository",params['spec_file'])
-        bot.logger.warning("Dockerfile found in repository, will attempt build.")
+        bot.warning("Build file %s not found in repository",params['spec_file'])
+        bot.warning("Dockerfile found in repository, will attempt build.")
         dockerfile = dockerfile_to_singularity(dockerfile_path='Dockerfile', 
                                                output_dir=build_dir)
 
         if dockerfile is not None:
-            bot.logger.info("""\n
+            bot.info("""\n
                                 --------------------------------------------------------------
                                 Dockerfile
                                 --------------------------------------------------------------
@@ -130,11 +130,11 @@ def run_build(build_dir,params,verbose=True):
 
     # Now look for spec file
     if os.path.exists(params['spec_file']):
-        bot.logger.info("Found spec file %s in repository",params['spec_file'])
+        bot.info("Found spec file %s in repository" %params['spec_file'])
 
         # If size is None, set default of 800
         if params['size'] in [None,'']:
-            bot.logger.info("""\n
+            bot.info("""\n
                             --------------------------------------------------------------
                             Size not detected for build. Will first try to estimate, and then
                             use default of 800MB padding. If your build still fails, you should 
@@ -147,10 +147,10 @@ def run_build(build_dir,params,verbose=True):
                 params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
                                                      sudopw='',
                                                      padding=params['padding'])
-                bot.logger.info("Size estimated as %s",params['size'])  
+                bot.info("Size estimated as %s" %params['size'])  
             except:
                 params['size'] = 800
-                bot.logger.info("Size estimation didn't work, using default %s",params['size'])  
+                bot.info("Size estimation didn't work, using default %s" %params['size'])  
 
         # START TIMING
         os.chdir(build_dir)
@@ -162,12 +162,12 @@ def run_build(build_dir,params,verbose=True):
                                 debug=params['debug'])
 
         final_time = (datetime.now() - start_time).seconds
-        bot.logger.info("Final time of build %s seconds.",final_time)  
+        bot.info("Final time of build %s seconds." %final_time)  
 
         # Did the container build successfully?
         test_result = test_container(image)
         if test_result['return_code'] == 255:
-            bot.logger.error("Image failed to bootstrap, cancelling build.")
+            bot.error("Image failed to bootstrap, cancelling build.")
             sys.exit(1)
 
         # Compress image
@@ -226,8 +226,8 @@ def run_build(build_dir,params,verbose=True):
     else:
         # Tell the user what is actually there
         present_files = glob("*")
-        bot.logger.error("Build file %s not found in repository",params['spec_file'])
-        bot.logger.info("Found files are %s","\n".join(present_files))
+        bot.error("Build file %s not found in repository" %params['spec_file'])
+        bot.info("Found files are %s" %"\n".join(present_files))
         # Params have been exported, will be found by log
         sys.exit(1)
 
@@ -243,7 +243,7 @@ def send_build_data(build_dir,data,response_url=None,clean_up=True):
     if response_url != None:
         finish = requests.post(response_url,data=data)    
     else:
-        bot.logger.warning("response_url set to None, skipping sending of build.")
+        bot.warning("response_url set to None, skipping sending of build.")
 
     if clean_up == True:
         shutil.rmtree(build_dir)
@@ -278,5 +278,5 @@ def send_build_close(params,response_url=None):
         # Send it back!
         return requests.post(response_url,data=response)
     
-    bot.logger.warning("Response url set to none, cannot send build close.")
+    bot.warning("Response url set to none, cannot send build close.")
     return None

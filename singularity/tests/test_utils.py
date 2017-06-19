@@ -107,14 +107,6 @@ class TestUtils(unittest.TestCase):
         self.assertTrue(whereami.endswith('singularity'))
 
 
-    def test_calculate_folder_size(self):
-        '''ensure that calculation of folder size is accurate
-        '''
-        from singularity.utils import calculate_folder_size
-        size_truncated = calculate_folder_size(self.tmpdir)
-        self.assertTrue(isinstance(size_truncated,int))
-
-
     def test_remove_uri(self):
         from singularity.utils import remove_uri
         self.assertEqual(remove_uri('docker://ubuntu'),'ubuntu')

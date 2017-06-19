@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 auth.py: authentication functions for singularity hub api
          currently no token / auth for private collections
@@ -28,38 +26,65 @@ SOFTWARE.
 
 '''
 
-from singularity.logman import bot
+from singularity.logger import bot
 import os
 import sys
 
+from singularity.utils import (
+    read_json,
+    write_json
+)
 
-def basic_auth_header(username, password):
-    '''basic_auth_header will return a base64 encoded header object to
-    generate a token
-    :param username: the username
-    :param password: the password
+import os
+import json
+import requests
+import sys
+
+
+def read_client_secrets():
+    secrets = None
+    token_file = os.environ.get("SINGULARITY_CLIENT_SECRETS",None)
+    if token_file is not None:
+        if os.path.exists(token_file):
+            secrets = read_json(token_file)
+    if secrets is None:
+        bot.error('Cannot find SINGULARITY_CLIENT_SECRETS credential file path in environment.')
+        sys.exit(1)
+    return secrets
+
+
+def authenticate():
+    '''get_access_token will return the currently active access token
+    from the client secrets file
     '''
-    s = "%s:%s" % (username, password)
-    if sys.version_info[0] >= 3:
-        s = bytes(s, 'utf-8')
-        credentials = base64.b64encode(s).decode('utf-8')
-    else:
-        credentials = base64.b64encode(s)
-    auth = {"Authorization": "Basic %s" % credentials}
-    return auth
+    token = None
+    secrets = read_client_secrets()
+    if secrets is not None:
+        token = secrets['accessToken']
+    return token
 
 
-
-def get_headers(token=None):
-    '''get_headers will return a simple default header for a json
-    post. This function will be adopted as needed.
-    :param token: an optional token to add for auth
+def refresh_access_token():
+    '''refresh access token reads in the client secrets from 
+    the token file, and update the tokens, and save back to file
     '''
-    headers = dict()
-    headers["Content-Type"] = "application/json"
-    if token!=None:
-        headers["Authorization"] = "Bearer %s" %(token)
+    token_file = os.environ.get("SINGULARITY_CLIENT_SECRETS",None)
+    secrets = read_client_secrets()
+    token = None
 
-    header_names = ",".join(list(headers.keys()))
-    bot.logger.debug("Headers found: %s",header_names)
-    return headers
+    # Query to update the token
+    if secrets is not None:
+        response = requests.post(secrets['token_uri'],
+                                 data=json.dumps({'refreshToken':secrets['refreshToken']}),
+                                 headers={'Content-Type':"application/json"})
+
+        if response.status_code == 200:
+
+            response = response.json()
+            secrets["accessToken"] = response['accessToken']
+            secrets["refreshToken"] = response['refreshToken']
+            print("Successfully refreshed access token.")
+            token_file = write_json(secrets,token_file)
+            token = secrets['accessToken']
+
+    return token

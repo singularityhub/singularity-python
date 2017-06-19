@@ -163,7 +163,7 @@ def main():
                                      size=args.size)
 
            if image is None:
-               bot.logger.error("Cannot find image. Exiting.")
+               bot.error("Cannot find image. Exiting.")
                sys.exit(1)
 
            # the user wants to make a tree
@@ -213,8 +213,8 @@ def main():
        elif args.images is not None:
 
            image1,image2 = args.images.split(',')
-           bot.logger.debug("Image1: %s",image1)
-           bot.logger.debug("Image2: %s",image2)
+           bot.debug("Image1: %s" %image1)
+           bot.debug("Image2: %s" %image2)
            image1,existed1 = get_image(image1,
                                        return_existed=True,
                                        size=args.size)
@@ -223,7 +223,7 @@ def main():
                                        size=args.size)
 
            if image1 is None or image2 is None:
-               bot.logger.error("Cannot find image. Exiting.")
+               bot.error("Cannot find image. Exiting.")
                sys.exit(1)
 
            # the user wants to make a similarity tree
@@ -255,7 +255,7 @@ def clean_up(image,existed):
     from singularity.logman import bot
     if existed == False:
         if os.path.exists(image):
-            bot.logger.info("%s created was temporary, removing",image)
+            bot.info("%s created was temporary, removing" %image)
             os.remove(image)
 
 

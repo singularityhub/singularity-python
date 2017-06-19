@@ -32,7 +32,7 @@ import re
 
 import shutil
 import simplejson
-from singularity.logman import bot
+from singularity.logger import bot
 
 from singularity.utils import (
     get_installdir,
@@ -93,7 +93,7 @@ def get_build_template(template_name,params=None,to_file=None):
     template_folder = "%s/build/scripts" %(base)
     template_file = "%s/%s" %(template_folder,template_name)
     if os.path.exists(template_file):
-        bot.logger.debug("Found template %s",template_file)
+        bot.debug("Found template %s" %template_file)
 
         # Implement when needed - substitute params here
         # Will need to read in file instead of copying below
@@ -101,7 +101,7 @@ def get_build_template(template_name,params=None,to_file=None):
  
         if to_file != None:
             shutil.copyfile(template_file,to_file)
-            bot.logger.debug("Template file saved to %s",to_file)
+            bot.debug("Template file saved to %s" %to_file)
             return to_file
 
         # If the user wants a string
@@ -110,7 +110,7 @@ def get_build_template(template_name,params=None,to_file=None):
 
 
     else:
-        bot.logger.warning("Template %s not found.",template_file)
+        bot.warning("Template %s not found." %template_file)
         return None
 
 
@@ -132,10 +132,10 @@ def get_singularity_version(singularity_version=None):
         try:
             cmd = ['singularity','--version']
             singularity_version = run_command(cmd,error_message="Cannot determine Singularity version!").decode('utf-8').strip('\n')
-            bot.logger.info("Singularity %s being used.",singularity_version)
+            bot.info("Singularity %s being used." %singularity_version)
         except:
             singularity_version = None
-            bot.logger.warning("Singularity version not found, so it's likely not installed.")
+            bot.warning("Singularity version not found, so it's likely not installed.")
 
     return singularity_version
 
@@ -188,7 +188,7 @@ def sniff_extension(file_path,verbose=True):
         mime_type = mime_types['txt']
 
     if verbose==True:
-        bot.logger.info("%s --> %s", file_path, mime_type)
+        bot.info("%s --> %s" %(file_path, mime_type))
 
     return mime_type
 
@@ -203,5 +203,5 @@ def get_script(script_name):
     if os.path.exists(script_path):
         return script_path
     else:
-        bot.logger.error("Script %s is not included in singularity-python!", script_path)
+        bot.error("Script %s is not included in singularity-python!" %script_path)
         return None

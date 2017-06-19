@@ -1,4 +1,7 @@
+#!/usr/bin/python
+
 '''
+Test package utils functions for singularity python
 
 The MIT License (MIT)
 
@@ -24,8 +27,34 @@ SOFTWARE.
 
 '''
 
-from singularity.version import __version__
+from singularity.utils import get_installdir
 
-__all__ = ['analysis', 'build', 'views', 'api',
-           'app', 'cli', 'logger', 'scripts',
-           'utils', '__version__']
+import unittest
+import tempfile
+import shutil
+import json
+import os
+
+class TestUtils(unittest.TestCase):
+
+    def setUp(self):
+        self.pwd = get_installdir()
+        self.tmpdir = tempfile.mkdtemp()
+        self.spec = "%s/tests/data/Singularity" %(self.pwd)
+        print("\n---START----------------------------------------")
+        
+    def tearDown(self):
+        shutil.rmtree(self.tmpdir)
+        print("\n---END------------------------------------------")
+
+
+    def test_calculate_folder_size(self):
+        '''ensure that calculation of folder size is accurate
+        '''
+        from singularity.package.utils import calculate_folder_size
+        size_truncated = calculate_folder_size(self.tmpdir)
+        self.assertTrue(isinstance(size_truncated,int))
+
+
+if __name__ == '__main__':
+    unittest.main()
