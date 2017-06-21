@@ -36,7 +36,7 @@ from singularity.utils import (
     read_file
 )
 
-from singularity.logman import bot
+from singularity.logger import bot
 import json
 
 
@@ -283,10 +283,10 @@ def dockerfile_to_singularity(dockerfile_path, output_dir=None):
             return build_file
 
         except:
-            bot.logger.error("Error generating Dockerfile from %s.", dockerfile_path)
+            bot.error("Error generating Dockerfile from %s." %dockerfile_path)
 
     # If we make it here, something didn't work
-    bot.logger.error("Could not find %s.", dockerfile_path)
+    bot.error("Could not find %s." %dockerfile_path)
     return build_file
 
 

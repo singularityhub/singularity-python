@@ -33,7 +33,7 @@ import json
 import os
 import re
 import requests
-from singularity.logman import bot
+from singularity.logger import bot
 from singularity.utils import get_installdir
 from singularity.analysis.utils import get_packages
 from singularity.views.utils import get_container_contents
@@ -83,7 +83,7 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     comparisons = dict()
 
     for b in by:
-        bot.logger.debug("Starting comparisons for %s",b)
+        bot.debug("Starting comparisons for %s" %b)
         df = pandas.DataFrame(columns=packages_set)
         for package2 in packages_set:
             sim = calculate_similarity(container1=container1,
@@ -91,7 +91,7 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
                                        by=b)[b]
            
             name1 = os.path.basename(package2).replace('.img.zip','')
-            bot.logger.debug("container vs. %s: %s" %(name1,sim))
+            bot.debug("container vs. %s: %s" %(name1,sim))
             df.loc["container",package2] = sim
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]
         comparisons[b] = df
@@ -263,7 +263,7 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
     comparisons = dict()
 
     for b in by:
-        bot.logger.debug("Starting comparisons for %s",b)
+        bot.debug("Starting comparisons for %s" %b)
         df = pandas.DataFrame(index=packages_set1,columns=packages_set2)
         for package1 in packages_set1:
             for package2 in packages_set2:
@@ -276,7 +276,7 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
 
                 name1 = os.path.basename(package1).replace('.img.zip','')
                 name2 = os.path.basename(package2).replace('.img.zip','')
-                bot.logger.debug("%s vs. %s: %s" %(name1,name2,sim))
+                bot.debug("%s vs. %s: %s" %(name1,name2,sim))
                 df.loc[package1,package2] = sim
         df.index = [os.path.basename(x).replace('.img.zip','') for x in df.index.tolist()]
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]

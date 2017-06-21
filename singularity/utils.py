@@ -103,6 +103,25 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
 
 
 ############################################################################
+## FOLDER OPERATIONS #########################################################
+############################################################################
+
+
+def mkdir_p(path):
+    '''mkdir_p attempts to get the same functionality as mkdir -p
+    :param path: the path to create.
+    '''
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            bot.error("Error creating path %s, exiting." %path)
+            sys.exit(1)
+
+
+############################################################################
 ## FILE OPERATIONS #########################################################
 ############################################################################
 
@@ -157,54 +176,6 @@ def clean_up(files):
         if os.path.exists(f):
             bot.verbose3("Cleaning up %s" %f)
             os.remove(f)
-
-
-
-def remove_unicode_dict(input_dict):
-    '''remove unicode keys and values from dict, encoding in utf8
-    '''
-    #if isinstance(input_dict, basestring):
-    #    return str(input_dict)
-    if isinstance(input_dict, collections.Mapping):
-        return dict(map(remove_unicode_dict, input_dict.iteritems()))
-    elif isinstance(input_dict, collections.Iterable):
-        return type(input_dict)(map(remove_unicode_dict, input_dict))
-    else:
-        return input_dict
-
-
-def update_dict(input_dict,key,value):
-    '''update_dict will update lists in a dictionary. If the key is not included,
-    if will add as new list. If it is, it will append.
-    :param input_dict: the dict to update
-    :param value: the value to update with
-    '''
-    if key in input_dict:
-        input_dict[key].append(value)
-    else:
-        input_dict[key] = [value]
-    return input_dict
-
-
-
-def update_dict_sum(input_dict,key,increment=None,initial_value=None):
-    '''update_dict sum will increment a dictionary key 
-    by an increment, and add a value of 0 if it doesn't exist
-    :param input_dict: the dict to update
-    :param increment: the value to increment by. Default is 1
-    :param initial_value: value to start with. Default is 0
-    '''
-    if increment == None:
-        increment = 1
-
-    if initial_value == None:
-        initial_value = 0
-
-    if key in input_dict:
-        input_dict[key] += increment
-    else:
-        input_dict[key] = initial_value
-    return input_dict
 
 
 def format_container_name(name,special_characters=None):

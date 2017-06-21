@@ -11,3 +11,8 @@ from .build import (
     package
 )
  
+from .manager import (
+    list_packages,
+    get_packages,
+    get_package_base
+)

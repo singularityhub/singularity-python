@@ -142,7 +142,7 @@ def main():
         sys.exit(0)
 
     # Initialize the message bot, with level above
-    from singularity.logman import bot
+    from singularity.logger import bot
     from singularity.utils import check_install
     from singularity.cli import get_image
 
@@ -252,7 +252,7 @@ def clean_up(image,existed):
     '''clean up will remove an image file if existed is False (meaning it was
     created as temporary for the script
     '''
-    from singularity.logman import bot
+    from singularity.logger import bot
     if existed == False:
         if os.path.exists(image):
             bot.info("%s created was temporary, removing" %image)

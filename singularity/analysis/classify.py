@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 '''
 classify.py: part of singularity package
@@ -28,42 +27,33 @@ SOFTWARE.
 
 '''
 
-from glob import glob
-import json
+
 import os
 import re
-import requests
-from singularity.cli import Singularity
-from singularity.logman import bot
+from singularity.logger import bot
 from singularity.analysis.compare import (
     compare_packages,
     compare_containers,
     container_similarity_vector
 )
 
-from singularity.analysis.utils import get_package_base
-from singularity.package import package as make_package
+from singularity.package import (
+    package as make_package,
+    get_package_base
+)
 from singularity.utils import (
     get_installdir,
     remove_uri,
-    read_file,
+    read_file
+)
+
+from .utils import (
     update_dict,
     update_dict_sum
 )
 
 from singularity.views.utils import get_container_contents
-
-from singularity.package import (
-    load_package,
-    package
-)
-
-import numpy
-import pandas
-import shutil
 import sys
-import tempfile
-import zipfile
 
 
 
@@ -186,13 +176,13 @@ def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,d
     tags = []
     for search_folder in search_folders:
         if search_folder in diff:
-            bot.logger.info("Adding tags for folder %s",search_folder)
+            bot.info("Adding tags for folder %s" %search_folder)
             tags = tags + diff[search_folder]
         else:
-            bot.logger.info("Did not find folder %s in difference.",search_folder)
+            bot.info("Did not find folder %s in difference." %search_folder)
 
     if return_unique == True:
-        tags = numpy.unique(tags).tolist()
+        tags = list(set(tags))
     return tags
 
 
@@ -226,7 +216,7 @@ def file_counts(container=None,patterns=None,image_package=None,sudopw=None,diff
     for folder, items in diff.items():
         for pattern in patterns:
             count += len([x for x in items if re.search(pattern.lower(),x.lower())])
-    bot.logger.info("Total files matching patterns is %s",count)
+    bot.info("Total files matching patterns is %s" %count)
     return count
 
 
