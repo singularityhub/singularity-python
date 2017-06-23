@@ -26,7 +26,8 @@ SOFTWARE.
 import os
 import sys
 
-ABRT = -4
+ABORT = -5
+CRITICAL = -4
 ERROR = -3
 WARNING = -2
 LOG = -1
@@ -47,6 +48,7 @@ class SingularityMessage:
         self.outputStream = sys.stdout
         self.colorize = self.useColor()
         self.colors = {ABRT:"\033[31m",    # dark red
+                       CRITICAL:"\033[31m",
                        ERROR: "\033[91m",  # red
                        WARNING:"\033[93m", # dark yellow
                        LOG:"\033[95m",     # purple
@@ -212,6 +214,9 @@ class SingularityMessage:
 
     def abort(self,message):
         self.emit(ABRT,message,'ABRT')        
+
+    def critical(self,message):
+        self.emit(CRITICAL,message,'CRITICAL')
 
     def error(self,message):
         self.emit(ERROR,message,'ERROR')        
