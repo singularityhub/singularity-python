@@ -99,6 +99,8 @@ def main():
                                  uri=args.uri,
                                  name=args.name)        
 
+if len(sys.argv) == 1:
+    parser.print_help()
 
 if __name__ == '__main__':
     main()
