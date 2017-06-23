@@ -254,7 +254,34 @@ def get_logging_level():
     MESSAGELEVEL. if MESSAGELEVEL is not set, the maximum level
     (5) is assumed (all messages).     
     '''
-    return int(os.environ.get("MESSAGELEVEL",5))
+    try:
+        level = int(os.environ.get("MESSAGELEVEL", DEBUG))
+
+    except ValueError:
+
+        level = os.environ.get("MESSAGELEVEL", DEBUG)
+        if level == "CRITICAL":
+            return CRITICAL
+        elif level == "ABORT":
+            return ABORT
+        elif level == "ERROR":
+            return ERROR
+        elif level == "WARNING":
+            return WARNING
+        elif level == "LOG":
+            return LOG
+        elif level == "INFO":
+            return INFO
+        elif level == "QUIET":
+            return QUIET
+        elif level.startswith("VERBOSE"):
+            return VERBOSE3
+        elif level == "LOG":
+            return LOG
+        elif level == "DEBUG":
+            return DEBUG
+     
+    return level
     
 
 def get_user_color_preference():
