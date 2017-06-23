@@ -47,7 +47,7 @@ class SingularityMessage:
         self.errorStream = sys.stderr
         self.outputStream = sys.stdout
         self.colorize = self.useColor()
-        self.colors = {ABRT:"\033[31m",    # dark red
+        self.colors = {ABORT:"\033[31m",    # dark red
                        CRITICAL:"\033[31m",
                        ERROR: "\033[91m",  # red
                        WARNING:"\033[93m", # dark yellow
@@ -88,7 +88,7 @@ class SingularityMessage:
     def emitError(self,level):
         '''determine if a level should print to
         stderr, includes all levels but INFO and QUIET'''
-        if level in [ABRT,
+        if level in [ABORT,
                      ERROR,
                      WARNING,
                      VERBOSE,
@@ -204,7 +204,7 @@ class SingularityMessage:
         # Only show progress bar for level > min_level
         if self.level > min_level:
             percent = "%5s" %("{0:.1f}").format(percent)
-            output = '\r' + prefix +  " |%s| %s%s %s" % (bar, percent, '%', suffix)            
+            output = '\r' + prefix +  " |%s| %s%s %s" % (bar, percent, '%', suffix)
             sys.stdout.write(output),
             if iteration == total and carriage_return: 
                 sys.stdout.write('\n')
@@ -213,37 +213,37 @@ class SingularityMessage:
 
 
     def abort(self,message):
-        self.emit(ABRT,message,'ABRT')        
+        self.emit(ABORT,message,'ABORT')
 
     def critical(self,message):
         self.emit(CRITICAL,message,'CRITICAL')
 
     def error(self,message):
-        self.emit(ERROR,message,'ERROR')        
+        self.emit(ERROR,message,'ERROR')
 
     def warning(self,message):
-        self.emit(WARNING,message,'WARNING')        
+        self.emit(WARNING,message,'WARNING')
 
     def log(self,message):
-        self.emit(LOG,message,'LOG')        
+        self.emit(LOG,message,'LOG')
 
     def info(self,message):
-        self.emit(INFO,message)        
+        self.emit(INFO,message)
 
     def verbose(self,message):
-        self.emit(VERBOSE,message,"VERBOSE")        
+        self.emit(VERBOSE,message,"VERBOSE")
 
     def verbose1(self,message):
-        self.emit(VERBOSE,message,"VERBOSE1")        
+        self.emit(VERBOSE,message,"VERBOSE1")
 
     def verbose2(self,message):
-        self.emit(VERBOSE2,message,'VERBOSE2')        
+        self.emit(VERBOSE2,message,'VERBOSE2')
 
     def verbose3(self,message):
-        self.emit(VERBOSE3,message,'VERBOSE3')        
+        self.emit(VERBOSE3,message,'VERBOSE3')
 
     def debug(self,message):
-        self.emit(DEBUG,message,'DEBUG')        
+        self.emit(DEBUG,message,'DEBUG')
 
     def is_quiet(self):
         '''is_quiet returns true if the level is under 1
