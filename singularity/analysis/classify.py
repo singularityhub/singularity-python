@@ -38,6 +38,7 @@ from singularity.analysis.compare import (
 )
 
 from singularity.package import (
+    get_container_contents,
     package as make_package,
     get_package_base
 )
@@ -52,7 +53,6 @@ from .utils import (
     update_dict_sum
 )
 
-from singularity.views.utils import get_container_contents
 import sys
 
 

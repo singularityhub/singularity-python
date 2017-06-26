@@ -1,4 +1,4 @@
-from .tree import (
+from .trees import (
     container_difference as container_difference_tree,
     container_similarity as container_similarity_tree,
     container_tree,

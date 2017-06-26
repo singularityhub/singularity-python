@@ -32,7 +32,6 @@ import json
 
 from singularity.logger import bot
 
-from singularity.views.utils import get_container_contents
 from singularity.analysis.compare import (
     calculate_similarity,
     compare_containers,
@@ -41,6 +40,7 @@ from singularity.analysis.compare import (
 
 
 from singularity.package import (
+    gt_container_contents
     load_package,
     package
 )

@@ -32,7 +32,7 @@ from singularity.logger import bot
 from singularity.utils import get_installdir
 from singularity.package import (
     get_packages,
-    get_container_contents
+    get_container_contents,
     load_package,
     package as make_package
 )
