@@ -65,7 +65,6 @@ def get_parser():
     # Build
     build_parser = subparsers.add_parser("build")
 
-
     parser.add_argument("--version", dest='version', 
                         help="show software version", 
                         default=False, action='store_true')
@@ -122,7 +121,9 @@ def main():
 
 
 if len(sys.argv) == 1:
+    parser = get_parser()
     parser.print_help()
+    sys.exit(1)
 
 if __name__ == '__main__':
     main()
