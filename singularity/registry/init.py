@@ -68,6 +68,11 @@ def generate_registry(base,
                                   uri=uri,
                                   name=name,
                                   storage=storage)
+
+    bot.debug("Adding CI templates to recipes folder.")
+    copied = get_template(templates=['ci/.travis.yml'],
+                          output_folder="%s/recipes" %base)
+
     return config_file
 
 
