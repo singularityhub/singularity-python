@@ -27,10 +27,8 @@ SOFTWARE.
 
 from singularity.logger import bot
 
-from .utils import (
-    calculate_folder_size,
-    zip_up
-)
+from .utils import zip_up
+from .size import calculate_folder_size
 from singularity.utils import (
     format_container_name,
     read_file, 

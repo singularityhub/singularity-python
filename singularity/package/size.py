@@ -25,8 +25,6 @@ SOFTWARE.
 
 '''
 
-
-from .build import build_from_spec
 from singularity.logger import bot
 import os
 
@@ -37,6 +35,8 @@ def estimate_image_size(spec_file,sudopw=None,padding=None):
     :param spec_file: the spec file, called "Singuarity"
     :param padding: the padding (MB) to add to the image
     '''
+    from .build import build_from_spec
+    
     if padding == None:
         padding = 200
 
