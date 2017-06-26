@@ -102,6 +102,7 @@ def main():
     if args.command == "init":
         from .init import generate_registry
 
+
         if args.base is None:
             bot.info("Please provide a registry base with --base, recommended is /opt/shub")
             sys.exit(1)
@@ -114,16 +115,19 @@ def main():
             bot.error("Please provide a registry --name to generate.")
             sys.exit(1)
 
-        base = generate_registry(base=args.generate,
+        base = generate_registry(base=args.base,
                                  storage=args.storage,
                                  uri=args.uri,
                                  name=args.name)        
 
-
-if len(sys.argv) == 1:
+def help():
     parser = get_parser()
     parser.print_help()
+    print("For help with an action, type [action] --help")
     sys.exit(1)
+
+if len(sys.argv) == 1:
+    help()
 
 if __name__ == '__main__':
     main()
