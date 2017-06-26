@@ -39,18 +39,32 @@ import os
 def get_parser():
     parser = argparse.ArgumentParser(
     description="Singularity Registry controller")
+    subparsers = parser.add_subparsers(help='registry actions',
+                                       title='actions',
+                                       description='action for the registry',
+                                       dest="command")
+    
+    # Generate
+    init_parser = subparsers.add_parser("init")
+    init_parser.add_argument("--base", dest='base', 
+                             help="full path to singularity registry base, recommended is /opt/shub", 
+                             type=str, default=None)
 
-    parser.add_argument("--generate", dest='generate', 
-                        help="full path to singularity registry base", 
-                        type=str, default=None)
+    init_parser.add_argument("--storage", dest='storage', 
+                             help="base for storage of containers, defaults to /opt/shub/storage", 
+                             type=str, default=None)
 
-    parser.add_argument("--uri", dest='uri', 
-                        help="uri for your registry <10 characters lowercase, optional -", 
-                        type=str, default=None)
+    init_parser.add_argument("--uri", dest='uri', 
+                             help="uri for your registry <10 characters lowercase, optional -", 
+                             type=str, default=None)
 
-    parser.add_argument("--name", dest='name', 
-                        help="human friendly name of your registry", 
-                        type=str, default=None)
+    init_parser.add_argument("--name", dest='name', 
+                             help="human friendly name of your registry", 
+                             type=str, default=None)
+ 
+    # Build
+    build_parser = subparsers.add_parser("build")
+
 
     parser.add_argument("--version", dest='version', 
                         help="show software version", 
@@ -85,19 +99,27 @@ def main():
 
     # Initialize the message bot, with level above
     from singularity.logger import bot
-    from .utils import generate_registry
 
-    # If we are given an image, ensure full path
-    if args.generate is not None:
+    if args.command == "init":
+        from .init import generate_registry
+
+        if args.base is None:
+            bot.info("Please provide a registry base with --base, recommended is /opt/shub")
+            sys.exit(1)
+
         if args.uri is None:
             bot.error("Please provide a registry --uri to generate.")
             sys.exit(1)
+
         if args.name is None:
             bot.error("Please provide a registry --name to generate.")
             sys.exit(1)
+
         base = generate_registry(base=args.generate,
+                                 storage=args.storage,
                                  uri=args.uri,
                                  name=args.name)        
+
 
 if len(sys.argv) == 1:
     parser.print_help()

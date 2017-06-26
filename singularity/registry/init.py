@@ -35,39 +35,46 @@ import os
 def generate_registry(base,
                       uri,
                       name,
-                      container_base=None,
-                      recipe_base=None):
+                      storage=None):
+
     '''initalize a registry, meaning generating the root folder with
     subfolders for containers and recipes, along with the config file
     at the root
     '''
+    if storage is None:
+        storage = "%s/storage" %(base) 
 
-    if container_base is None:
-        container_base = "containers"
-    if recipe_base is None:
-        recipe_base = "recipes"
+    container_base = "%s/containers" %storage
 
-    if os.path.exists(base):
-        bot.error("%s already exists, will not overwrite." %base)
+    if os.path.exists(base) or os.path.exists(storage):
+        bot.error("%s or %s already exists, will not overwrite." %(base,storage))
         sys.exit(1)
 
+    # Make directories for containers, builder, recipes
     mkdir_p(container_base)
-    mkdir_p(recipe_base)
-    bot.info("Created container and recipe home at %s" %base)
+    for subfolder in ['builder','recipes']:
+        os.mkdir('%s/%s' %(base,subfolder))
+    
+    # /[base]/builder/templates
+    os.mkdir("%s/builder/templates")
+
+    bot.info("BASE: %s" %base)
+    bot.info(" --> RECIPES: %s/recipes" %base)
+    bot.info(" --> BUILDER: %s/builder\n" %base)
+    bot.info("STORAGE: %s" %storage)
+    bot.info(" --> CONTAINERS: %s/containers" %storage)
 
     config_file = generate_config(base=base,
                                   uri=uri,
                                   name=name,
-                                  container_base=container_base,
-                                  recipe_base=recipe_base)
+                                  storage=storage)
     return config_file
 
 
 def generate_config(base,
                     uri,
                     name,
-                    container_base,
-                    recipe_base,
+                    storage,
                     filename=None):
 
     '''generate config will write a config file at the registry
@@ -75,15 +82,17 @@ def generate_config(base,
     '''
 
     if filename is None:
-        filename = '.shub'
+        filename = 'config.json'
+    filename = os.path.basename(filename)
 
     config = { 
-                "STORAGE_BASE": container_base,
-                "RECIPE_BASE":  recipe_base,
+                "REGISTRY_BASE":  base,
+                "STORAGE_BASE": storage,
                 "REGISTRY_URI": uri,
                 "REGISTRY_NAME": name 
              }
 
     config_file = "%s/%s" %(base,filename)
+    bot.debug("Generating config file %s" %config_file)
     write_json(config,config_file)
     return config_file

@@ -95,7 +95,7 @@ class Client(ApiConnection):
                 bot.error('Error extracting image, cleaning up.')
                 clean_up([image_file,"%s.gz" %image_file])
 
-    return image_file
+        return image_file
 
 
     def get_collection(self,container_name):

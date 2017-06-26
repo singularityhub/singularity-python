@@ -93,14 +93,14 @@ def get_memory_tar(image_path):
     return (file_object,tar)
 
 
-def get_image_tar(image_path,write_file=True,S=None)
+def get_image_tar(image_path,write_file=True,S=None):
     '''get an image tar, either written in memory or to
     the file system.
     '''
     file_obj = None
 
     # Singularity 2.3 and up
-    if not write_file False:
+    if not write_file:
         file_obj,tar = get_memory_tar(image_path)
 
     # Singularity < version 2.3

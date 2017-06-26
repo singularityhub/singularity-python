@@ -79,7 +79,7 @@ def get_level(level,version=None,include_files=None,skip_files=None):
     if level.upper() in level_names:
         level = levels[level]
     else:
-        bot.warning("%s is not a valid level. Options are %s",%(level.upper(),
+        bot.warning("%s is not a valid level. Options are %s"  %(level.upper(),
                                                                 "\n".join(levels)))
         return None
 
