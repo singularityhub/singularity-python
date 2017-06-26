@@ -23,6 +23,7 @@ SOFTWARE.
 
 '''
 
+from singularity.logger import bot
 from singularity.utils import (
     mkdir_p,
     write_json
@@ -56,7 +57,7 @@ def generate_registry(base,
         os.mkdir('%s/%s' %(base,subfolder))
     
     # /[base]/builder/templates
-    os.mkdir("%s/builder/templates")
+    os.mkdir("%s/builder/templates" %base)
 
     bot.info("BASE: %s" %base)
     bot.info(" --> RECIPES: %s/recipes" %base)
