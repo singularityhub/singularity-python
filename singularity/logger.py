@@ -230,6 +230,9 @@ class SingularityMessage:
     def info(self,message):
         self.emit(INFO,message)
 
+    def newline(self):
+        return self.info(""):
+
     def verbose(self,message):
         self.emit(VERBOSE,message,"VERBOSE")
 

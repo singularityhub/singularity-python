@@ -55,7 +55,7 @@ def get_parser():
                              type=str, default=None)
 
     init_parser.add_argument("--uri", dest='uri', 
-                             help="uri for your registry <10 characters lowercase, optional -", 
+                             help="uri for your registry under 10 chars lowercase", 
                              type=str, default=None)
 
     init_parser.add_argument("--name", dest='name', 
@@ -90,7 +90,7 @@ def main():
 
     # if environment logging variable not set, make silent
     if args.debug is False:
-        os.environ['MESSAGELEVEL'] = "CRITICAL"
+        os.environ['MESSAGELEVEL'] = "DEBUG"
 
     if args.version is True:
         print(singularity.__version__)
@@ -102,18 +102,14 @@ def main():
     if args.command == "init":
         from .init import generate_registry
 
-
         if args.base is None:
-            bot.info("Please provide a registry base with --base, recommended is /opt/shub")
-            sys.exit(1)
+            subcommand_help("Please provide a registry base with --base, recommended is /opt/shub","init")            
 
         if args.uri is None:
-            bot.error("Please provide a registry --uri to generate.")
-            sys.exit(1)
+            subcommand_help("Please provide a registry --uri to generate.","init")
 
         if args.name is None:
-            bot.error("Please provide a registry --name to generate.")
-            sys.exit(1)
+            subcommand_help("Please provide a registry --name to generate.","init")
 
         base = generate_registry(base=args.base,
                                  storage=args.storage,
@@ -124,6 +120,12 @@ def help():
     parser = get_parser()
     parser.print_help()
     print("For help with an action, type [action] --help")
+    sys.exit(1)
+
+def subcommand_help(message,command):
+    bot.info(message)
+    bot.info("-------------------------------------------------------------")
+    bot.info("For help with %s, singularity.registry %s --help" %(command,command))
     sys.exit(1)
 
 if len(sys.argv) == 1:

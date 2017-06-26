@@ -28,6 +28,7 @@ from singularity.utils import (
     mkdir_p,
     write_json
 )
+from .template import get_template
 from glob import glob
 import sys
 import os
@@ -59,11 +60,13 @@ def generate_registry(base,
     # /[base]/builder/templates
     os.mkdir("%s/builder/templates" %base)
 
+    bot.newline()
     bot.info("BASE: %s" %base)
-    bot.info(" --> RECIPES: %s/recipes" %base)
     bot.info(" --> BUILDER: %s/builder\n" %base)
+    bot.info(" --> RECIPES: %s/builder/recipes" %base)
     bot.info("STORAGE: %s" %storage)
     bot.info(" --> CONTAINERS: %s/containers" %storage)
+    bot.newline()
 
     config_file = generate_config(base=base,
                                   uri=uri,
