@@ -28,6 +28,7 @@ SOFTWARE.
 '''
 
 import collections
+import errno
 import os
 import re
 import requests
