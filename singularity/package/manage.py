@@ -31,6 +31,7 @@ import re
 
 from singularity.logger import bot
 from singularity.utils import get_installdir
+import json
 import sys
 
 install_dir = get_installdir()
@@ -73,3 +74,55 @@ def get_package_base():
     '''returns base folder of packages'''
     return "%s/packages/data" %(install_dir)
 
+
+def list_package(package_path):
+    '''list_package will list the contents of a package, without reading anything into memory
+    :package_path: the full path to the package
+    '''
+    zf = zipfile.ZipFile(package_path, 'r')
+    return zf.namelist()
+
+
+def load_package(package_path,get=None):
+    '''load_package will return the contents of a package, read into memory
+    :param package_path: the full path to the package
+    :param get: the files to load. If none specified, all things loaded
+    '''
+    if get == None:
+        get = list_package(package_path)
+
+    # Open the zipfile
+    zf = zipfile.ZipFile(package_path, 'r')
+
+    # The user might have provided a string and not a list
+    if isinstance(get,str): 
+        get = [get]
+
+    retrieved = dict()
+
+    for g in get:
+
+        filename,ext = os.path.splitext(g)
+
+        # Extract image
+        if ext in [".img"]:
+            tmpdir = tempfile.mkdtemp()
+            print("Extracting image %s to %s..." %(g,tmpdir))
+            image_extracted_path = zf.extract(g,tmpdir)
+            retrieved[g] = image_extracted_path
+
+
+        # Extract text
+        elif ext in [".txt"] or g == "runscript":
+            retrieved[g] = zf.read(g).decode('utf-8').split('\n')
+        elif g in ["VERSION","NAME"]:
+            retrieved[g] = zf.read(g).decode('utf-8')
+
+        # Extract json or metadata
+        elif ext in [".json"]:
+            retrieved[g] = json.loads(zf.read(g).decode('utf-8'))
+
+        else:
+            bot.debug("Unknown extension %s, skipping %s" %(ext,g))
+
+    return retrieved

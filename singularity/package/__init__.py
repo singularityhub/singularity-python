@@ -6,13 +6,12 @@ from .size import estimate_image_size
 
 from .build import (
     build_from_spec,
-    list_package,
-    load_package,
     package
 )
  
-from .manager import (
-    list_packages,
+from .manage import (
+    list_package,
+    load_package,
     get_packages,
     get_package_base
 )
