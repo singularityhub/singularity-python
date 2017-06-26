@@ -1,0 +1,27 @@
+language: python
+
+addons:
+  apt:
+    packages:
+      - python-pip
+
+sudo: true
+
+os: linux
+
+compiler:
+  - gcc
+
+before_install:
+  - sudo sed -i -e 's/^Defaults\tsecure_path.*$//' /etc/sudoers
+  - cd /tmp && git clone -b development https://www.github.com/singularityware/singularity.git && cd singularity
+  - echo $PWD && ls
+  - ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
+  - cd $TRAVIS_BUILD_DIR/
+
+install:
+  - singularity create container.img
+  - sudo singularity bootstrap container.img Singularity 
+
+script:
+  - ./container.img

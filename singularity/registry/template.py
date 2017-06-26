@@ -23,9 +23,11 @@ SOFTWARE.
 
 '''
 
+from singularity.logger import bot
 from singularity.utils import (
     read_file,
     write_file,
+    mkdir_p,
     get_installdir,
     write_json
 )
@@ -44,14 +46,15 @@ def get_template(templates,output_folder):
         bot.error("%s does not exist, please create first." %output_folder)
     sys.exit(1)    
 
-    templates_base = "%s/registry/templates"
+    templates_base = "%s/registry/templates" %here
     copied = []
     if not isinstance(templates,list):
         templates = [templates]
 
     for template in templates:
         path = "%s/%s" %(templates_base,template)
-        finished = "%s/%s" %(output_folder,template)
+        filename = os.path.basename(template)
+        finished = "%s/%s" %(output_folder,filename)
         if os.path.exists(path):
             shutil.copyfile(path,finished)
             copied.append(finished)

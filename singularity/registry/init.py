@@ -54,10 +54,7 @@ def generate_registry(base,
 
     # Make directories for containers, builder, recipes
     mkdir_p(container_base)
-    for subfolder in ['builder','recipes']:
-        os.mkdir('%s/%s' %(base,subfolder))
-    
-    # /[base]/builder/templates
+    mkdir_p('%s/builder/recipes' %base)
     os.mkdir("%s/builder/templates" %base)
 
     bot.newline()
@@ -76,7 +73,7 @@ def generate_registry(base,
     templates=['ci/.travis.yml','vc/README.md']
     bot.debug("Adding templates to recipes folder.")
     copied = get_template(templates=templates,
-                          output_folder="%s/recipes" %base)
+                          output_folder="%s/builder/recipes" %base)
 
     return config_file
 

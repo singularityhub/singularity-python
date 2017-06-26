@@ -231,7 +231,7 @@ class SingularityMessage:
         self.emit(INFO,message)
 
     def newline(self):
-        return self.info(""):
+        return self.info("")
 
     def verbose(self,message):
         self.emit(VERBOSE,message,"VERBOSE")
