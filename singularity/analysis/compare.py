@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 compare.py: part of singularity package
 functions to compare packages and images
@@ -28,27 +26,19 @@ SOFTWARE.
 
 '''
 
-from glob import glob
-import json
 import os
 import re
-import requests
 from singularity.logger import bot
 from singularity.utils import get_installdir
-from singularity.analysis.utils import get_packages
-from singularity.views.utils import get_container_contents
-from singularity.reproduce import get_memory_tar
-
 from singularity.package import (
+    get_packages,
+    get_container_contents
     load_package,
     package as make_package
 )
+from singularity.reproduce import get_memory_tar
 
 import pandas
-import shutil
-import sys
-import tempfile
-import zipfile
 
 
 ###################################################################################
@@ -282,34 +272,4 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]
         comparisons[b] = df
     return comparisons
-
-
-###################################################################################
-# METRICS #########################################################################
-###################################################################################
-
-
-def information_coefficient(total1,total2,intersect):
-    '''a simple jacaard (information coefficient) to compare two lists of overlaps/diffs
-    '''
-    total = total1 + total2
-    return 2.0*len(intersect) / total
-
-
-
-def RSA(m1,m2):
-    '''RSA analysis will compare the similarity of two matrices
-    '''
-    from scipy.stats import pearsonr
-    import scipy.linalg
-    import numpy
-
-    # This will take the diagonal of each matrix (and the other half is changed to nan) and flatten to vector
-    vectorm1 = m1.mask(numpy.triu(numpy.ones(m1.shape)).astype(numpy.bool)).values.flatten()
-    vectorm2 = m2.mask(numpy.triu(numpy.ones(m2.shape)).astype(numpy.bool)).values.flatten()
-    # Now remove the nans
-    m1defined = numpy.argwhere(~numpy.isnan(numpy.array(vectorm1,dtype=float)))
-    m2defined = numpy.argwhere(~numpy.isnan(numpy.array(vectorm2,dtype=float)))
-    idx = numpy.intersect1d(m1defined,m2defined)
-    return pearsonr(vectorm1[idx],vectorm2[idx])[0]
 

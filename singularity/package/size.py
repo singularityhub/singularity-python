@@ -26,9 +26,9 @@ SOFTWARE.
 '''
 
 
-from .utils import calculate_folder_size
 from .build import build_from_spec
 from singularity.logger import bot
+import os
 
 def estimate_image_size(spec_file,sudopw=None,padding=None):
     '''estimate_image_size will generate an image in a directory, and add
@@ -54,3 +54,22 @@ def estimate_image_size(spec_file,sudopw=None,padding=None):
     padded_size = original_size + padding
     bot.debug("Size with padding will be %s" %padded_size)
     return padded_size
+
+
+
+def calculate_folder_size(folder_path,truncate=True):
+    '''calculate_folder size recursively walks a directory to calculate
+    a total size (in MB)
+    :param folder_path: the path to calculate size for
+    :param truncate: if True, converts size to an int
+    '''
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(folder_path):
+        for filey in filenames:
+            file_path = os.path.join(dirpath, filey)
+            if os.path.isfile(file_path) and not os.path.islink(file_path):
+                total_size += os.path.getsize(file_path) # this is bytes
+    size_mb = total_size / 1000000
+    if truncate == True:
+        size_mb = int(size_mb)
+    return size_mb

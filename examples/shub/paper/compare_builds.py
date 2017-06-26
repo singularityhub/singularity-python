@@ -266,7 +266,8 @@ data = [
 py.iplot(data,filename='replicate_hub_diffs2')
 
 # Generate equivalent file path comparison
-from singularity.analysis.compare import compare_singularity_images, RSA
+from singularity.analysis.compare import compare_singularity_images 
+from singularity.analysis.metrics import RSA
 
 diffs_files = compare_singularity_images(image_paths1=image_files)
 diffs_files.to_csv('%s/analysis_compare_singularity_images.tsv' %base,sep='\t')

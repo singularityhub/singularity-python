@@ -1,8 +1,11 @@
-from .utils import (
+from .size import (
+    estimate_image_size,
     calculate_folder_size
 )
 
-from .size import estimate_image_size
+from .utils import (
+    get_container_contents
+)
 
 from .build import (
     build_from_spec,
