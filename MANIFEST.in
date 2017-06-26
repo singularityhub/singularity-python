@@ -7,4 +7,5 @@ recursive-include singularity/static *
 recursive-include singularity/build *
 recursive-include singularity/analysis *
 recursive-include singularity/views *
+recursive-include singularity/registry *
 recursive-include singularity/testing *
