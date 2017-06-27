@@ -44,7 +44,7 @@ def get_template(templates,output_folder):
     '''
     if not os.path.exists(output_folder):
         bot.error("%s does not exist, please create first." %output_folder)
-    sys.exit(1)    
+        sys.exit(1)    
 
     templates_base = "%s/registry/templates" %here
     dirname = os.path.basename(output_folder)
