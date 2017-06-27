@@ -54,11 +54,13 @@ def generate_registry(base,
 
     # Make directories for containers, builder, recipes
     mkdir_p(container_base)
+    os.mkdir("%s/bin" %base)
     mkdir_p('%s/builder/recipes' %base)
     os.mkdir("%s/builder/templates" %base)
 
     bot.newline()
     bot.info("BASE: %s" %base)
+    bot.info(" --> MANAGER: %s/bin\n" %base)
     bot.info(" --> BUILDER: %s/builder\n" %base)
     bot.info(" --> RECIPES: %s/builder/recipes" %base)
     bot.info("STORAGE: %s" %storage)
@@ -70,10 +72,15 @@ def generate_registry(base,
                                   name=name,
                                   storage=storage)
 
+    # Recipe templates
     templates=['ci/.travis.yml','vc/README.md']
-    bot.debug("Adding templates to recipes folder.")
+    bot.debug("Adding templates and helpers...")
     copied = get_template(templates=templates,
                           output_folder="%s/builder/recipes" %base)
+
+    # Executable helpers
+    copied = get_template(templates=['bin'],
+                          output_folder="%s/bin" %base)
 
     return config_file
 

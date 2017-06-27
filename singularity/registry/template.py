@@ -47,6 +47,8 @@ def get_template(templates,output_folder):
     sys.exit(1)    
 
     templates_base = "%s/registry/templates" %here
+    dirname = os.path.basename(output_folder)
+
     copied = []
     if not isinstance(templates,list):
         templates = [templates]
@@ -56,9 +58,14 @@ def get_template(templates,output_folder):
         filename = os.path.basename(template)
         finished = "%s/%s" %(output_folder,filename)
         if os.path.exists(path):
-            shutil.copyfile(path,finished)
+            if os.path.isdir(path):
+                bot.debug("Copying folder %s to %s" %(filename,dirname))
+                shutil.copytree(path,finished)
+            else:
+                bot.debug("Copying file %s to %s" %(filename,dirname))
+                shutil.copyfile(path,finished)
             copied.append(finished)
         else:
-            bot.warning("Could not find template %s" %template)
+            bot.warning("Could not find %s" %template)
 
     return copied
