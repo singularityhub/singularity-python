@@ -123,6 +123,7 @@ def help():
     sys.exit(1)
 
 def subcommand_help(message,command):
+    from singularity.logger import bot
     bot.info(message)
     bot.info("-------------------------------------------------------------")
     bot.info("For help with %s, singularity.registry %s --help" %(command,command))

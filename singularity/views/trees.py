@@ -40,7 +40,7 @@ from singularity.analysis.compare import (
 
 
 from singularity.package import (
-    gt_container_contents
+    get_container_contents,
     load_package,
     package
 )
