@@ -30,7 +30,7 @@ Shelp (){
 
 echo "Singularity Registry Database Commands: 
 
-USAGE: sudo singularity-registry-db migrate [options]
+USAGE: sudo singularity-registry-db [options]
 
 OPTIONS:
 
@@ -59,7 +59,7 @@ fi
 
 
 if [ -z "$SINGULARITY_REGISTRY_MANAGER" ]; then
-    SINGULARITY_REGISTRY_MANAGER="singularity.registry"
+    SINGULARITY_REGISTRY_MANAGER=$SINGULARITY_REGISTRY_BASE/bin/singularity.registry
     export SINGULARITY_REGISTRY_MANAGER
 fi
 
@@ -73,7 +73,7 @@ if [ "$(id -u)" != "0" ]; then
     echo ""
     echo "database manager must be run as root (sudo)"
     echo "----------------------------------------------"
-    exec ./singularity-registry build --help
+    Shelp
     exit 1
 fi
 
@@ -91,7 +91,7 @@ fi
 while true; do
     case ${1:-} in
         -h|--help|help)
-            Shelp()
+            Shelp
             exit
         ;;
         --migrate|migrate)
