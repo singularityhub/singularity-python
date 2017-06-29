@@ -25,11 +25,9 @@ package
 ## Unpack Node into Container
 Then this file can be turned into a Singularity image:
 
-
 ```
 from singularity.package import unpack_node
 image = unpack_node(image_path=package,size=9000)
-
 ```
 
 We see unpack, image creation, and a break at the end when it's importing:
