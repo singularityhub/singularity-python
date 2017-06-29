@@ -40,9 +40,9 @@ def generate_registry(base,
                       storage=None):
 
     '''initalize a registry, meaning generating the root folder with
-    subfolders for containers and recipes, along with the config file
-    at the root
+    subfolders for containers and recipes.
     '''
+
     if storage is None:
         storage = "%s/storage" %(base) 
 
@@ -65,42 +65,10 @@ def generate_registry(base,
     bot.info(" --> CONTAINERS: %s/containers" %storage)
     bot.newline()
 
-    config_file = generate_config(base=base,
-                                  uri=uri,
-                                  name=name,
-                                  storage=storage)
-
     # Recipe templates
     templates=['ci/.travis.yml','vc/README.md']
     bot.debug("Adding templates and helpers...")
     copied = get_template(templates=templates,
                           output_folder="%s/builder/recipes" %base)
 
-    return config_file
-
-
-def generate_config(base,
-                    uri,
-                    name,
-                    storage,
-                    filename=None):
-
-    '''generate config will write a config file at the registry
-    base. The default filename is .shub
-    '''
-
-    if filename is None:
-        filename = 'config.json'
-    filename = os.path.basename(filename)
-
-    config = { 
-                "REGISTRY_BASE":  base,
-                "STORAGE_BASE": storage,
-                "REGISTRY_URI": uri,
-                "REGISTRY_NAME": name 
-             }
-
-    config_file = "%s/%s" %(base,filename)
-    bot.debug("Generating config file %s" %config_file)
-    write_json(config,config_file)
-    return config_file
+    return copied
