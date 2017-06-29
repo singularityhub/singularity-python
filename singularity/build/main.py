@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 build/main.py: main runner for Singularity Hub builds
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 build/google.py: build functions for singularity hub google compute engine
 
