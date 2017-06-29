@@ -48,7 +48,7 @@ def package_node(root=None,name=None):
     if root is None:
         root = "/"
 
-    tmpdir = tempfile.mkdtmp()
+    tmpdir = tempfile.mkdtemp()
     image = "%s/%s.tgz" %(tmpdir,name)
 
     cmd = ["tar","--one-file-system","-czvSf", image, root,"--exclude",image]
