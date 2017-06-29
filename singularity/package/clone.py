@@ -30,6 +30,8 @@ from singularity.logger import bot
 from singularity.cli import Singularity
 from singularity.utils import run_command
 import platform
+import os
+import sys
 
 def package_node(root=None,name=None):
     '''package node aims to package a (present working node) for a user into
@@ -51,6 +53,7 @@ def package_node(root=None,name=None):
     tmpdir = tempfile.mkdtemp()
     image = "%s/%s.tgz" %(tmpdir,name)
 
+    print("Preparing to package root %s into %s" %(root,name))
     cmd = ["tar","--one-file-system","-czvSf", image, root,"--exclude",image]
     output = run_command(cmd)
     return image
@@ -67,7 +70,7 @@ def unpack_node(image_path,name=None,output_folder=None,size=None):
         sys.exit(1)
 
     if output_folder is None:
-        output_folder = os.path.dirname(image_path)
+        output_folder = os.path.dirname(os.path.abspath(image_path))
 
     image_name = os.path.basename(image_path)
     if name is None:
