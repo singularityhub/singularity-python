@@ -160,6 +160,7 @@ def make_sim_tree(image1,image2,port=None):
     webbrowser.open("http://localhost:%s/containers/similarity" %(port))
     app.run(host="0.0.0.0",debug=False,port=port)
 
+
 # Function to make difference tree for two images
 def make_diff_tree(image1,image2,port=None):
     app.images = [image1,image2]

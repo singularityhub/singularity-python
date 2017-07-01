@@ -1,13 +1,6 @@
-#!/usr/bin/env python
-
 '''
-cli.py: part of singularity package
 
-Last updated: Singularity version 2.1
-
-The MIT License (MIT)
-
-Copyright (c) 2016-2017 Vanessa Sochat
+Copyright (c) 2016-2017 Vanessa Sochat, All Rights Reserved
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -31,18 +24,12 @@ SOFTWARE.
 
 from singularity.utils import (
     getsudo, 
-    run_command, 
-    check_install, 
-    write_json, 
-    write_file
+    run_command
 )
 
 from singularity.logger import bot
 
 from glob import glob
-import subprocess
-import tempfile
-import shutil
 import json
 import sys
 import os
@@ -377,51 +364,3 @@ class Singularity:
             cmd.append('--contain')       
 
         return cmd
-
-
-
-
-#################################################################################
-# HELPER FUNCTIONS
-#################################################################################
-
-def get_image(image,return_existed=False,size=None,debug=False):
-    '''get_image will return the file, if it exists, or if it's docker or
-    shub, will use the Singularity command line tool to generate a temporary image
-    :param image: the image file or path (eg, docker://)
-    :param return_existed: if True, will return image_path,existed to tell if
-    an image is temporary (if existed==False)
-    :param sudopw: needed to create an image, if docker:// provided
-    '''
-    existed = True
-
-    # Is the image a docker or singularity hub image?
-    if image.startswith('^docker://') or image.startswith('shub'):
-        existed = False
-        cli = Singularity(debug=debug)
-        tmpdir = tempfile.mkdtemp()
-
-        if image.startswith('docker://'):
-            image_name = "%s.img" %image.replace("docker://","").replace("/","-")
-            bot.info("Found docker image %s, creating and importing..." %image_name)
-
-        elif image.startswith('shub://'):
-            image_name = "%s.img" %image.replace("shub://","").replace("/","-")
-            bot.info("Found shub image %s, creating and importing..." %image_name)
-
-
-        image_path = "%s/%s" %(tmpdir,image_name)
-        cli.pull(image_path=image,
-                 pull_folder=tmpdir,
-                 image_name=image_name,
-                 size=size)
-
-        image = image_path
-
-
-    if os.path.exists(image):
-        image = os.path.abspath(image)
-        if return_existed == True:
-            return image,existed
-        return image
-    return None

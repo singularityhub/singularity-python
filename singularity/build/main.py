@@ -29,6 +29,8 @@ from singularity.version import (
     __version__ as singularity_python_version
 )
 
+from singularity.cli import Singularity
+
 from singularity.package import (
     build_from_spec, 
     estimate_image_size,
@@ -187,6 +189,10 @@ def run_build(build_dir,params,verbose=True):
         # Derive software tags by subtracting similar OS
         diff = get_diff(image_package=image_package)
 
+        # Inspect to get labels and other metadata
+        cli = Singularity(debug=params['debug'])
+        inspect = cli.inspect(image_path=image)
+
         # Get tags for services, executables
         interesting_folders = ['init','init.d','bin','systemd']
         tags = get_tags(search_folders=interesting_folders,
@@ -212,7 +218,8 @@ def run_build(build_dir,params,verbose=True):
                    'os_sims':os_sims['SCORE'].to_dict(),
                    'tags':tags,
                    'file_counts':counts,
-                   'file_ext':extensions }
+                   'file_ext':extensions,
+                   'inspect':inspect }
       
         output = {'image':compressed_image,
                   'image_package':image_package,
