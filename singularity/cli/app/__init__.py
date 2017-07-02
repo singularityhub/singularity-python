@@ -1,12 +1,8 @@
-#!/usr/bin/env python
-
 '''
-singularity: views/utils.py: part of singularity package
-utility functions for views
 
 The MIT License (MIT)
 
-Copyright (c) 2016-2017 Vanessa Sochat
+Copyright (c) 2016-2017 Vanessa Sochat, All Rights Reserved
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -28,28 +24,14 @@ SOFTWARE.
 
 '''
 
-import os
-from singularity.logger import bot
-from singularity.utils import (
-    get_installdir,
-    read_file
+from .main import (
+    app_plot_os_sims,
+    app_container_tree,    
+    difference_tree,
+    app_similar_tree,
+    get_container_names,
+    make_tree,
+    plot_os_sims,
+    make_sim_tree,
+    make_diff_tree
 )
-
-import sys
-
-
-def get_template(template_name,fields=None):
-    '''get_template will return a template in the template folder,
-    with some substitutions (eg, {'{{ graph | safe }}':"fill this in!"}
-    '''
-    template = None
-    if not template_name.endswith('.html'):
-        template_name = "%s.html" %(template_name)
-    here = "%s/cli/app/templates" %(get_installdir())
-    template_path = "%s/%s" %(here,template_name)
-    if os.path.exists(template_path):
-        template = ''.join(read_file(template_path))
-    if fields is not None:
-        for tag,sub in fields.items():
-            template = template.replace(tag,sub)
-    return template

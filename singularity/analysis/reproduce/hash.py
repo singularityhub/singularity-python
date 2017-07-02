@@ -31,13 +31,15 @@ from singularity.logger import bot
 from .criteria import *
 from .levels import *
 from .utils import (
-    get_memory_tar,
+    get_image_tar,
+    delete_image_tar,
     extract_guts
 )
 import datetime
 import hashlib
 import sys
 import os
+import io
 import re
 
 
@@ -61,7 +63,8 @@ def get_image_hash(image_path,
                    level=None,level_filter=None,
                    include_files=None,
                    skip_files=None,
-                   version=None):
+                   version=None,
+                   memory_tar=False):
 
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
@@ -96,7 +99,8 @@ def get_image_hash(image_path,
                                 include_files=include_files)
                 
     cli = Singularity()
-    file_obj,tar = get_memory_tar(image_path)
+    file_obj,tar = get_memory_tar(image_path,
+                                  write_file=not memory_tar)
     hasher = hashlib.md5()
 
     for member in tar:
@@ -113,7 +117,13 @@ def get_image_hash(image_path,
             hasher.update(buf)
 
     digest = hasher.hexdigest()
-    file_obj.close()
+
+    if isinstance(file_obj,io.BytesIO):
+        file_obj.close()
+    else:
+        if os.path.exists(file_obj):
+            os.remove(file_obj)
+
     return digest
 
 
@@ -124,7 +134,8 @@ def get_content_hashes(image_path,
                        level_filter=None,
                        skip_files=None,
                        version=None,
-                       include_sizes=True):
+                       include_sizes=True,
+                       memory_tar=False):
 
     '''get_content_hashes is like get_image_hash, but it returns a complete dictionary 
     of file names (keys) and their respective hashes (values). This function is intended
@@ -145,14 +156,16 @@ def get_content_hashes(image_path,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
-    file_obj,tar = get_memory_tar(image_path)
+    file_obj,tar = get_image_tar(image_path,
+                                 write_file=not memory_tar)
+
     results = extract_guts(image_path=image_path,
                            tar=tar,
                            file_filter=file_filter,
                            tag_root=tag_root,
                            include_sizes=include_sizes)
 
-    file_obj.close()
+    deleted = delete_image_tar(file_obj)
     return results
 
 

@@ -33,6 +33,7 @@ from singularity.logger import bot
 from singularity.utils import get_installdir
 import json
 import sys
+import zipfile
 
 install_dir = get_installdir()
 
@@ -47,7 +48,7 @@ def get_packages(family=None):
     be used.
     :param name: the name of the package family to load
     '''
-    package_base = "%s/analysis/packages" %(install_dir)
+    package_base = get_package_base()
     package_folders = glob("%s/*" %(package_base))
     package_families = [os.path.basename(x) for x in package_folders]
     if family == None:
@@ -66,13 +67,13 @@ def get_packages(family=None):
 def list_package_families():
     '''return a list of package families (folders) provided by singularity python
     '''
-    package_base = "%s/analysis/packages" %(install_dir)
+    package_base = get_package_base()
     return glob("%s/*" %(package_base))
 
 
 def get_package_base():
     '''returns base folder of packages'''
-    return "%s/packages/data" %(install_dir)
+    return "%s/package/data" %(install_dir)
 
 
 def list_package(package_path):

@@ -24,7 +24,6 @@ SOFTWARE.
 
 '''
 
-from glob import glob
 import singularity
 import argparse
 import sys

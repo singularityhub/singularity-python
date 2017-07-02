@@ -42,5 +42,5 @@ S.help(command="exec")
 byte_array = S.export(image)
 
 # Get an in memory tar
-from singularity.reproduce import get_memory_tar
+from singularity.analysis.reproduce import get_memory_tar
 tar = get_memory_tar(image)

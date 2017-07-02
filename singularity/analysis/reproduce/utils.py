@@ -95,22 +95,40 @@ def get_memory_tar(image_path):
 
 def get_image_tar(image_path,write_file=True,S=None):
     '''get an image tar, either written in memory or to
-    the file system.
+    the file system. file_obj will either be the file object,
+    or the file itself.
     '''
-    file_obj = None
 
     # Singularity 2.3 and up
     if not write_file:
         file_obj,tar = get_memory_tar(image_path)
+        bot.debug('Generate in memory tar...')   
 
     # Singularity < version 2.3
     else:
+        bot.debug('Generate file system tar...')   
         if S is None:
             S = Singularity()
-        tmptar = S.export(image_path=image_path,old_version=True)
-        tar = tarfile.open(tmptar)
+        file_obj = S.export(image_path=image_path,old_version=True)
+        tar = tarfile.open(file_obj)
 
     return file_obj, tar
+
+
+def delete_image_tar(file_obj):
+    '''delete image tar will close a file object (if extracted into
+    memory) or delete from the file system (if saved to disk)'''
+    deleted = False
+    if isinstance(file_obj,io.BytesIO):
+        file_obj.close()
+        deleted = True
+        bot.debug('Closed memory tar.')   
+    else:
+        if os.path.exists(file_obj):
+            os.remove(file_obj)
+            deleted = True
+            bot.debug('Deleted file system tar.')   
+    return deleted
 
 
 def extract_content(image_path,member_name,cli=None,return_hash=False):

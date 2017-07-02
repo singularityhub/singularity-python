@@ -35,7 +35,8 @@ from singularity.utils import (
 )
 
 from singularity.cli import Singularity
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
+    delete_image_tar,
     get_image_tar,
     get_image_file_hash,
     get_image_hashes,
@@ -144,8 +145,7 @@ def package(image_path,
     if sudopw is not None:
         S = Singularity(sudopw=sudopw,debug=verbose)
 
-    file_obj, tar = get_image_tar(image_path,
-                                  S=S,
+    file_obj, tar = get_image_tar(image_path,S=S,
                                   write_file=old_version)
 
     members = tar.getmembers()
@@ -182,8 +182,7 @@ def package(image_path,
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     bot.debug("Package created at %s" %(zipfile))
 
-    if file_obj is not None:
-        file_obj.close()
+    deleted = delete_image_tar(file_obj)
     
     # return package to user
     return zipfile

@@ -129,6 +129,8 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
     :param split_delim: if defined, will split text by split delimiter
     :param image_package: if defined, user has provided an image_package
     '''
+    from singularity.package import package, load_package
+
     if container == None and image_package == None:
         bot.error("You must define an image package or container.")
         sys.exit(1)

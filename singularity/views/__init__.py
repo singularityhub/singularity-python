@@ -6,5 +6,3 @@ from .trees import (
     make_package_tree,
     make_interactive_tree
 )
-
-

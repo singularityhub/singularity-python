@@ -36,7 +36,12 @@ from singularity.package import (
     load_package,
     package as make_package
 )
-from singularity.reproduce import get_memory_tar
+from singularity.analysis.reproduce import (
+    get_image_tar,
+    delete_image_tar
+)
+
+from .metrics import information_coefficient
 
 import pandas
 
@@ -88,7 +93,7 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     return comparisons
 
 
-def compare_singularity_images(image_paths1,image_paths2=None):
+def compare_singularity_images(image_paths1,image_paths2=None,old_version=True):
     '''compare_singularity_images is a wrapper for compare_containers to compare
     singularity containers. If image_paths2 is not defined, pairwise comparison is done
     with image_paths1
@@ -108,7 +113,9 @@ def compare_singularity_images(image_paths1,image_paths2=None):
 
     comparisons_done = []
     for image1 in image_paths1:
-        fileobj1,tar1 = get_memory_tar(image1)
+        fileobj1,tar1 = get_image_tar(image1,
+                                      write_file=old_version)
+
         members1 = [x.name for x in tar1]
         for image2 in image_paths2:
             comparison_id = [image1,image2]
@@ -118,16 +125,18 @@ def compare_singularity_images(image_paths1,image_paths2=None):
                 if image1 == image2:
                     sim = 1.0
                 else:
-                    fileobj2,tar2 = get_memory_tar(image2)
+                    fileobj2,tar2 = get_image_tar(image2,
+                                                  write_file=old_version)
                     members2 = [x.name for x in tar2]
                     c = compare_lists(members1,members2)
                     sim = information_coefficient(c['total1'],c['total2'],c['intersect'])
-                    fileobj2.close()
+                    delete_image_tar(fileobj2)
+                        
                 dfs.loc[image1,image2] = sim
                 if repeat:
                     dfs.loc[image2,image1] = sim
                 comparisons_done.append(comparison_id)
-        fileobj1.close()
+        delete_image_tar(fileobj1)
     return dfs
 
 

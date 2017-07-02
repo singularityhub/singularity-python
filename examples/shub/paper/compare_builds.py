@@ -136,7 +136,7 @@ pickle.dump(containers,open('%s/container_manifests.pkl' %(hub),'wb'))
 #############################################################################
 
 from singularity.utils import write_json, write_file
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
     assess_differences,
     get_levels
 )
@@ -283,7 +283,7 @@ pearsonr_sim = RSA(diffs,diffs_files)
 #############################################################################
 
 from singularity.utils import write_json, write_file
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
     assess_differences,
     get_levels
 )
@@ -381,7 +381,7 @@ diffs.to_csv('%s/analysis_local_replicates.tsv' %base,sep='\t')
 # itself minus one file
 # 4. show that the score goes from 0 (the phantom) to the OS (1)
 
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
     get_memory_tar,
     extract_guts
 )
@@ -599,7 +599,7 @@ sns.plt.show()
 dfs = dict()
 levels = get_levels()
 
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
     get_content_hashes,
     get_image_hashes,
     get_image_hash

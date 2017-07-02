@@ -97,7 +97,7 @@ def run_command(cmd,error_message=None,sudopw=None,suppress=False):
             process = subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             output, err = process.communicate()
         except: 
-            bot.error(error)
+            bot.error(err)
             return None
     
     return output

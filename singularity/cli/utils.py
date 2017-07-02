@@ -23,13 +23,12 @@ SOFTWARE.
 '''
 
 from singularity.logger import bot
-
 from glob import glob
 import tempfile
 import os
 
 
-def get_image(image,return_existed=False,size=None,debug=False):
+def get_image(image,return_existed=False,size=None,debug=False,pull_folder=None):
     '''get_image will return the file, if it exists, or if it's docker or
     shub, will use the Singularity command line tool to generate a temporary image
     :param image: the image file or path (eg, docker://)
@@ -37,14 +36,15 @@ def get_image(image,return_existed=False,size=None,debug=False):
     an image is temporary (if existed==False)
     :param sudopw: needed to create an image, if docker:// provided
     '''
-    from .client import Singularity
+    from singularity.cli import Singularity
     existed = True
 
     # Is the image a docker or singularity hub image?
-    if image.startswith('^docker://') or image.startswith('shub'):
-        existed = Faiteflse
+    if image.startswith('docker://') or image.startswith('shub://'):
+        existed = False
         cli = Singularity(debug=debug)
-        tmpdir = tempfile.mkdtemp()
+        if pull_folder is None:
+            pull_folder = tempfile.mkdtemp()
 
         if image.startswith('docker://'):
             image_name = "%s.img" %image.replace("docker://","").replace("/","-")
@@ -55,9 +55,9 @@ def get_image(image,return_existed=False,size=None,debug=False):
             bot.info("Found shub image %s, creating and importing..." %image_name)
 
 
-        image_path = "%s/%s" %(tmpdir,image_name)
+        image_path = "%s/%s" %(pull_folder,image_name)
         cli.pull(image_path=image,
-                 pull_folder=tmpdir,
+                 pull_folder=pull_folder,
                  image_name=image_name,
                  size=size)
 

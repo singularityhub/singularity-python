@@ -25,7 +25,3 @@ SOFTWARE.
 '''
 
 from singularity.version import __version__
-
-__all__ = ['analysis', 'build', 'views', 'api',
-           'app', 'cli', 'logger', 'registry', 
-           'utils', '__version__']

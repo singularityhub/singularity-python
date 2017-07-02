@@ -47,10 +47,15 @@ class TestAnalysisCompare(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.container = get_image('docker://ubuntu:16.04')
-        self.comparator = get_image('docker://ubuntu:12.04')
+        self.container = get_image('docker://ubuntu:16.04', 
+                                    pull_folder=self.tmpdir)
+
+        self.comparator = get_image('docker://ubuntu:12.04',
+                                    pull_folder=self.tmpdir)
         
     def tearDown(self):
+        os.remove(self.container)
+        os.remove(self.comparator)
         shutil.rmtree(self.tmpdir)
 
 
@@ -58,7 +63,7 @@ class TestAnalysisCompare(unittest.TestCase):
         print("Testing singularity.analysis.compare.container_similarity_vector")
         import pandas
         from singularity.analysis.compare import container_similarity_vector
-        from singularity.analysis.utils import get_packages
+        from singularity.package import get_packages
         packages_set = get_packages('docker-os')[0:2]
         vector = container_similarity_vector(container1=self.container,
                                              custom_set=packages_set)
@@ -85,7 +90,7 @@ class TestAnalysisCompare(unittest.TestCase):
      
 
     def test_calculate_similarity(self):
-        print("Testitng singularity.analysis.compare.calculate_similarity")
+        print("Testing singularity.analysis.compare.calculate_similarity")
         from singularity.analysis.compare import calculate_similarity
         sim = calculate_similarity(self.container,self.comparator)
         self.assertTrue(sim['files.txt'] -0.4921837537163134 < 0.01)
@@ -102,8 +107,8 @@ class TestAnalysisCompare(unittest.TestCase):
         self.assertTrue(isinstance(comparison['files.txt'],pandas.DataFrame))
 
     def test_information_coefficient(self):
-        print("Testing singularity.analysis.compare.information_coefficient")
-        from singularity.analysis.compare import information_coefficient
+        print("Testing singularity.analysis.metrics.information_coefficient")
+        from singularity.analysis.metrics import information_coefficient
         self.assertEqual(information_coefficient(100,100,range(0,50)),0.5)
         self.assertEqual(information_coefficient(100,100,range(0,100)),1.0)
  

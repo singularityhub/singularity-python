@@ -51,7 +51,7 @@ class TestAnalysis(unittest.TestCase):
 
     def test_get_packages(self):
         print("Testing singularity.analysis.utils.get_packages")
-        from singularity.analysis.utils import get_packages
+        from singularity.package import get_packages
 
         print("Case 1: Default returns Docker operating systems")
         packages = get_packages()
@@ -64,7 +64,7 @@ class TestAnalysis(unittest.TestCase):
 
     def test_list_package_families(self):
         print("testing singularity.analysis.utils.list_package_families")
-        from singularity.analysis.utils import list_package_families
+        from singularity.package import list_package_families
         families = [os.path.basename(x) for x in list_package_families()]
         for family in ['docker-os','docker-library']:
             self.assertTrue(family in families)    

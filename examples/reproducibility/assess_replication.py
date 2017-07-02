@@ -1,6 +1,6 @@
 from glob import glob
 
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
     assess_replication, 
     assess_differences
 )

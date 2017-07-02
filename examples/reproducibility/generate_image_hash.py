@@ -1,6 +1,6 @@
 from glob import glob
 
-from singularity.reproduce import (
+from singularity.analysis.reproduce import (
     get_image_hash,
     get_levels,
     get_content_hashes,

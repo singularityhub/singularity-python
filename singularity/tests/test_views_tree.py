@@ -56,7 +56,8 @@ class TestViewsTree(unittest.TestCase):
 
     def test_tree(self):
         import json
-        from singularity.views.utils import get_template, get_container_contents
+        from singularity.package.utils import get_container_contents
+        from singularity.views.utils import get_template
         from singularity.views.trees import container_tree
         print("Testing generation of container tree")
         viz = container_tree(self.container)
