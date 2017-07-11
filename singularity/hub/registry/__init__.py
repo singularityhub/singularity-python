@@ -73,6 +73,14 @@ def get_parser():
                         help="use verbose logging to debug.", 
                         default=False, action='store_true')
 
+    parser.add_argument('recipes', metavar='recipes', 
+                        type=str, nargs='+',
+                        help='one or more recipes, folders, or patterns.')
+
+
+args = parser.parse_args()
+print(args.accumulate(args.integers))
+
     return parser
 
 
@@ -115,6 +123,10 @@ def main():
                                  storage=args.storage,
                                  uri=args.uri,
                                  name=args.name)        
+
+    if args.command == "build":
+        print("Here we will run a build with %s" %args.recipes)
+
 
 def help():
     parser = get_parser()
