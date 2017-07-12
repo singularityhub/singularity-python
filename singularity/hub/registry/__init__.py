@@ -54,14 +54,7 @@ def get_parser():
                              help="base for storage of containers, defaults to /opt/shub/storage", 
                              type=str, default=None)
 
-    init_parser.add_argument("--uri", dest='uri', 
-                             help="uri for your registry under 10 chars lowercase", 
-                             type=str, default=None)
 
-    init_parser.add_argument("--name", dest='name', 
-                             help="human friendly name of your registry", 
-                             type=str, default=None)
- 
     # Build
     build_parser = subparsers.add_parser("build")
 
@@ -113,16 +106,9 @@ def main():
         if args.base is None:
             subcommand_help("Please provide a registry base with --base, recommended is /opt/shub","init")            
 
-        if args.uri is None:
-            subcommand_help("Please provide a registry --uri to generate.","init")
-
-        if args.name is None:
-            subcommand_help("Please provide a registry --name to generate.","init")
-
         base = generate_registry(base=args.base,
-                                 storage=args.storage,
-                                 uri=args.uri,
-                                 name=args.name)        
+                                 storage=args.storage)  
+
 
     if args.command == "build":
         print("Here we will run a build with %s" %args.recipes)

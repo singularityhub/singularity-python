@@ -34,10 +34,7 @@ import sys
 import os
 
 
-def generate_registry(base,
-                      uri,
-                      name,
-                      storage=None):
+def generate_registry(base,storage=None):
 
     '''initalize a registry, meaning generating the root folder with
     subfolders for containers and recipes.
@@ -48,8 +45,8 @@ def generate_registry(base,
 
     container_base = "%s/containers" %storage
 
-    if os.path.exists(base) or os.path.exists(storage):
-        bot.error("%s or %s already exists, will not overwrite." %(base,storage))
+    if os.path.exists(base) or os.path.exists(container_base):
+        bot.error("%s or %s already exists, will not overwrite." %(base,container_base))
         sys.exit(1)
 
     # Make directories for containers, builder, recipes
