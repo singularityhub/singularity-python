@@ -23,6 +23,7 @@ SOFTWARE.
 '''
 
 from singularity.logger import bot
+from singularity.utils import mkdir_p
 import tempfile
 import os
 import pwd
@@ -89,7 +90,7 @@ def get_cache(subfolder=None,quiet=False):
         cache_base = "%s/%s" %(cache_base,subfolder)
         
     # Create the cache folder(s), if don't exist
-    create_folders(cache_base)
+    mkdir_p(cache_base)
 
     if not quiet:
         bot.debug("Cache folder set to %s" %cache_base)
