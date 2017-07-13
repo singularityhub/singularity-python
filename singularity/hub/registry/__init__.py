@@ -71,9 +71,6 @@ def get_parser():
                         help='one or more recipes, folders, or patterns.')
 
 
-args = parser.parse_args()
-print(args.accumulate(args.integers))
-
     return parser
 
 
