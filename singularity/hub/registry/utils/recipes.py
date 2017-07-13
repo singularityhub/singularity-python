@@ -46,14 +46,13 @@ def find_recipes(folders,pattern=None):
     for base_folder in folders:
 
         # For file, return the one file
+        custom_pattern=None
         if os.path.isfile(base_folder):
             manifest = find_single_recipe(filename=base_folder,
                                           pattern=pattern,
                                           manifest=manifest)
             continue
 
-        # A path and pattern
-        custom_pattern=None
         elif not os.path.isdir(base_folder):
             custom_pattern = base_folder.split('/')[-1:][0]
             base_folder = "/".join(base_folder.split('/')[0:-1])
