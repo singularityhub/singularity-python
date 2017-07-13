@@ -28,7 +28,7 @@ from singularity.utils import (
     mkdir_p,
     write_json
 )
-from .template import get_template
+
 from glob import glob
 import sys
 import os
@@ -62,10 +62,4 @@ def generate_registry(base,storage=None):
     bot.info(" --> CONTAINERS: %s/containers" %storage)
     bot.newline()
 
-    # Recipe templates
-    templates=['ci/.travis.yml','vc/README.md']
-    bot.debug("Adding templates and helpers...")
-    copied = get_template(templates=templates,
-                          output_folder="%s/builder/recipes" %base)
-
-    return copied
+    return container_base
