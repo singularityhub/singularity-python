@@ -94,5 +94,4 @@ if __name__ == "__main__":
               'Programming Language :: Python :: 2.7',
               'Programming Language :: Python :: 3',
           ],
-          entry_points = {'console_scripts': [ 'shub=singularity.cli:main',
-                                               'sreg=singularity.hub.registry:main' ] })
+          entry_points = {'console_scripts': [ 'shub=singularity.cli:main' ] })
