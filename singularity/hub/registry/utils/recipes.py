@@ -47,12 +47,13 @@ def find_recipes(folders,pattern=None):
 
         # For file, return the one file
         custom_pattern=None
-        if os.path.isfile(base_folder):
+        if os.path.isfile(base_folder):  # updates manifest
             manifest = find_single_recipe(filename=base_folder,
                                           pattern=pattern,
                                           manifest=manifest)
             continue
 
+        # The user likely provided a custom pattern
         elif not os.path.isdir(base_folder):
             custom_pattern = base_folder.split('/')[-1:][0]
             base_folder = "/".join(base_folder.split('/')[0:-1])
@@ -65,16 +66,19 @@ def find_recipes(folders,pattern=None):
     return manifest
 
 
-def find_folder_recipes(base_folder,pattern=None):
+def find_folder_recipes(base_folder,pattern=None, manifest=None):
     '''find folder recipes will find recipes based on a particular pattern.
     '''
-    manifest = dict()
+    if manifest is None:
+        manifest = dict()
+
     if pattern is None:
         pattern = "Singularity*"
 
     for root, dirnames, filenames in os.walk(base_folder):
 
         for filename in fnmatch.filter(filenames, pattern):
+
             container_path = os.path.join(root, filename)
             container_uri = '/'.join(container_path.split('/')[-2:])
             add_container = True
@@ -83,7 +87,7 @@ def find_folder_recipes(base_folder,pattern=None):
             if container_uri in manifest:
                 if manifest[container_uri]['modified'] > os.path.getmtime(container_path):
                     add_container = False
-   
+
             if add_container:
                 manifest[container_uri] = {'path':container_path,
                                            'modified':os.path.getmtime(container_path)}
@@ -112,4 +116,3 @@ def find_single_recipe(filename,pattern=None,manifest=None):
         return manifest
         
     return recipe
-
