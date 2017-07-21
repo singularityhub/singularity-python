@@ -106,7 +106,7 @@ def find_single_recipe(filename,pattern=None,manifest=None):
     file_basename = os.path.basename(filename)
     if fnmatch.fnmatch(file_basename,pattern):
         recipe = {'path':filename,
-                  'modified':os.path.getmtime(container_path)}
+                  'modified':os.path.getmtime(filename)}
 
     if manifest is not None and recipe is not None:
         container_uri = '/'.join(filename.split('/')[-2:])
