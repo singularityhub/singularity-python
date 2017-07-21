@@ -110,7 +110,6 @@ def find_single_recipe(filename,pattern=None,manifest=None):
 
     if manifest is not None and recipe is not None:
         container_uri = '/'.join(filename.split('/')[-2:])
-        recipe = {container_uri: recipe}
         if container_uri in manifest:
             if manifest[container_uri]['modified'] < os.path.getmtime(filename):
                 manifest[container_uri] = recipe
