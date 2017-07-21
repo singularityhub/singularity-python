@@ -114,6 +114,8 @@ def find_single_recipe(filename,pattern=None,manifest=None):
         if container_uri in manifest:
             if manifest[container_uri]['modified'] < os.path.getmtime(filename):
                 manifest[container_uri] = recipe
+        else:
+            manifest[container_uri] = recipe
         return manifest
         
     return recipe
