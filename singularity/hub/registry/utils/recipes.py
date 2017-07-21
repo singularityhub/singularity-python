@@ -103,7 +103,8 @@ def find_single_recipe(filename,pattern=None,manifest=None):
         pattern = "Singularity*"
 
     recipe = None
-    if fnmatch.fnmatch(filename,pattern):
+    file_basename = os.path.basename(filename)
+    if fnmatch.fnmatch(file_basename,pattern):
         recipe = {'path':filename,
                   'modified':os.path.getmtime(container_path)}
 
