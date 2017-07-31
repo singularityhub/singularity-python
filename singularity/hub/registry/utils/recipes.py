@@ -37,8 +37,7 @@ def find_recipes(folders,pattern=None, base=None):
     (indicated by Starting with Singularity
     :param base: if defined, consider collection folders below
     this level.
-    '''
-    
+    '''    
     if folders is None:
         folders = os.getcwd()
 
@@ -86,7 +85,10 @@ def find_folder_recipes(base_folder,pattern=None, manifest=None, base=None):
 
             container_path = os.path.join(root, filename)
             if base is not None:
-                container_uri = container_path.replace(base,'').strip('/').replace('/','-')
+                container_base = container_path.replace(base,'').strip('/')
+                collection = container_base.split('/')[0]
+                recipe = os.path.basename(container_base)
+                container_uri = "%s/%s" %(collection,recipe)
             else:
                 container_uri = '/'.join(container_path.strip('/').split('/')[-2:])
 
