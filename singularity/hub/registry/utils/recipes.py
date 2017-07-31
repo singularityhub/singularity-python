@@ -31,10 +31,13 @@ import fnmatch
 import tempfile
 
 
-def find_recipes(folders,pattern=None):
+def find_recipes(folders,pattern=None, base=None):
     '''find recipes will use a list of base folders, files,
     or patterns over a subset of content to find recipe files
-    (indicated by Starting with Singularity'''
+    (indicated by Starting with Singularity
+    :param base: if defined, consider collection folders below
+    this level.
+    '''
     
     if folders is None:
         folders = os.getcwd()
@@ -61,13 +64,15 @@ def find_recipes(folders,pattern=None):
         # If we don't trigger loop, we have directory
         manifest = find_folder_recipes(base_folder=base_folder,
                                        pattern=custom_pattern or pattern,
-                                       manifest=manifest)
+                                       manifest=manifest,
+                                       base=base)
         
     return manifest
 
 
-def find_folder_recipes(base_folder,pattern=None, manifest=None):
+def find_folder_recipes(base_folder,pattern=None, manifest=None, base=None):
     '''find folder recipes will find recipes based on a particular pattern.
+    If base is defined, consider folders under this level as contrainer collections
     '''
     if manifest is None:
         manifest = dict()
@@ -80,7 +85,11 @@ def find_folder_recipes(base_folder,pattern=None, manifest=None):
         for filename in fnmatch.filter(filenames, pattern):
 
             container_path = os.path.join(root, filename)
-            container_uri = '/'.join(container_path.split('/')[-2:])
+            if base is not None:
+                container_uri = container_path.replace(base,'').strip('/').replace('/','-')
+            else:
+                container_uri = '/'.join(container_path.strip('/').split('/')[-2:])
+
             add_container = True
 
             # Add the most recently updated container
