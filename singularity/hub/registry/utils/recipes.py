@@ -100,7 +100,7 @@ def find_folder_recipes(base_folder,pattern=None, manifest=None, base=None):
                     add_container = False
 
             if add_container:
-                manifest[container_uri] = {'path':container_path,
+                manifest[container_uri] = {'path': os.path.abspath(container_path),
                                            'modified':os.path.getmtime(container_path)}
 
     return manifest
@@ -116,7 +116,7 @@ def find_single_recipe(filename,pattern=None,manifest=None):
     recipe = None
     file_basename = os.path.basename(filename)
     if fnmatch.fnmatch(file_basename,pattern):
-        recipe = {'path':filename,
+        recipe = {'path': os.path.abspath(filename),
                   'modified':os.path.getmtime(filename)}
 
     if manifest is not None and recipe is not None:
