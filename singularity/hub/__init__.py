@@ -39,13 +39,13 @@ import os
 
 class ApiConnection(object):
 
-    def __init__(self, token=None):
+    def __init__(self, token=None, base=None):
  
         self.headers = None
         if token is not None:
             self.token = token
+        self.base = base
         self.update_headers()
-        
 
     def get_headers(self):
         return self.headers
@@ -203,7 +203,7 @@ class ApiConnection(object):
 
 
 
-    def call(self,url,func,data=None,return_json=True):
+    def call(self,url,func,data=None,return_json=True, stream=False):
         '''call will issue the call, and issue a refresh token
         given a 401 response.
         :param func: the function (eg, post, get) to call

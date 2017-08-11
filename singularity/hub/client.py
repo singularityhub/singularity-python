@@ -28,19 +28,12 @@ SOFTWARE.
 from singularity.logger import bot
 from singularity.utils import clean_up
 from singularity.hub import ApiConnection
-from singularity.hub.utils import (
-    prepare_url,
-    download_image
-)
+from singularity.hub.utils import prepare_url
 
 import demjson
 import json
 import sys
 
-from .auth import (
-    authenticate,
-    refresh_access_token
-)
 
 api_base = "https://singularity-hub.org/api"
 
@@ -48,7 +41,8 @@ class Client(ApiConnection):
 
     def __init__(self, **kwargs):
         super(ApiConnection, self).__init__(**kwargs)
- 
+
+        self.base = api_base 
         self.headers = None
         if self.token is None:
             self.token = authenticate()
@@ -108,7 +102,7 @@ class Client(ApiConnection):
     def get_collections(self):
         '''get all container collections
         '''
-        results = paginate_get(url='%s/collections/?format=json' %(api_base))
+        results = paginate_get(url='%s/collections/?format=json' %(self.base))
         print("Found %s collections." %(len(results)))
         # TODO: The shub API needs to have this endpoint expanded
         return results
@@ -116,7 +110,7 @@ class Client(ApiConnection):
 
     def get_containers(self,latest=True):
         '''get all containers'''
-        results = paginate_get(url='%s/containers/?format=json' %(api_base))
+        results = paginate_get(url='%s/containers/?format=json' %(self.base))
         print("Found %s containers." %(len(results)))
         containers = dict()
         if latest == True:

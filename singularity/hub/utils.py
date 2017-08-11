@@ -89,7 +89,7 @@ def parse_container_name(image):
 
     # If the user provided a number (unique id for an image), return it
     if is_number(image) == True:
-        bot.logger.info("Numeric image ID %s found.", image)
+        bot.info("Numeric image ID %s found.", image)
         return int(image)
 
     image = image.split('/')
@@ -101,7 +101,7 @@ def parse_container_name(image):
 
     # Otherwise, we trigger error (not supported just usernames yet)
     else:
-        bot.logger.error('You must specify a repo name and username, %s is not valid',container_name)
+        bot.error('You must specify a repo name and username, %s is not valid' %container_name)
         sys.exit(1)
 
     # Now split the name by : in case there is a tag
@@ -115,9 +115,9 @@ def parse_container_name(image):
         repo_name = image[0]
         repo_tag = "latest"
 
-    bot.logger.info("User: %s", user)
-    bot.logger.info("Repo Name: %s", repo_name)
-    bot.logger.info("Repo Tag: %s", repo_tag)
+    bot.info("User: %s", user)
+    bot.info("Repo Name: %s", repo_name)
+    bot.info("Repo Tag: %s", repo_tag)
 
     parsed = {'repo_name':repo_name,
               'repo_tag':repo_tag,

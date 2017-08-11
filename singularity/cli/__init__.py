@@ -24,8 +24,6 @@ SOFTWARE.
 
 '''
 
-from .main import main
-
 from .utils import get_image
 
 from singularity.utils import (
