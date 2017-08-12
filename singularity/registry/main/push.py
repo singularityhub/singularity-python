@@ -35,7 +35,8 @@ import os
 def main(args,parser,subparser):
 
     # Does the user have a valid image?
-    if not os.path.exists(args.image):  
+    image = args.image[0]
+    if not os.path.exists(image):  
         subparser.print_help()
         bot.error("Please supply one or more paths to existing images.")
         sys.exit(1)
@@ -48,7 +49,7 @@ def main(args,parser,subparser):
 
         
     sreg = Client()
-    response = sreg.push(path=args.image,
+    response = sreg.push(path=image,
                          name=args.name,
                          tag=args.tag)
 

@@ -66,7 +66,7 @@ def get_parser():
 
     push.add_argument("image", nargs=1, 
                        help="full path to image file", 
-                       type=str, required=True)
+                       type=str)
 
     push.add_argument("--tag", dest='tag', 
                        help="tag for image. If not provided, defaults to latest", 
@@ -90,7 +90,7 @@ def get_subparsers(parser):
     for action in actions:
         # get all subparsers and print help
         for choice, subparser in action.choices.items():
-            subs[choice] = subparser
+            subparsers[choice] = subparser
 
     return subparsers
 
@@ -126,9 +126,12 @@ def main():
         from .push import main
 
     # Pass on to the correct parser
-    main(args=args,
-         parser=parser,
-         subparser=subparsers[args.command])
+    try:
+        main(args=args,
+             parser=parser,
+             subparser=subparsers[args.command])
+    except UnboundLocalError:
+        parser.print_help()
 
 
 
