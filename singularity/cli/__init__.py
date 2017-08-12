@@ -237,19 +237,16 @@ class Singularity:
         :param environment: show environment (default True)
         '''
         cmd = ['singularity','--quiet','inspect']
-        options = {"environment":environment,
-                   "json":json,
-                   "deffile":deffile,
-                   "labels":labels,
-                   "runscript":runscript,
-                   "test":test}
-
-        for key,selected in options.items():
-            if selected is True:
-                cmd.append('--%s' %(key))
+        options = locals()
+        acceptable = ['environment','json','deffile','labels','runscript','test']
+        for key,option in options.items():
+            if key in acceptable:
+                if option is True:
+                    cmd.append('--%s' %(key))
 
         cmd.append(image_path)
         output = self.run_command(cmd)
+        output = self.println(output,quiet=quiet)    
         return output
 
 
