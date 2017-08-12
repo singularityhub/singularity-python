@@ -250,7 +250,6 @@ class Singularity:
 
         cmd.append(image_path)
         output = self.run_command(cmd)
-        output = self.println(output,quiet=quiet)    
         return output
 
 
