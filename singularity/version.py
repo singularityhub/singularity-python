@@ -33,7 +33,6 @@ LICENSE = "LICENSE"
 
 INSTALL_REQUIRES = (
 
-    ('clint',{'exact_version':'0.5.1'}),
     ('demjson', {'min_version': None}),
     ('flask', {'min_version': '0.12'}),
     ('flask-restful', {'min_version': None}),
