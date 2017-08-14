@@ -1,6 +1,6 @@
 '''
 
-logger.py: Python logger base for singularity python
+logger/message.py: Python logger base for singularity python
 
 Copyright (c) 2016-2017 Vanessa Sochat
 
@@ -49,11 +49,11 @@ class SingularityMessage:
         self.colorize = self.useColor()
         self.colors = {ABORT: "\033[31m",    # dark red
                        CRITICAL: "\033[31m",
-                       ERROR: "\033[91m",  # red
+                       ERROR: "\033[91m",    # red
                        WARNING: "\033[93m",  # dark yellow
-                       LOG: "\033[95m",     # purple
-                       DEBUG: "\033[36m",   # cyan
-                       'OFF': "\033[0m"}    # end sequence
+                       LOG: "\033[95m",      # purple
+                       DEBUG: "\033[36m",    # cyan
+                       'OFF': "\033[0m"}     # end sequence
 
     # Colors --------------------------------------------
 
@@ -160,6 +160,7 @@ class SingularityMessage:
         if join_newline:
             return '\n'.join(self.history)
         return self.history
+
 
     def show_progress(
             self,
