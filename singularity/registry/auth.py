@@ -27,34 +27,41 @@ SOFTWARE.
 '''
 
 from singularity.logger import bot
-import os
-import sys
-
 from singularity.utils import (
     read_json,
     write_json
 )
 
-import os
-import json
-import pwd
-import requests
+import base64
 import datetime
 import hashlib
 import hmac
+import json
+import os
+import pwd
+import requests
 import sys
+
+
+def encode(item):
+    '''make sure an item is bytes for the digest
+    '''
+    if not isinstance(item,bytes):
+        item = item.encode('utf-8')
+    return item
 
 
 def generate_signature(payload, secret):
     '''use an endpoint specific payload and client secret to generate
     a signature for the request'''
-    timestamp = datetime.datetime.utcnow().strftime('%b-%d-%G-%H-%M')
-    payload = ("%s|%s|%s" %(payload,secret,timestamp)).encode('utf-8')
-    return hmac.new(payload, digestmod=hashlib.sha256,
+    payload = encode(payload)
+    secret = encode(secret)
+    bot.debug("Sending payload %s" %payload)
+    return hmac.new(secret, digestmod=hashlib.sha256,
                     msg=payload).hexdigest()
 
 def generate_timestamp():
-    return datetime.datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')
+    return datetime.datetime.utcnow().strftime('%Y%m%dT%HZ')
 
 
 def generate_credential(s):
@@ -91,30 +98,3 @@ def read_client_secrets(secrets=None,required=True):
 
     bot.warning(message)
     return None
-
-
-def refresh_access_token():
-    '''refresh access token reads in the client secrets from
-    the token file, and update the tokens, and save back to file
-    '''
-    token_file = os.environ.get("SINGULARITY_CLIENT_SECRETS", None)
-    secrets = read_client_secrets()
-    token = None
-
-    # Query to update the token
-    if secrets is not None:
-        response = requests.post(secrets['token_uri'],
-                                 data=json.dumps(
-                                     {'refreshToken': secrets['refreshToken']}),
-                                 headers={'Content-Type': "application/json"})
-
-        if response.status_code == 200:
-
-            response = response.json()
-            secrets["accessToken"] = response['accessToken']
-            secrets["refreshToken"] = response['refreshToken']
-            print("Successfully refreshed access token.")
-            token_file = write_json(secrets, token_file)
-            token = secrets['accessToken']
-
-    return token
