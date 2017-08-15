@@ -44,6 +44,10 @@ def get_parser():
                         help="use verbose logging to debug.", 
                         default=False, action='store_true')
 
+    parser.add_argument("--secrets", dest='secrets', 
+                        help="full path to credential secrets (.sregistry) default in $HOME", 
+                        type=str, default=None)
+
 
     subparsers = parser.add_subparsers(help='sreg actions',
                                        title='actions',
@@ -54,10 +58,6 @@ def get_parser():
     # Authentication
     auth = subparsers.add_parser("auth", 
                                  help="test auth token")
-
-    auth.add_argument("--secrets", dest='secrets', 
-                       help="full path to credential secrets (.sregistry) default in $HOME", 
-                       type=str, default=None)
 
     # Authentication
     push = subparsers.add_parser("push",

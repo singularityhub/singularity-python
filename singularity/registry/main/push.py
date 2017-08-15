@@ -42,15 +42,13 @@ def main(args,parser,subparser):
         sys.exit(1)
 
     
-    # Do auth here
-    #    secrets = read_client_secrets(args.secrets)
-    #    token = secrets['token']
-    #    user = secrets['username']
-
+    # Authenticate
+    secrets = read_client_secrets(args.secrets) # required here
         
     sreg = Client()
     response = sreg.push(path=image,
                          name=args.name,
-                         tag=args.tag)
+                         tag=args.tag,
+                         secrets=secrets)
 
 
