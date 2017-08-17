@@ -32,6 +32,7 @@ ERROR = -3
 WARNING = -2
 LOG = -1
 INFO = 1
+CUSTOM = 1
 QUIET = 0
 VERBOSE = VERBOSE1 = 2
 VERBOSE2 = 3
@@ -52,6 +53,7 @@ class SingularityMessage:
                        ERROR: "\033[91m",    # red
                        WARNING: "\033[93m",  # dark yellow
                        LOG: "\033[95m",      # purple
+                       CUSTOM: "\033[95m",       
                        DEBUG: "\033[36m",    # cyan
                        'OFF': "\033[0m"}     # end sequence
 
@@ -210,6 +212,9 @@ class SingularityMessage:
                 sys.stdout.write('\n')
             sys.stdout.flush()
 
+    # Logging ------------------------------------------
+
+
     def abort(self, message):
         self.emit(ABORT, message, 'ABORT')
 
@@ -224,6 +229,9 @@ class SingularityMessage:
 
     def log(self, message):
         self.emit(LOG, message, 'LOG')
+
+    def custom(self, prefix, message):
+        self.emit(CUSTOM, message, prefix)
 
     def info(self, message):
         self.emit(INFO, message)
@@ -252,6 +260,28 @@ class SingularityMessage:
         if self.level < 1:
             return False
         return True
+
+
+    # Terminal ------------------------------------------
+
+    def table(self, rows, col_width=20):
+        '''table will print a table of entries. If the rows is 
+        a dictionary, the keys are interpreted as column names. if
+        not, a numbered list is used.
+        '''
+
+        labels = [str(x) for x in range(1,len(rows)+1)]
+        if isinstance(rows, dict):
+            labels = list(rows.keys())
+            rows = list(rows.values())
+
+        for row in rows: 
+            label = labels.pop(0)
+            label = label.ljust(col_width)
+            message = "\t".join(row) 
+            self.custom(prefix=label,
+                        message=detail)
+        
 
 
 def get_logging_level():

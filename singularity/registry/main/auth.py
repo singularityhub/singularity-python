@@ -22,8 +22,10 @@ SOFTWARE.
 
 '''
 
+from singularity.cli import get_image
+from singularity.utils import read_json
 from singularity.logger import bot
-from singularity.registry.client import Client
+from singularity.registry.auth import read_client_secrets
 import sys
 import pwd
 import os
@@ -31,18 +33,10 @@ import os
 
 def main(args,parser,subparser):
 
-    # Does the user have a valid image?
-    image = args.image[0]
-    if not os.path.exists(image):  
+    # Load the user auth secrets
+    try:
+        secrets = read_client_secrets(args.secrets)
+        token = secrets['token']
+        user = secrets['username']
+    except:
         subparser.print_help()
-        bot.error("Please supply one or more paths to existing images.")
-        sys.exit(1)
-
-    
-    # Authenticate
-    sreg = Client(secrets=args.secrets)
-    response = sreg.push(path=image,
-                         name=args.name,
-                         tag=args.tag)
-
-

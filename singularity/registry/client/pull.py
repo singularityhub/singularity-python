@@ -1,6 +1,10 @@
 '''
 
-Copyright (c) 2016-2017 Vanessa Sochat, All Rights Reserved
+pull.py: pull function for singularity registry
+
+The MIT License (MIT)
+
+Copyright (c) 2016-2017 Vanessa Sochat
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,27 +26,16 @@ SOFTWARE.
 
 '''
 
+from singularity.cli import Singularity
 from singularity.logger import bot
-from singularity.registry.client import Client
+from singularity.registry.utils import parse_image_name
+
+import requests
 import sys
-import pwd
 import os
 
-
-def main(args,parser,subparser):
-
-    # Does the user have a valid image?
-    image = args.image[0]
-    if not os.path.exists(image):  
-        subparser.print_help()
-        bot.error("Please supply one or more paths to existing images.")
-        sys.exit(1)
-
-    
-    # Authenticate
-    sreg = Client(secrets=args.secrets)
-    response = sreg.push(path=image,
-                         name=args.name,
-                         tag=args.tag)
-
-
+def pull(self, collection, name, tag=None, to_file=None):
+    names = parse_image_name(name,tag=tag)
+    # Query for image, find url
+    # if it exists:
+    self.download()

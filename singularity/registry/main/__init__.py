@@ -59,7 +59,29 @@ def get_parser():
     auth = subparsers.add_parser("auth", 
                                  help="test auth token")
 
-    # Authentication
+    # List or search containers
+    ls = subparsers.add_parser("ls",
+                                 help="list and search for containers")
+
+
+    ls.add_argument("query", nargs=1, 
+                     help="container search query, not required", 
+                     type=str, default=None)
+
+
+    # List or search labels
+    labels = subparsers.add_parser("labels",
+                                    help="query for labels")
+
+    labels.add_argument("--key", "-k", dest='key', 
+                         help="A label key to search for", 
+                         type=str, default=None)
+
+    labels.add_argument("--value", "-v", dest='value', 
+                         help="A value to search for", 
+                         type=str, default=None)
+
+    # Push an image
     push = subparsers.add_parser("push",
                                  help="push one or more images to a registry")
 
@@ -124,6 +146,12 @@ def main():
 
     if args.command == "push":
         from .push import main
+
+    if args.command == "ls":
+        from .ls import main
+
+    if args.command == "labels":
+        from .labels import main
 
     # Pass on to the correct parser
     try:

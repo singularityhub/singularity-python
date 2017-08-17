@@ -56,7 +56,6 @@ def generate_signature(payload, secret):
     a signature for the request'''
     payload = encode(payload)
     secret = encode(secret)
-    bot.debug("Sending payload %s" %payload)
     return hmac.new(secret, digestmod=hashlib.sha256,
                     msg=payload).hexdigest()
 

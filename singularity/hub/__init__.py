@@ -62,9 +62,6 @@ class ApiConnection(object):
         else:
             headers = self.headers
 
-        if self.token is not None:
-            headers["Authorization"] = "Bearer %s" %(self.token)
-
         if fields is not None:
             for key,value in fields.items():
                 headers[key] = value
@@ -108,9 +105,8 @@ class ApiConnection(object):
 
 
 
-    def paginate_get(url,headers=None,token=None,data=None,return_json=True,stream_to=None,
-                     start_page=None):
-        '''paginate_get is a wrapper for get to paginate results
+    def paginate_get(self, url, headers=None, return_json=True, start_page=None):
+        '''paginate_call is a wrapper for get to paginate results
         '''
         get = '%s&page=1' %(url)
         if start_page is not None:
@@ -118,13 +114,18 @@ class ApiConnection(object):
 
         results = []
         while get is not None:
-            result = self.get(url)
+            result = self.get(url, headers=headers, return_json=return_json)
+
+            # Exit if response not successful
+            if result.status_code != 200:
+                bot.error("%s, %s: %s" %(get, result.status_code, result.reason))
+                sys.exit(1)
+
             if 'results' in result:
                 results = results + result['results']
             get = result['next']
         return results
         
-
 
     def download(self,url,file_name,headers=None,show_progress=True):
         '''stream to a temporary file, rename on successful completion
@@ -222,15 +223,10 @@ class ApiConnection(object):
 
         # Errored response, try again with refresh
         if response.status_code == 401:
-            bot.warning("Expired token, refreshing...")
-            self.token = refresh_access_token()
-            self.update_headers()
-            response = func(url,
-                            headers=self.headers,
-                            data=data,
-                            stream=stream)
+            bot.error("Your credentials are expired.")
+            sys.exit(1)
 
-        if response.status_code == 200:
+        elif response.status_code == 200:
 
             if return_json:
 
@@ -238,7 +234,7 @@ class ApiConnection(object):
                     response =  response.json()
 
                 except (SimpleJSONDecodeError, JSONDecodeError):
-                    bot.error("The server returned a malformed response. Are you on VPN?")
+                    bot.error("The server returned a malformed response.")
                     sys.exit(1)
 
         return response
