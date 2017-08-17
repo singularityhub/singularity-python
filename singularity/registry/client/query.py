@@ -106,8 +106,8 @@ def collection_search(self, query):
 
     rows = []
     for container in result['containers']:
-        rows.append([container['uri'],
-                    [container['detail'])
+        rows.append([ container['uri'],
+                      container['detail'] ])
 
     bot.table(rows)
 
@@ -153,7 +153,7 @@ def container_search(self, query, across_collections=True):
 
     rows = []
     for container in result["containers"]:        
-        rows.append([container['uri'],
-                    [container['detail'])
+        rows.append([ container['uri'],
+                      container['detail'] ])
 
     bot.table(rows)
