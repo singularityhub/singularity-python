@@ -5,7 +5,7 @@
 # This is a simple script to use the singularity command line tool to 
 # obtain a manifest and download an image. You will need to install first
 
-singularity pull shub://vsoch/hello-world.img
+singularity pull shub://vsoch/hello-world
 
 which sregistry
 
@@ -56,6 +56,13 @@ sregistry list dinosaur/tacos:delicious --e --r --d --t
 
 sregistry delete dinosaur/tacos:delicious
 sregistry list
+
+###################################################################
+# Pull
+###################################################################
+
+sregistry pull dinosaur/avocado:delicious
+
 
 ###################################################################
 # Labels
