@@ -1,5 +1,6 @@
 pandas
 requests
+requests-toolbelt
 retrying
 simplejson
 scikit-learn
