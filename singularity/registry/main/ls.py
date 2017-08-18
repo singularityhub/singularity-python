@@ -31,11 +31,12 @@ import os
 
 def main(args,parser,subparser):
 
+
     # Does the user have a valid image?
     sreg = Client(secrets=args.secrets)
 
-    try:
-        sreg.ls(query=args.query)
-    except:
-        subparser.print_help()
-        sys.exit(1)
+    for query in args.query:
+        if query in ['','*']:
+            query = None
+
+        sreg.ls(query=query,args=args)

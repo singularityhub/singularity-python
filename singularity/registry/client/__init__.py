@@ -37,8 +37,9 @@ from singularity.registry.auth import read_client_secrets
 from .auth import authorize
 from .pull import pull
 from .push import push
+from .delete import remove
 from .query import (
-    ls, search, 
+    ls, search,
     label_search,
     collection_search, 
     container_search
@@ -66,9 +67,11 @@ class Client(ApiConnection):
         self.update_headers()
         super(ApiConnection, self).__init__(**kwargs)
 
+
     def update_secrets(secrets=None):
         '''update secrets will take a secrets credential file
-        and update the current client secrets'''
+        and update the current client secrets
+        '''
         if secrets not in [None,'']:
             self.secrets = read_client_secrets(secrets)
 
@@ -79,6 +82,7 @@ class Client(ApiConnection):
 
 Client.authorize = authorize
 Client.ls = ls
+Client.remove = remove
 Client.pull = pull
 Client.push = push
 Client.search = search

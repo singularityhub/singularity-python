@@ -29,13 +29,14 @@ SOFTWARE.
 from singularity.logger import bot
 from singularity.registry.utils import parse_image_name
 from singularity.hub import ApiConnection
+from datetime import datetime
 
 import json
 import sys
 import os
 
 
-def ls(self, query=None):
+def ls(self, query=None, args=None):
     '''query a Singularity registry for a list of images. 
      If query is None, collections are listed. 
 
@@ -63,46 +64,62 @@ def ls(self, query=None):
 
         # List details of a specific collection container
         elif "/" in query or ":" in query:  
+            if args is not None:
+                return self.container_search(query, deffile=args.deffile,
+                                                    environment=args.environ,
+                                                    runscript=args.runscript,
+                                                    test=args.test)
             return self.container_search(query)
 
-        # Call custom search
-        else:
-            return self.search(query)
-
-    else:
-        # List all collections
-        return self.collection_search()
+        # Search collections across all fields
+        return self.collection_search(query=query)
 
 
-def search(self, query):
-    '''find containers based on a query, this will search containers
-    across collections, but return collections
-    '''
-    url = '%s/collection/search/%s' %(self.base,query.lower())
-    results = self.get(url)
-    #TODO: test and parse result!
+    # Search collections across all fields
+    return self.search()
+
 
 
 ##################################################################
 # Search Helpers
 ##################################################################
 
+def search(self):
+    '''a "show all" search that doesn't require a query'''
+
+    url = '%s/collections/' %self.base
+
+    results = self.paginate_get(url)
+   
+    if len(results) == 0:
+        bot.info("No container collections found.")
+        sys.exit(1)
+
+    bot.info("Collections")
+
+    rows = []
+    for result in results:
+        if "containers" in result:
+            for c in result['containers']:
+                rows.append([ c['uri'],
+                              c['detail'] ])
+
+    bot.table(rows)
+
+
 def collection_search(self, query):
     '''collection search will list all containers for a specific
     collection. We assume query is the name of a collection'''
 
     query = query.lower().strip('/')
-    url = '%s/collections/%s' % (self.base, collection_name)
+    url = '%s/collection/%s' %(self.base, query)
 
     result = self.get(url)
     if len(result) == 0:
         bot.info("No collections found.")
         sys.exit(1)
 
-    bot.info("Collection %s" %query)
-    if 'containers' not in result:
-        bot.info("No containers found.")
-        sys.exit(0)
+    bot.custom(prefix="COLLECTION", message=query)
 
     rows = []
     for container in result['containers']:
@@ -115,45 +132,108 @@ def collection_search(self, query):
 def label_search(self, key=None, value=None):
     '''search across labels'''
 
-    key = key.lower()
-    value = value.lower()
+    if key is not None:
+        key = key.lower()
 
-    # If both key and value are None, the user wants all Labels
+    if value is not None:
+        value = value.lower()
+
+    show_details = True
     if key is None and value is None:
         url = '%s/labels/search' % (self.base)
+        show_details = False
+
     elif key is not None and value is not None:
         url = '%s/labels/search/%s/key/%s/value' % (self.base, key, value)
+
     elif key is None:
         url = '%s/labels/search/%s/value' % (self.base, value)
+
     else:
         url = '%s/labels/search/%s/key' % (self.base, key)
 
     result = self.get(url)
-    # TODO: test out
+    if len(result) == 0:
+        bot.info("No labels found.")
+        sys.exit(0)
+
+    bot.info("Labels\n")
+
+    rows = []
+    for l in result:        
+        if show_details is True:
+            entry = ["%s:%s" %(l['key'],l['value']),
+                     "\n%s\n\n" %"\n".join(l['containers'])]
+        else:
+            entry = ["N=%s" %len(l['containers']),
+                    "%s:%s" %(l['key'],l['value']) ]
+        rows.append(entry)
+    bot.table(rows)
 
 
-def container_search(self, query, across_collections=True):
+
+def container_search(self, query, across_collections=False, environment=False,
+                     deffile=False, runscript=False, test=False):
     '''search for a specific container. If across collections is False,
     the query is parsed as a full container name and a specific container
     is returned. If across_collections is True, the container is searched
-    for across collections'''
+    for across collections. If across collections is True, details are
+    not shown'''
 
     query = query.lower().strip('/')
-    url = '%s/container/search/%s' % (self.base, query, int(across_collections))
+
+    q = parse_image_name(query, defaults=False)
+
+    if q['tag'] is not None:
+        if across_collections is True:
+            url = '%s/container/search/name/%s/tag/%s' % (self.base, q['image'], q['tag'])
+        else:
+            url = '%s/container/search/collection/%s/name/%s/tag/%s' % (self.base, q['collection'], q['image'], q['tag'])
+
+    elif q['tag'] is None: 
+        if across_collections is True:
+            url = '%s/container/search/name/%s' % (self.base, q['image'])
+        else:
+            url = '%s/container/search/collection/%s/name/%s' % (self.base, q['collection'], q['image'])
 
     result = self.get(url)
+    if "containers" in result:
+        result = result['containers']
+
     if len(result) == 0:
         bot.info("No containers found.")
         sys.exit(1)
 
     bot.info("Containers %s" %query)
-    if "containers" not in result:
-        bot.info("No containers found.")
-        sys.exit(0)
 
     rows = []
-    for container in result["containers"]:        
-        rows.append([ container['uri'],
-                      container['detail'] ])
+    for c in result:        
+
+        # Convert date to readable thing
+        datetime_object = datetime.strptime(c['add_date'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        print_date = datetime_object.strftime('%b %d, %Y %I:%M%p')
+
+        rows.append([ '%s/%s' %(c['collection'], c['name']),
+                      c['tag'],
+                      print_date ])
 
     bot.table(rows)
+
+    # Finally, show metadata and other values
+    if test is True or deffile is True or environment is True or runscript is True:
+        bot.newline() 
+        for c in result:
+            metadata = c['metadata']
+
+            if test is True:
+                bot.custom(prefix='%test', message=metadata['test'], color="CYAN")
+                bot.newline()
+            if deffile is True:
+                bot.custom(prefix='Singularity', message=metadata['deffile'], color="CYAN")
+                bot.newline()
+            if environment is True:
+                bot.custom(prefix='%environment', message=metadata['environment'], color="CYAN")
+                bot.newline()
+            if runscript is True:
+                bot.custom(prefix='%runscript', message=metadata['runscript'], color="CYAN")
+                bot.newline()

@@ -1,10 +1,6 @@
 '''
 
-pull.py: pull function for singularity registry
-
-The MIT License (MIT)
-
-Copyright (c) 2016-2017 Vanessa Sochat
+Copyright (c) 2016-2017 Vanessa Sochat, All Rights Reserved
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,28 +22,16 @@ SOFTWARE.
 
 '''
 
-from singularity.cli import Singularity
 from singularity.logger import bot
-from singularity.registry.utils import parse_image_name
-
-import requests
+from singularity.registry.client import Client
 import sys
+import pwd
 import os
 
 
-def pull(self, images, file_name=None):
+def main(args,parser,subparser):
 
-    for image in images:
-        q = parse_image_name(image)
-
-        # Verify image existence, and obtain id
-        url = "%s/container/%s/%s:%s" %(self.base, q['collection'], q['image'], q['tag'])
-        result = self.get(url)
-        if file_name is None:
-            file_name = q['storage'].replace('/','-')
-    
-        image_file = self.download(url=result['image'],
-                                   file_name=file_name,
-                                   show_progress=True)
-        if os.path.exists(image_file):
-            bot.custom(prefix="Success!", message=image_file)
+    # Authenticate
+    sreg = Client(secrets=args.secrets)
+    response = sreg.pull(images=args.image,
+                         file_name=args.name)

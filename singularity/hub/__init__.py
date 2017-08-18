@@ -26,6 +26,7 @@ SOFTWARE.
 '''
 
 from simplejson import JSONDecodeError as SimpleJSONDecodeError
+from requests.exceptions import HTTPError
 from json import JSONDecodeError
 
 from singularity.logger import bot
@@ -47,12 +48,16 @@ class ApiConnection(object):
         self.base = base
         self.update_headers()
 
+# Headers
+
     def get_headers(self):
         return self.headers
 
     def _init_headers(self):
         return {'Content-Type':"application/json"}
 
+    def reset_headers(self):
+        self.headers = self.__init_headers()
 
     def update_headers(self,fields=None):
         '''update headers with a token & other fields
@@ -69,6 +74,18 @@ class ApiConnection(object):
         header_names = ",".join(list(headers.keys()))
         bot.debug("Headers found: %s" %header_names)
         self.headers = headers
+
+
+# Requests
+
+
+    def delete(self,url,return_json=True):
+        '''delete request, use with caution
+        '''
+        bot.debug('DELETE %s' %url)
+        return self.call(url,
+                         func=requests.delete,
+                         return_json=return_json)
 
 
     def put(self,url,data=None,return_json=True):
@@ -115,12 +132,6 @@ class ApiConnection(object):
         results = []
         while get is not None:
             result = self.get(url, headers=headers, return_json=return_json)
-
-            # Exit if response not successful
-            if result.status_code != 200:
-                bot.error("%s, %s: %s" %(get, result.status_code, result.reason))
-                sys.exit(1)
-
             if 'results' in result:
                 results = results + result['results']
             get = result['next']
@@ -134,27 +145,14 @@ class ApiConnection(object):
         :param headers: additional headers to add
         '''
 
-        try:
+        fd, tmp_file = tempfile.mkstemp(prefix=("%s.tmp." % file_name)) 
+        os.close(fd)
+        response = self.stream(url,headers=headers,stream_to=tmp_file)
 
-            fd, tmp_file = tempfile.mkstemp(prefix=("%s.tmp." % file_name)) 
-            os.close(fd)
-            response = self.stream(url,headers=headers,stream_to=tmp_file)
-
-            if isinstance(response, HTTPError):
-                bot.error("Error downloading %s, exiting." %url)
-                sys.exit(1)
-            os.rename(tmp_file, file_name)
-
-        except:
-            download_folder = os.path.dirname(os.path.abspath(file_name))
-            bot.error("Download error %s. Permission to write to %s?" %(url, download_folder))
-
-            try:
-                os.remove(tmp_file)
-            except:
-                pass
+        if isinstance(response, HTTPError):
+            bot.error("Error downloading %s, exiting." %url)
             sys.exit(1)
-
+        os.rename(tmp_file, file_name)
         return file_name
 
 
@@ -166,7 +164,7 @@ class ApiConnection(object):
         bot.debug("GET %s" %url)
 
         if headers == None:
-            headers = get_headers(token=token)
+            headers = self._init_headers()
 
         response = requests.get(url,         
                                 headers=headers,
@@ -194,8 +192,7 @@ class ApiConnection(object):
                                           carriage_return=False)
 
             # Newline to finish download
-            if show_progress:
-                sys.stdout.write('\n')
+            sys.stdout.write('\n')
 
             return stream_to 
 
@@ -222,8 +219,22 @@ class ApiConnection(object):
                         stream=stream)
 
         # Errored response, try again with refresh
+        if response.status_code in [500,502]:
+            bot.error("Beep boop! %s: %s" %(response.reason,
+                                            response.status_code))
+            sys.exit(1)
+
+        # Errored response, try again with refresh
+        if response.status_code == 404:
+            bot.error("Beep boop! %s: %s" %(response.reason,
+                                            response.status_code))
+            sys.exit(1)
+
+
+        # Errored response, try again with refresh
         if response.status_code == 401:
-            bot.error("Your credentials are expired.")
+            bot.error("Your credentials are expired! %s: %s" %(response.reason,
+                                                               response.status_code))
             sys.exit(1)
 
         elif response.status_code == 200:

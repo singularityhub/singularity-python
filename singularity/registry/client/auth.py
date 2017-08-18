@@ -49,10 +49,11 @@ def authorize(self, names, payload=None, request_type="push"):
         credential = "%s/%s/%s" %(request_type,credential,timestamp)
 
         if payload is None:
-            payload = "push|%s|%s|%s|%s|" %(names['collection'],
-                                            timestamp,
-                                            names['image'],
-                                            names['tag'])
+            payload = "%s|%s|%s|%s|%s|" %(request_type,
+                                          names['collection'],
+                                          timestamp,
+                                          names['image'],
+                                          names['tag'])
 
         signature = generate_signature(payload,self.secrets['token'])
         return "SREGISTRY-HMAC-SHA256 Credential=%s,Signature=%s" %(credential,signature)

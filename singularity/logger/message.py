@@ -39,6 +39,11 @@ VERBOSE2 = 3
 VERBOSE3 = 4
 DEBUG = 5
 
+PURPLE = "\033[95m"
+YELLOW = "\033[93m"
+RED = "\033[91m"
+DARKRED = "\033[31m"
+CYAN = "\033[36m"
 
 class SingularityMessage:
 
@@ -48,14 +53,20 @@ class SingularityMessage:
         self.errorStream = sys.stderr
         self.outputStream = sys.stdout
         self.colorize = self.useColor()
-        self.colors = {ABORT: "\033[31m",    # dark red
-                       CRITICAL: "\033[31m",
-                       ERROR: "\033[91m",    # red
-                       WARNING: "\033[93m",  # dark yellow
-                       LOG: "\033[95m",      # purple
-                       CUSTOM: "\033[95m",       
-                       DEBUG: "\033[36m",    # cyan
-                       'OFF': "\033[0m"}     # end sequence
+        self.colors = {ABORT: DARKRED,
+                       CRITICAL: RED,
+                       ERROR: RED,    
+                       WARNING: YELLOW,  
+                       LOG: PURPLE,      
+                       CUSTOM: PURPLE,       
+                       DEBUG: CYAN,      
+                       'OFF': "\033[0m", # end sequence
+                       'CYAN':CYAN,
+                       'PURPLE':PURPLE,
+                       'RED':RED,
+                       'DARKRED':DARKRED,
+                       'YELLOW':YELLOW}
+                       
 
     # Colors --------------------------------------------
 
@@ -113,19 +124,21 @@ class SingularityMessage:
             return True
         return False
 
-    def emit(self, level, message, prefix=None):
+    def emit(self, level, message, prefix=None, color=None):
         '''emit is the main function to print the message
         optionally with a prefix
         :param level: the level of the message
         :param message: the message to print
         :param prefix: a prefix for the message
         '''
+        if color is None:
+            color = level
 
         if prefix is not None:
-            prefix = self.addColor(level, "%s " % (prefix))
+            prefix = self.addColor(color, "%s " % (prefix))
         else:
             prefix = ""
-            message = self.addColor(level, message)
+            message = self.addColor(color, message)
 
         # Add the prefix
         message = "%s%s" % (prefix, message)
@@ -230,8 +243,8 @@ class SingularityMessage:
     def log(self, message):
         self.emit(LOG, message, 'LOG')
 
-    def custom(self, prefix, message):
-        self.emit(CUSTOM, message, prefix)
+    def custom(self, prefix, message, color=PURPLE):
+        self.emit(CUSTOM, message, prefix, color)
 
     def info(self, message):
         self.emit(INFO, message)
@@ -264,7 +277,7 @@ class SingularityMessage:
 
     # Terminal ------------------------------------------
 
-    def table(self, rows, col_width=20):
+    def table(self, rows, col_width=2):
         '''table will print a table of entries. If the rows is 
         a dictionary, the keys are interpreted as column names. if
         not, a numbered list is used.
@@ -278,9 +291,9 @@ class SingularityMessage:
         for row in rows: 
             label = labels.pop(0)
             label = label.ljust(col_width)
-            message = "\t".join(row) 
+            message = "\t".join(row)
             self.custom(prefix=label,
-                        message=detail)
+                        message=message)
         
 
 

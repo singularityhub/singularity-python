@@ -55,19 +55,60 @@ def get_parser():
                                        dest="command")
 
 
-    # Authentication
-    auth = subparsers.add_parser("auth", 
-                                 help="test auth token")
-
     # List or search containers
-    ls = subparsers.add_parser("ls",
-                                 help="list and search for containers")
+    ls = subparsers.add_parser("list",
+                               help="list and search for containers")
 
 
-    ls.add_argument("query", nargs=1, 
-                     help="container search query, not required", 
-                     type=str, default=None)
+    ls.add_argument("query", nargs='*', 
+                     help="container search query, don't specify for all", 
+                     type=str, default="*")
 
+    ls.add_argument('--runscript','-r', dest="runscript", 
+                    help="show the runscript for each container", 
+                    default=False, action='store_true')
+
+    ls.add_argument('--def','-df', dest="deffile", 
+                    help="show the deffile for each container.", 
+                    default=False, action='store_true')
+
+    ls.add_argument('--env','-e', dest="environ", 
+                    help="show the environment for each container.", 
+                    default=False, action='store_true')
+
+    ls.add_argument('--test','-t', dest="test", 
+                    help="show the test for each container.", 
+                    default=False, action='store_true')
+
+    # Push an image
+    push = subparsers.add_parser("push",
+                                 help="push one or more images to a registry")
+
+
+    push.add_argument("image", nargs=1,
+                       help="full path to image file", 
+                       type=str)
+
+    push.add_argument("--tag", dest='tag', 
+                       help="tag for image. If not provided, defaults to latest", 
+                       type=str, default=None)
+
+    push.add_argument("--name", dest='name', 
+                       help='name of image, in format "library/image"', 
+                       type=str, required=True)
+
+
+    # Pull an image
+    pull = subparsers.add_parser("pull",
+                                 help="pull an image from a registry")
+
+    pull.add_argument("image", nargs=1,
+                       help="full uri of image", 
+                       type=str)
+
+    pull.add_argument("--name", dest='name', 
+                       help='custom name for image', 
+                       type=str, default=None)
 
     # List or search labels
     labels = subparsers.add_parser("labels",
@@ -81,22 +122,19 @@ def get_parser():
                          help="A value to search for", 
                          type=str, default=None)
 
-    # Push an image
-    push = subparsers.add_parser("push",
-                                 help="push one or more images to a registry")
+    # Remove
+    delete = subparsers.add_parser("delete",
+                                    help="delete an image from the registry.")
+
+    delete.add_argument('--force','-f', dest="force", 
+                        help="don't prompt before deletion", 
+                        default=False, action='store_true')
+
+    delete.add_argument("image", nargs=1,
+                        help="full path to image file", 
+                        type=str)
 
 
-    push.add_argument("image", nargs=1, 
-                       help="full path to image file", 
-                       type=str)
-
-    push.add_argument("--tag", dest='tag', 
-                       help="tag for image. If not provided, defaults to latest", 
-                       type=str, default=None)
-
-    push.add_argument("--name", dest='name', 
-                       help='name of image, in format "library/image"', 
-                       type=str, required=True)
 
     return parser
 
@@ -134,24 +172,26 @@ def main():
 
     # if environment logging variable not set, make silent
     if args.debug is False:
-        os.environ['MESSAGELEVEL'] = "CRITICAL"
+        os.environ['MESSAGELEVEL'] = "INFO"
 
     if args.version is True:
         print(singularity.__version__)
         sys.exit(0)
 
+    if args.command == "labels":
+        from .labels import main
 
-    if args.command == "auth":
-        from .auth import main
+    if args.command == "list":
+        from .ls import main
 
     if args.command == "push":
         from .push import main
 
-    if args.command == "ls":
-        from .ls import main
+    if args.command == "pull":
+        from .pull import main
 
-    if args.command == "labels":
-        from .labels import main
+    if args.command == "delete":
+        from .delete import main
 
     # Pass on to the correct parser
     try:
