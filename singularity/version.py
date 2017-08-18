@@ -38,7 +38,6 @@ INSTALL_REQUIRES = (
     ('requests', {'min_version': '2.12.4'}),
     ('requests-toolbelt', {'min_version': '0.8.0'}),
     ('retrying', {'min_version': '1.3.3'}),
-    ('selenium', {'min_version': '3.0.2'}),
     ('simplejson', {'min_version': '3.10.0'}),
     ('pygments', {'min_version': '2.1.3'}),
     ('scikit-learn', {'min_version': '0.18.1'}),
