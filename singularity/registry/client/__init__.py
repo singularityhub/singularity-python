@@ -29,6 +29,7 @@ SOFTWARE.
 from singularity.cli import Singularity
 from singularity.logger import bot
 from singularity.hub import ApiConnection
+import json
 import sys
 import os
 
@@ -78,6 +79,16 @@ class Client(ApiConnection):
     def __str__(self):
         return "singularity.registry.client.%s" %(self.base)
     
+
+    def read_response(self,response, field="detail"):
+        '''attempt to read the detail provided by the response. If none, 
+        default to using the reason'''
+
+        try:
+            message = json.loads(response._content.decode('utf-8'))[field]
+        except:
+            message = response.reason
+        return message
 
 
 Client.authorize = authorize

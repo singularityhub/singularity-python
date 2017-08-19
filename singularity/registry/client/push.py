@@ -36,6 +36,7 @@ from requests_toolbelt import (
 )
 
 import requests
+import json
 import sys
 import os
 
@@ -83,7 +84,10 @@ def push(self, path, name, tag=None):
 
     try:
         r = requests.post(url, data=monitor, headers=headers)
-        print('\nUpload finished! [Return status {0} {1}]'.format(r.status_code, r.reason.lower()))
+        message = self.read_response(r)
+
+        print('\nUpload finished! [Return status {0} {1}]'.format(r.status_code, message))
+
     except KeyboardInterrupt:
         print('\nUpload cancelled.')
 

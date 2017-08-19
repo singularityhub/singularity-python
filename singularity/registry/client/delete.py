@@ -59,16 +59,8 @@ def remove(self, image, force=False):
 
     if continue_delete is True:
         response = self.delete(url)
-        if response.status_code == 404:
-            bot.info("Container not found: %s" %(response.status_code))
-        
-        elif response.status_code == 304:
-            bot.info("Container is frozen, delete cancelled: %s" %(response.status_code))
+        message = self.read_response(response)
+        bot.info("Response %s, %s" (response.status_code, message))
 
-        elif response.status_code == 204:
-            bot.info("Delete request complete: %s" %(response.status_code))
-
-        else:
-            bot.info("%s: %s" %(response.reason,response.status_code))
     else:
         bot.info("Delete cancelled.")
