@@ -60,7 +60,7 @@ def remove(self, image, force=False):
     if continue_delete is True:
         response = self.delete(url)
         message = self.read_response(response)
-        bot.info("Response %s, %s" (response.status_code, message))
+        bot.info("Response %s, %s" %(response.status_code, message))
 
     else:
         bot.info("Delete cancelled.")
