@@ -63,6 +63,16 @@ def push(self, path, name, tag=None):
                            quiet=True,
                            environment=True)
 
+    # Try to add the size
+    try:
+        metadata = json.loads(metadata)
+        image_size = os.path.getsize(path) >> 20
+        metadata['data']['attributes']['labels']['SREGISTRY_SIZE_MB'] = image_size
+        metadata = json.dumps(metadata)
+    except:
+        bot.warning("Cannot load metadata to add calculated size.")
+        pass
+
     names = parse_image_name(name,tag=tag)
     url = '%s/push/' % self.base
     upload_from=path
