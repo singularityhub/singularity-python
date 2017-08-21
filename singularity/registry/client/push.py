@@ -89,7 +89,7 @@ def push(self, path, name, tag=None, compress=True):
         pass
 
 
-    names = parse_image_name(name,tag=tag, ext=".img.gz")
+    names = parse_image_name(name,tag=tag, ext="img.gz")
     url = '%s/push/' % self.base
 
     if compress is True:

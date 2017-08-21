@@ -27,7 +27,7 @@ import os
 import re
 
 
-def parse_image_name(image_name, tag=None, defaults=True, ext=".img"):
+def parse_image_name(image_name, tag=None, defaults=True, ext="img"):
     '''return a collection and repo name and tag
     for an image file.
     
