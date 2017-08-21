@@ -31,6 +31,21 @@ import fnmatch
 import tempfile
 
 
+def parse_header(recipe, header="from", remove_header=True):
+    '''take a recipe, and return the complete header, line. If
+    remove_header is True, only return the value.
+    '''
+    parsed_header = None
+    fromline = [x for x in recipe.split('\n') if "%s:" %header in x.lower()]
+    if len(fromline) > 0:
+        fromline = fromline[0]
+        parsed_header = fromline.strip()
+    if remove_header is True:
+        parsed_header = fromline.split(':', 1)[-1].strip()
+    return parsed_header               
+
+
+
 def find_recipes(folders,pattern=None, base=None):
     '''find recipes will use a list of base folders, files,
     or patterns over a subset of content to find recipe files

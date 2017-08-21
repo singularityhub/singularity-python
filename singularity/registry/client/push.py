@@ -28,7 +28,10 @@ SOFTWARE.
 
 from singularity.cli import Singularity
 from singularity.logger import bot
-from singularity.registry.utils import parse_image_name
+from singularity.registry.utils import (
+    parse_image_name,
+    parse_header
+)
 from singularity.logger import ProgressBar
 from requests_toolbelt import (
     MultipartEncoder,
@@ -72,6 +75,19 @@ def push(self, path, name, tag=None):
     except:
         bot.warning("Cannot load metadata to add calculated size.")
         pass
+
+
+    try:
+        metadata = json.loads(metadata)
+        fromimage = parse_header(metadata['data']['attributes']['deffile'],
+                                 header="from",
+                                 remove_header=True) 
+        metadata['data']['attributes']['labels']['SREGISTRY_FROM'] = fromimage
+        metadata = json.dumps(metadata)
+    except:
+        bot.warning("Cannot load metadata to parse From: line.")
+        pass
+
 
     names = parse_image_name(name,tag=tag)
     url = '%s/push/' % self.base
