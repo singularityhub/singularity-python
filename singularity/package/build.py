@@ -32,6 +32,7 @@ from .size import calculate_folder_size
 from singularity.utils import (
     format_container_name,
     read_file, 
+    run_command
 )
 
 from singularity.cli import Singularity

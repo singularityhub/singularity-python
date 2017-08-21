@@ -25,12 +25,7 @@ SOFTWARE.
 '''
 
 from .utils import get_image
-
-from singularity.utils import (
-    getsudo, 
-    run_command
-)
-
+from singularity.utils import run_command
 from singularity.logger import bot
 
 from glob import glob
@@ -43,36 +38,30 @@ import re
 class Singularity:
     
 
-    def __init__(self,sudo=False,sudopw=None,debug=False,quiet=False):
+    def __init__(self,sudo=False,debug=False,quiet=False):
        '''upon init, store user password to not ask for it again'''
 
-       self.sudopw = sudopw
        self.debug = debug
        self.quiet = quiet
 
-       # Try getting from environment
-       if self.sudopw == None:
-           self.sudopw = os.environ.get('pancakes',None)
 
-       if sudo == True and self.sudopw == None:
-           self.sudopw = getsudo()
-
-
-    def run_command(self,cmd,sudo=False,suppress=False):
+    def run_command(self, cmd, sudo=False, quiet=False):
         '''run_command is a wrapper for the global run_command, checking first
-        for sudo (and asking for it to store) if sudo is needed.
+        for sudo and exiting on error if needed
         :param cmd: the command to run
         :param sudo: does the command require sudo?
-        :param suppress: run os.system instead of os.popen if sudo required
         '''
-        if sudo==True:
-            if self.sudopw == None:
-                self.sudopw = getsudo()
-            output = run_command(cmd,sudopw=self.sudopw,suppress=suppress)
-        else:
-            output = run_command(cmd,suppress=suppress) # suppress doesn't make difference here
-        return output
-
+        result = run_command(cmd,sudo=sudo)
+        return_code = result['return_code']
+        message = result['message']
+        if return_code == 0:
+            if isinstance(message,bytes):
+                message=message.decode('utf-8')
+            return message
+        if quiet is False:
+            bot.error("Return Code %s: %s" %(return_code,
+                                             message))
+        sys.exit(1)
 
 
     def help(self,command=None,stdout=True):
@@ -83,9 +72,6 @@ class Singularity:
         if command != None:
             cmd.append(command)
         help = self.run_command(cmd)
-
-        if isinstance(help,bytes):
-            help = help.decode('utf-8')
 
         # Print to console, or return string to user
         if stdout == True:
@@ -100,23 +86,21 @@ class Singularity:
         '''
         if isinstance(output,bytes):
             output = output.decode('utf-8')
-
         if self.quiet is False and quiet is False:
             print(output)
-        return output
-
+        
 
     def bootstrap(self,image_path,spec_path):
         '''create will bootstrap an image using a spec
         :param image_path: full path to image
         :param spec_path: full path to the spec file (Singularity)
         ''' 
-        if self.debug == True:
+        if self.debug is True:
             cmd = ['singularity','--debug','bootstrap',image_path,spec_path]
         else:
             cmd = ['singularity','bootstrap',image_path,spec_path]
         output = self.run_command(cmd,sudo=True)
-        output = self.println(output)     
+        self.println(output)     
         return image_path
 
 
@@ -128,8 +112,7 @@ class Singularity:
             return compressed_image
         else:
             bot.error("Cannot find image %s" %image_path)
-        return None
-
+            sys.exit(1)
 
     def create(self,image_path,size=None,sudo=False):
         '''create will create a a new image
@@ -145,22 +128,27 @@ class Singularity:
         else:
             cmd = ['singularity','create','--size',str(size),image_path]
         output = self.run_command(cmd,sudo=sudo)
-        output = self.println(output)        
-        if os.path.exists(image_path):
-            return image_path
-        return None
+        self.println(output)
+
+        if not os.path.exists(image_path):
+            bot.error("Could not create image %s" %image_path)
+            sys.exit(1)
+
+        return image_path
 
 
-
-    def decompress(self,image_path):
+    def decompress(self,image_path,quiet=True):
         '''decompress will (properly) decompress an image'''
-        if os.path.exists(image_path):
-            extracted_file = image_path.replace('.gz','')
-            os.system('gzip -d -f %s' %image_path)
-            return extracted_file
-        else:
-            bot.error("Cannot find image %s" %image_path)
 
+        if not os.path.exists(image_path):
+            bot.error("Cannot find image %s" %image_path)
+            sys.exit(1)
+
+        extracted_file = image_path.replace('.gz','')
+        cmd = ['gzip','-d','-f', image_path]
+        result = self.run_command(cmd, quiet=quiet) # exits if return code != 0
+        return extracted_file
+        
 
     def execute(self,image_path,command,writable=False,contain=False):
         '''execute: send a command to a container
@@ -176,10 +164,11 @@ class Singularity:
         else:
             cmd = ["singularity",'--quiet',"exec"]
 
-        cmd = self.add_flags(cmd,writable=writable,contain=contain)
+        cmd = self.add_flags(cmd,
+                             writable=writable,
+                             contain=contain)
 
-        # Needing sudo?
-        if writable == True:
+        if writable is True:
             sudo = True
 
         if not isinstance(command,list):
@@ -208,6 +197,7 @@ class Singularity:
     
         cmd.append(image_path)
         output = self.run_command(cmd)
+        
         if old_version == True:
             return tmptar
         return output
@@ -221,7 +211,7 @@ class Singularity:
         '''
         cmd = ['singularity','import',image_path,input_source]
         output = self.run_command(cmd,sudo=False)
-        output = self.println(output)        
+        self.println(output)        
         return image_path
 
 
@@ -246,7 +236,7 @@ class Singularity:
 
         cmd.append(image_path)
         output = self.run_command(cmd)
-        output = self.println(output,quiet=quiet)    
+        self.println(output,quiet=quiet)    
         return output
 
 
@@ -299,7 +289,6 @@ class Singularity:
 
         cmd.append(image_path)
         output = self.run_command(cmd)
-        output = self.println(output,quiet=True)        
         return output.split("Container is at:")[-1].strip('\n').strip()
         
 
@@ -316,7 +305,7 @@ class Singularity:
         cmd = cmd + [image_path]
 
         # Conditions for needing sudo
-        if writable == True:
+        if writable is True:
             sudo = True
         
         if args is not None:        
@@ -325,7 +314,6 @@ class Singularity:
             cmd = cmd + args
 
         result = self.run_command(cmd,sudo=sudo)
-        result = self.println(result,quiet=True)
         result = result.strip('\n')
         try:
             result = json.loads(result)
@@ -339,7 +327,6 @@ class Singularity:
         '''
         cmd = ['singularity','exec',image_path,'cat','/.singularity/labels.json']
         labels = self.run_command(cmd)
-        labels = self.println(labels,quiet=True)
         if len(labels) > 0:
             return json.loads(labels)
         return labels

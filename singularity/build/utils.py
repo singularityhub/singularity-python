@@ -65,18 +65,14 @@ def stop_if_result_none(result):
 
 def test_container(image_path):
     '''test_container is a simple function to send a command to a container, and 
-    return the status code and any message run for the test. It does it by
-    way of sending an echo of some message, which (I think?) should
-    work in most linux.
+    return the status code and any message run for the test. This comes after
     :param image_path: path to the container image
     '''
+    from singularity.utils import run_command
+    bot.debug('Testing container exec with a list command.')
     testing_command = ["singularity", "exec", image_path, 'ls']
-    output = Popen(testing_command,stderr=STDOUT,stdout=PIPE)
-    t = output.communicate()[0],output.returncode
-    result = {'message':t[0],
-              'return_code':t[1]}
-    return result
-
+    return run_command(testing_command)
+    
 
 ######################################################################################
 # Build Templates

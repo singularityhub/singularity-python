@@ -31,6 +31,7 @@ from singularity.logger import bot
 from singularity.registry.utils import parse_image_name
 
 import requests
+import shutil
 import sys
 import os
 
@@ -57,13 +58,14 @@ def pull(self, images, file_name=None):
                 cli = Singularity()
                 sys.stdout.write('Decompressing image ')
                 bot.spinner.start()
-                image_file = cli.decompress(image_file)
-                bot.spinner.stop()
+                image_file = cli.decompress(image_file, quiet=True)
             except KeyboardInterrupt:
                 bot.warning('Decompression cancelled.')
             except:
                 bot.info('Image is not compressed.')
-                image_file = os.rename(image_file,image_file.replace('.gz',''))
+                image_name = image_file.replace('.gz','')
+                image_file = shutil.move(image_file,image_name)
                 pass
 
+            bot.spinner.stop()
             bot.custom(prefix="Success!", message=image_file)

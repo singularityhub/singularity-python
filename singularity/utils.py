@@ -37,7 +37,11 @@ import shutil
 import json
 import simplejson
 from singularity.logger import bot
-import subprocess
+from subprocess import (
+    Popen,
+    PIPE,
+    STDOUT
+)
 import sys
 
 
@@ -70,38 +74,21 @@ def get_installdir():
     return os.path.abspath(os.path.dirname(__file__))
 
 
-def getsudo():
-    sudopw = input('[sudo] password for %s: ' % (os.environ['USER']))
-    os.environ['pancakes'] = sudopw
-    return sudopw
 
-
-def run_command(cmd, error_message=None, sudopw=None, suppress=False):
+def run_command(cmd, sudo=False):
     '''run_command uses subprocess to send a command to the terminal.
     :param cmd: the command to send, should be a list for subprocess
     :param error_message: the error message to give to user if fails,
     if none specified, will alert that command failed.
-    :param execute: if True, will add `` around command (default is False)
     :param sudopw: if specified (not None) command will be run asking for sudo
     '''
-    if sudopw is None:
-        sudopw = os.environ.get('pancakes', None)
+    if sudo is True:
+        cmd = ['sudo'] + cmd
 
-    if sudopw is not None:
-        cmd = ' '.join(["echo", sudopw, "|", "sudo", "-S"] + cmd)
-        if not suppress:
-            output = os.popen(cmd).read().strip('\n')
-        else:
-            output = cmd
-            os.system(cmd)
-    else:
-        try:
-            process = subprocess.Popen(
-                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            output, err = process.communicate()
-        except BaseException:
-            bot.error(err)
-            return None
+    output = Popen(cmd,stderr=STDOUT,stdout=PIPE)
+    t = output.communicate()[0],output.returncode
+    output = {'message':t[0],
+              'return_code':t[1]}
 
     return output
 
