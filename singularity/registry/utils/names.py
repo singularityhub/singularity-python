@@ -27,7 +27,7 @@ import os
 import re
 
 
-def parse_image_name(image_name, tag=None, defaults=True):
+def parse_image_name(image_name, tag=None, defaults=True, ext=".img"):
     '''return a collection and repo name and tag
     for an image file.
     
@@ -70,10 +70,10 @@ def parse_image_name(image_name, tag=None, defaults=True):
     
     if tag is not None:
         uri = "%s/%s:%s" % (collection, image_name, tag)
-        storage = "%s/%s-%s.img" % (collection, image_name, tag)
+        storage = "%s/%s-%s.%s" % (collection, image_name, tag, ext)
     else:
         uri = "%s/%s" % (collection, image_name)
-        storage = "%s/%s.img" % (collection, image_name)
+        storage = "%s/%s.%s" % (collection, image_name, ext)
 
     result = {"collection": collection,
               "image": image_name,

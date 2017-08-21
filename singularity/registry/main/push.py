@@ -43,6 +43,7 @@ def main(args,parser,subparser):
     sreg = Client(secrets=args.secrets)
     response = sreg.push(path=image,
                          name=args.name,
-                         tag=args.tag)
+                         tag=args.tag,
+                         compress=not args.nocompress)
 
 

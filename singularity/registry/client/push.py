@@ -50,7 +50,7 @@ from singularity.registry.auth import (
 )
 
 
-def push(self, path, name, tag=None):
+def push(self, path, name, tag=None, compress=True):
     '''push an image to Singularity Registry'''
     path = os.path.abspath(path)
 
@@ -89,9 +89,23 @@ def push(self, path, name, tag=None):
         pass
 
 
-    names = parse_image_name(name,tag=tag)
+    names = parse_image_name(name,tag=tag, ext=".img.gz")
     url = '%s/push/' % self.base
-    upload_from=path
+
+    if compress is True:
+        try:
+            sys.stdout.write('Compressing image ')
+            bot.spinner.start()
+            upload_from = cli.compress(path)
+            bot.spinner.stop()
+        except KeyboardInterrupt:
+            print('Upload cancelled')
+            if os.path.exists("%s.gz" %path):
+                os.remove("%s.gz" %path)
+            sys.exit(1)
+    else:
+        upload_from = path
+
     upload_to = os.path.basename(names['storage'])
 
     SREGISTRY_EVENT = self.authorize(request_type="push",
@@ -116,6 +130,11 @@ def push(self, path, name, tag=None):
 
     except KeyboardInterrupt:
         print('\nUpload cancelled.')
+
+    # Clean up
+    if compress is True:
+        if os.path.exists("%s.gz" %path):
+            os.remove("%s.gz" %path)
 
 
 def create_callback(encoder):

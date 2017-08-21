@@ -25,6 +25,7 @@ SOFTWARE.
 
 import os
 import sys
+from .spinner import Spinner
 
 ABORT = -5
 CRITICAL = -4
@@ -348,4 +349,5 @@ def convert2boolean(arg):
     return arg
 
 
+SingularityMessage.spinner = Spinner()
 bot = SingularityMessage()

@@ -97,6 +97,10 @@ def get_parser():
                        help='name of image, in format "library/image"', 
                        type=str, required=True)
 
+    push.add_argument('--no-compress', dest="nocompress", 
+                      help="show the test for each container.", 
+                      default=False, action='store_true')
+
 
     # Pull an image
     pull = subparsers.add_parser("pull",
