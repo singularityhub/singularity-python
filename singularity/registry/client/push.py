@@ -66,29 +66,27 @@ def push(self, path, name, tag=None, compress=True):
                            quiet=True,
                            environment=True)
 
+    metadata = json.loads(metadata)
+
     # Try to add the size
     try:
-        metadata = json.loads(metadata)
         image_size = os.path.getsize(path) >> 20
         metadata['data']['attributes']['labels']['SREGISTRY_SIZE_MB'] = image_size
-        metadata = json.dumps(metadata)
     except:
         bot.warning("Cannot load metadata to add calculated size.")
         pass
 
 
     try:
-        metadata = json.loads(metadata)
         fromimage = parse_header(metadata['data']['attributes']['deffile'],
                                  header="from",
                                  remove_header=True) 
         metadata['data']['attributes']['labels']['SREGISTRY_FROM'] = fromimage
-        metadata = json.dumps(metadata)
     except:
         bot.warning("Cannot load metadata to parse From: line.")
         pass
 
-
+    metadata = json.dumps(metadata)
     names = parse_image_name(name,tag=tag, ext="img.gz")
     url = '%s/push/' % self.base
 
