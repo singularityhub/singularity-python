@@ -50,10 +50,18 @@ api_base = "http://127.0.0.1"
 
 class Client(ApiConnection):
 
-    def __init__(self, base=None, secrets=None, **kwargs):
+    def __init__(self, secrets=None, base=None, **kwargs):
  
-        # If base not set, use default
+        self.headers = None
         self.base = base
+        self.secrets = read_client_secrets(secrets)
+        self.update_headers()
+ 
+        # Credentials base takes 1st preference
+        if "base" in self.secrets:
+            self.base = self.secrets['base']
+
+        # If not defined, default to localhost
         if self.base is None:
             self.base = api_base
         self.base = self.base.strip('/') 
@@ -62,10 +70,6 @@ class Client(ApiConnection):
         if not self.base.endswith('/api'):
             self.base =  "%s/api" %self.base
 
-        self.headers = None
-        self.secrets = read_client_secrets(secrets)
-
-        self.update_headers()
         super(ApiConnection, self).__init__(**kwargs)
 
 
