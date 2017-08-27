@@ -24,10 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 '''
-
-from simplejson import JSONDecodeError as SimpleJSONDecodeError
 from requests.exceptions import HTTPError
-from json import JSONDecodeError
 
 from singularity.logger import bot
 import requests
@@ -244,7 +241,7 @@ class ApiConnection(object):
                 try:
                     response =  response.json()
 
-                except (SimpleJSONDecodeError, JSONDecodeError):
+                except ValueError:
                     bot.error("The server returned a malformed response.")
                     sys.exit(1)
 
