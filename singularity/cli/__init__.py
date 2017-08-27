@@ -108,7 +108,7 @@ class Singularity:
         '''compress will (properly) compress an image'''
         if os.path.exists(image_path):
             compressed_image = "%s.gz" %image_path
-            os.system('gzip -c -9 %s > %s' %(image_path,compressed_image))
+            os.system('gzip -c -6 %s > %s' %(image_path,compressed_image))
             return compressed_image
         else:
             bot.error("Cannot find image %s" %image_path)
