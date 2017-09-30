@@ -123,7 +123,7 @@ def run_build(build_dir,params,verbose=True):
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 sudopw='', # with root should not need sudo
                                 build_dir=build_dir,
-                                secure=True,
+                                isolated=True,
                                 sandbox=False,
                                 debug=params['debug'])
 

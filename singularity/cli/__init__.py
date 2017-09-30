@@ -89,16 +89,16 @@ class Singularity:
             print(output)
         
 
-    def build(self, image_path, spec_path, secure=False, sandbox=False):
-        '''build a singularity image, optionally for a secure build
+    def build(self, image_path, spec_path, isolated=False, sandbox=False):
+        '''build a singularity image, optionally for an isolated build
            (requires sudo)'''
         if self.debug is True:
             cmd = ['singularity','--debug','build']
         else:
             cmd = ['singularity','build']
 
-        if secure is True:
-            cmd.append('--secure')
+        if isolated is True:
+            cmd.append('--isolated')
         if sandbox is True:
             cmd.append('--sandbox')
 
