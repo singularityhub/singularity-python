@@ -124,11 +124,16 @@ def get_singularity_version(singularity_version=None):
         singularity_version = os.environ.get("SINGULARITY_VERSION",None)
         
     # Next get from system
+    installed = True
     if singularity_version == None:
         try:
             cmd = ['singularity','--version']
-            singularity_version = run_command(cmd,error_message="Cannot determine Singularity version!").decode('utf-8').strip('\n')
-            bot.info("Singularity %s being used." %singularity_version)
+            output = run_command(cmd)
+
+            if isinstance(output['message'],bytes):
+                output['message'] = output['message'].decode('utf-8')
+            bot.info("Singularity %s being used." % output['message'].strip('\n'))
+
         except:
             singularity_version = None
             bot.warning("Singularity version not found, so it's likely not installed.")

@@ -85,8 +85,6 @@ def extract_guts(image_path,tar,file_filter,tag_root=True,include_sizes=True):
 def get_memory_tar(image_path):
     '''get an in memory tar of an image (does not require sudo!)'''
     cli = Singularity()
-    if "pancakes" in os.environ:
-        del os.environ['pancakes']
     byte_array = cli.export(image_path)
     file_object = io.BytesIO(byte_array)
     tar = tarfile.open(mode="r|*", fileobj=file_object)
@@ -109,7 +107,10 @@ def get_image_tar(image_path,write_file=True,S=None):
         bot.debug('Generate file system tar...')   
         if S is None:
             S = Singularity()
-        file_obj = S.export(image_path=image_path,old_version=True)
+        file_obj = S.export(image_path=image_path)
+        if file_obj is None:
+            bot.error("Error generating tar, exiting.")
+            sys.exit(1)
         tar = tarfile.open(file_obj)
 
     return file_obj, tar

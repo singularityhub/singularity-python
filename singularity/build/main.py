@@ -119,12 +119,11 @@ def run_build(build_dir,params,verbose=True):
         bot.info("Found spec file %s in repository" %params['spec_file'])
 
         # START TIMING
-        os.chdir(build_dir)
         start_time = datetime.now()
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
                                 sudopw='', # with root should not need sudo
                                 build_dir=build_dir,
-                                paranoid=True,
+                                secure=True,
                                 sandbox=False,
                                 debug=params['debug'])
 
@@ -136,10 +135,6 @@ def run_build(build_dir,params,verbose=True):
         if test_result['return_code'] == 255:
             bot.error("Image failed to bootstrap, cancelling build.")
             sys.exit(1)
-
-        # Compress image
-        compressed_image = "%s.img.gz" %image
-        os.system('gzip -c -9 %s > %s' %(image,compressed_image))
 
         # Get singularity version
         singularity_version = get_singularity_version()
@@ -159,6 +154,7 @@ def run_build(build_dir,params,verbose=True):
         # Inspect to get labels and other metadata
         cli = Singularity(debug=params['debug'])
         inspect = cli.inspect(image_path=image)
+        apps = cli.apps(image_path=image)
 
         # Get tags for services, executables
         interesting_folders = ['init','init.d','bin','systemd']
@@ -177,8 +173,7 @@ def run_build(build_dir,params,verbose=True):
         os_sims = estimate_os(image_package=image_package,return_top=False)
         most_similar = os_sims['SCORE'].idxmax()
 
-        metrics = {'size': params['size'],
-                   'build_time_seconds':final_time,
+        metrics = {'build_time_seconds':final_time,
                    'singularity_version':singularity_version,
                    'singularity_python_version':singularity_python_version, 
                    'estimated_os': most_similar,
@@ -187,8 +182,11 @@ def run_build(build_dir,params,verbose=True):
                    'file_counts':counts,
                    'file_ext':extensions,
                    'inspect':inspect }
-      
-        output = {'image':compressed_image,
+
+        if apps is not None:
+            metrics['apps'] = apps
+    
+        output = {'image':image,
                   'image_package':image_package,
                   'metadata':metrics,
                   'params':params }

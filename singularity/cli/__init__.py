@@ -52,9 +52,8 @@ class Singularity:
         :param sudo: does the command require sudo?
         '''
         result = run_command(cmd,sudo=sudo)
-        return_code = result['return_code']
         message = result['message']
-        if return_code == 0:
+        if result['return_code'] == 0:
             if isinstance(message,bytes):
                 message=message.decode('utf-8')
             return message
@@ -90,7 +89,7 @@ class Singularity:
             print(output)
         
 
-    def build(self, image_path, spec_path, paranoid=False):
+    def build(self, image_path, spec_path, secure=False, sandbox=False):
         '''build a singularity image, optionally for a secure build
            (requires sudo)'''
         if self.debug is True:
@@ -98,14 +97,26 @@ class Singularity:
         else:
             cmd = ['singularity','build']
 
-        if paranoid is True:
-            cmd.append('--paranoid')
+        if secure is True:
+            cmd.append('--secure')
+        if sandbox is True:
+            cmd.append('--sandbox')
 
         cmd = cmd + [image_path,spec_path]
 
         output = self.run_command(cmd,sudo=True)
         self.println(output)     
         return image_path
+
+
+    def apps(self,image_path):
+        '''return list of singularity apps in image
+        '''
+        cmd = ['singularity','apps',image_path]
+        output = self.run_command(cmd)
+        if output not in ['', None]:   
+            self.println(output)
+            return output
 
 
     def bootstrap(self,image_path,spec_path):
@@ -132,6 +143,7 @@ class Singularity:
             bot.error("Cannot find image %s" %image_path)
             sys.exit(1)
 
+
     def create(self,image_path,size=None,sudo=False):
         '''create will create a a new image
         :param image_path: full path to image
@@ -142,9 +154,9 @@ class Singularity:
             size=1024
 
         if self.debug == True:
-            cmd = ['singularity','--debug','create','--size',str(size),image_path]
+            cmd = ['singularity','--debug','image.create','--size',str(size),image_path]
         else:
-            cmd = ['singularity','create','--size',str(size),image_path]
+            cmd = ['singularity','image.create','--size',str(size),image_path]
         output = self.run_command(cmd,sudo=sudo)
         self.println(output)
 
@@ -197,28 +209,19 @@ class Singularity:
 
 
 
-    def export(self,image_path,export_format="tar",old_version=False):
+    def export(self,image_path, tmptar=None):
         '''export will export an image, sudo must be used.
         :param image_path: full path to image
         will generate temporary directory.
         :param export_format: the export format (only tar currently supported)
         '''
-        if old_version == True:
+        if tmptar is None:
             tmptar = "/tmp/tmptar.tar"
-            cmd = ['singularity','export','-f','/tmp/tmptar.tar']
-        else:
-            cmd = ['singularity','export']
-
-        if export_format is not "tar":
-            print("Currently only supported export format is tar.")
-            return None
-    
-        cmd.append(image_path)
-        output = self.run_command(cmd)
-        
-        if old_version == True:
+        cmd = 'sudo singularity image.export %s >> %s 2>/dev/null' %(image_path,
+                                                                     tmptar)
+        result = os.system(cmd)
+        if result == 0:
             return tmptar
-        return output
 
 
     def importcmd(self,image_path,input_source):

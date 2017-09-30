@@ -163,9 +163,9 @@ def get_image_path(repo_url,commit):
 
 
 
-def run_build(spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
+def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
               repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
-              padding=None,logfile=None,logging_url=None):
+              logfile=None,logging_url=None):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
@@ -215,7 +215,6 @@ def run_build(spec_file=None,repo_url=None,token=None,size=None,bucket_name=None
                 {'key': 'secret', 'value': secret},
                 {'key': 'branch', 'value': branch },
                 {'key': 'spec_file', 'value': spec_file},
-                {'key': 'padding', 'value': padding },
                 {'key': 'logging_url', 'value': logging_url },
                 {'key': 'logfile', 'value': logfile }]
 
@@ -348,12 +347,8 @@ def get_build_metadata(key):
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
     response = requests.get(url=url,headers=headers)
-    # Successful query returns the result
     if response.status_code == 200:
         return response.text
-    else:
-        bot.debug("Metadata %s not present, returned response %s" %(key,
-                                                                    response.status_code))
     return None
 
 
@@ -374,6 +369,6 @@ def get_build_params(metadata):
             response = get_build_metadata(key=item['key'])
             item['value'] = response
         params[item['key']] = item['value']
-        if item['key'] != 'credential':
+        if item['key'] not in ['token', 'secret', 'credential']:
             bot.info('%s is set to %s' %(item['key'],item['value']))        
     return params

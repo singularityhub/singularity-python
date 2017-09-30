@@ -57,18 +57,16 @@ import sys
 
 def build_from_spec(spec_file=None,
                     build_dir=None,
-                    sudopw=None,
                     build_folder=False,
                     sandbox=False,
-                    paranoid=False,
+                    secure=False,
                     debug=False):
 
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec_file: the spec file, called "Singuarity"
-    :param sudopw: the sudopw for Singularity, root should provide ''
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
-    :param size: the size of the image
-    :param build_folder: "build" the image into a folder instead. Default False
+    :param secure: "build" the image inside a secure environment (>2.4)
+    :param sandbox: ask for a sandbox build
     :param debug: ask for verbose output from builder
     '''
 
@@ -84,24 +82,20 @@ def build_from_spec(spec_file=None,
     bot.debug("Spec file set to %s" %spec_file)
     spec_path = "%s/%s" %(build_dir,os.path.basename(spec_file))
     bot.debug("Spec file for build should be in %s" %spec_path)
-    image_path = "%s/build" %(build_dir)
+    image_path = "%s/build.simg" %(build_dir)
     
 
     # Run create image and bootstrap with Singularity command line tool.
     cli = Singularity(debug=debug)
-    if sudopw is not None:
-        cli = Singularity(sudopw=sudopw,debug=debug)
-
     print("\nCreating and bootstrapping image...")
 
     # Does the user want to "build" into a folder or image?
     result = cli.build(image_path=image_path,
                        spec_path=spec_path,
                        sandbox=sandbox,
-                       paranoid=paranoid)
+                       secure=secure)
 
     print(result)
-    #TODO: check here for 255
 
     # If image, rename based on hash
     if sandbox is False:
@@ -117,12 +111,10 @@ def build_from_spec(spec_file=None,
 def package(image_path,
             spec_path=None,
             output_folder=None,
-            runscript=True,
             software=True,
             remove_image=False,
             verbose=False,
             S=None,
-            sudopw=None,
             old_version=False):
 
     '''generate a zip (including the image) to a user specified output_folder.
@@ -136,8 +128,6 @@ def package(image_path,
 
     # Run create image and bootstrap with Singularity command line tool.
     S = Singularity(debug=verbose)
-    if sudopw is not None:
-        S = Singularity(sudopw=sudopw,debug=verbose)
 
     file_obj, tar = get_image_tar(image_path,S=S,
                                   write_file=old_version)
@@ -157,13 +147,14 @@ def package(image_path,
         to_package['Singularity'] = singularity_spec
         to_package["VERSION"] = get_image_file_hash(image_path)
     
-    # Look for runscript
-    if runscript is True:
-        try:
-            to_package["runscript"] = extract_content(image_path,'./singularity',cli=S)
-            bot.debug("Found runscript.")
-        except KeyError:
-            bot.warning("No runscript found")
+    try:
+        inspection = S.inspect(image_path)       
+        to_package["inspect.json"] = inspection
+        inspection = json.loads(inspection)
+        to_package['runscript'] = inspection['data']['attributes']['runscript']
+    except:
+        bot.warning("Trouble extracting container metadata with inspect.")
+
 
     if software == True:
         bot.info("Adding software list to package.")
@@ -176,7 +167,8 @@ def package(image_path,
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     bot.debug("Package created at %s" %(zipfile))
 
-    deleted = delete_image_tar(file_obj)
+    if not delete_image_tar(file_obj):
+        bot.warning("Could not clean up temporary tarfile.")
     
     # return package to user
     return zipfile
