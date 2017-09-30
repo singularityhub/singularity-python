@@ -40,7 +40,6 @@ INSTALL_REQUIRES = (
     ('retrying', {'min_version': '1.3.3'}),
     ('simplejson', {'min_version': '3.10.0'}),
     ('pygments', {'min_version': '2.1.3'}),
-    ('scikit-learn', {'min_version': '0.18.1'}),
     ('google-api-python-client', {'min_version': None}),
     ('oauth2client', {'exact_version': '3.0'})
 )
