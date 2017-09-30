@@ -114,51 +114,18 @@ def run_build(build_dir,params,verbose=True):
     passing_params = "/tmp/params.pkl"
     pickle.dump(params,open(passing_params,'wb'))
 
-    # If there is not a specfile, but is a Dockerfile, try building that
-    if not os.path.exists(params['spec_file']) and os.path.exists('Dockerfile'):
-        bot.warning("Build file %s not found in repository",params['spec_file'])
-        bot.warning("Dockerfile found in repository, will attempt build.")
-        dockerfile = dockerfile_to_singularity(dockerfile_path='Dockerfile', 
-                                               output_dir=build_dir)
-
-        if dockerfile is not None:
-            bot.info("""\n
-                                --------------------------------------------------------------
-                                Dockerfile
-                                --------------------------------------------------------------
-                                \n%s""" %(dockerfile))        
-
     # Now look for spec file
     if os.path.exists(params['spec_file']):
         bot.info("Found spec file %s in repository" %params['spec_file'])
-
-        # If size is None, set default of 800
-        if params['size'] in [None,'']:
-            bot.info("""\n
-                            --------------------------------------------------------------
-                            Size not detected for build. Will first try to estimate, and then
-                            use default of 800MB padding. If your build still fails, you should 
-                            try setting the size manually under collection --> edit builder
-                            ---------------------------------------------------------------------
-                            \n""")
-
-            # Testing estimation of size
-            try:
-                params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
-                                                     sudopw='',
-                                                     padding=params['padding'])
-                bot.info("Size estimated as %s" %params['size'])  
-            except:
-                params['size'] = 800
-                bot.info("Size estimation didn't work, using default %s" %params['size'])  
 
         # START TIMING
         os.chdir(build_dir)
         start_time = datetime.now()
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
-                                size=params['size'],
                                 sudopw='', # with root should not need sudo
                                 build_dir=build_dir,
+                                paranoid=True,
+                                sandbox=False,
                                 debug=params['debug'])
 
         final_time = (datetime.now() - start_time).seconds

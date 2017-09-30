@@ -5,6 +5,7 @@ sudo apt-get -y install git \
                    build-essential \
                    libtool \
                    autotools-dev \
+                   squashfs-tools \
                    debootstrap \
                    automake \
                    autoconf \

@@ -163,7 +163,7 @@ def get_image_path(repo_url,commit):
 
 
 
-def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
+def run_build(spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
               repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
               padding=None,logfile=None,logging_url=None):
 
@@ -176,7 +176,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     :param repo_url: the url to download the repo from
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
     :param commit: the commit to checkout. If none provided, will use most recent.
-    :param size: the size of the image to build. If none set, builds folder size + 200MB padding
     :param bucket_name: the name of the bucket to send files to
     :param verbose: print out extra details as we go (default True)    
     :param token: a token to send back to the server to authenticate the collection
@@ -184,7 +183,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     :param response_url: the build url to send the response back to. Should also come
     from metadata. If not specified, no response is sent
     :param branch: the branch to checkout for the build.
-    :param padding: size (in MB) to add to image for padding. If not defined, 200
 
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
@@ -203,12 +201,9 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         debug = False
     bot.info('DEBUG %s' %debug)
 
-    # If no build directory is specified, make a temporary one
-    if build_dir == None:
-        build_dir = tempfile.mkdtemp()
-        bot.warning('Build directory not set, using %s' %build_dir)
-    else:
-        bot.info('Build directory set to %s' %build_dir)
+    # Uaw /tmp for build directory
+    build_dir = tempfile.mkdtemp()
+    bot.warning('Build directory not set, using %s' %build_dir)
 
     # Get variables from the instance metadata API
     metadata = [{'key': 'repo_url', 'value': repo_url },
@@ -218,7 +213,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
                 {'key': 'token', 'value': token },
                 {'key': 'commit', 'value': commit },
                 {'key': 'secret', 'value': secret},
-                {'key': 'size', 'value': size },
                 {'key': 'branch', 'value': branch },
                 {'key': 'spec_file', 'value': spec_file},
                 {'key': 'padding', 'value': padding },
@@ -234,10 +228,7 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         params['spec_file'] = "Singularity"
         
     if params['bucket_name'] == None:
-        params['bucket_name'] = "singularity-hub-regional"
-
-    if params['padding'] == None:
-        params['padding'] = 200
+        params['bucket_name'] = "singularityhub"
 
     output = run_build_main(build_dir=build_dir,
                             params=params)

@@ -90,6 +90,24 @@ class Singularity:
             print(output)
         
 
+    def build(self, image_path, spec_path, paranoid=False):
+        '''build a singularity image, optionally for a secure build
+           (requires sudo)'''
+        if self.debug is True:
+            cmd = ['singularity','--debug','build']
+        else:
+            cmd = ['singularity','build']
+
+        if paranoid is True:
+            cmd.append('--paranoid')
+
+        cmd = cmd + [image_path,spec_path]
+
+        output = self.run_command(cmd,sudo=True)
+        self.println(output)     
+        return image_path
+
+
     def bootstrap(self,image_path,spec_path):
         '''create will bootstrap an image using a spec
         :param image_path: full path to image

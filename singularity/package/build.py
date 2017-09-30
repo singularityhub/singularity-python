@@ -57,9 +57,10 @@ import sys
 
 def build_from_spec(spec_file=None,
                     build_dir=None,
-                    size=None,
                     sudopw=None,
                     build_folder=False,
+                    sandbox=False,
+                    paranoid=False,
                     debug=False):
 
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
@@ -83,12 +84,8 @@ def build_from_spec(spec_file=None,
     bot.debug("Spec file set to %s" %spec_file)
     spec_path = "%s/%s" %(build_dir,os.path.basename(spec_file))
     bot.debug("Spec file for build should be in %s" %spec_path)
-
-    # If it's not already there
-    if not os.path.exists(spec_path):
-        shutil.copyfile(spec_file,spec_path)
-
-    image_path = "%s/image" %(build_dir)
+    image_path = "%s/build" %(build_dir)
+    
 
     # Run create image and bootstrap with Singularity command line tool.
     cli = Singularity(debug=debug)
@@ -98,20 +95,16 @@ def build_from_spec(spec_file=None,
     print("\nCreating and bootstrapping image...")
 
     # Does the user want to "build" into a folder or image?
-    if build_folder == True:
-        bot.debug("build_folder is true, creating %s" %image_path)
-        os.mkdir(image_path)
-
-    else:
-        cli.create(image_path,size=size,sudo=True)
-
-    result = cli.bootstrap(image_path=image_path,
-                           spec_path=spec_path)
+    result = cli.build(image_path=image_path,
+                       spec_path=spec_path,
+                       sandbox=sandbox,
+                       paranoid=paranoid)
 
     print(result)
+    #TODO: check here for 255
 
     # If image, rename based on hash
-    if build_folder == False:
+    if sandbox is False:
         version = get_image_file_hash(image_path)
         final_path = "%s/%s" %(build_dir,version)
         os.rename(image_path,final_path)
