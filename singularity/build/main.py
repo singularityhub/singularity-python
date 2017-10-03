@@ -37,8 +37,6 @@ from singularity.package import (
     package
 )
 
-from singularity.build.converter import dockerfile_to_singularity
-
 from singularity.build.utils import (
     get_singularity_version,
     stop_if_result_none,
