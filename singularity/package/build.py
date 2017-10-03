@@ -59,13 +59,13 @@ def build_from_spec(spec_file=None,
                     build_dir=None,
                     build_folder=False,
                     sandbox=False,
-                    secure=False,
+                    isolated=False,
                     debug=False):
 
     '''build_from_spec will build a "spec" file in a "build_dir" and return the directory
     :param spec_file: the spec file, called "Singuarity"
     :param build_dir: the directory to build in. If not defined, will use tmpdir.
-    :param secure: "build" the image inside a secure environment (>2.4)
+    :param isolated: "build" the image inside an isolated environment (>2.4)
     :param sandbox: ask for a sandbox build
     :param debug: ask for verbose output from builder
     '''
@@ -93,7 +93,7 @@ def build_from_spec(spec_file=None,
     result = cli.build(image_path=image_path,
                        spec_path=spec_path,
                        sandbox=sandbox,
-                       secure=secure)
+                       isolated=isolated)
 
     print(result)
 

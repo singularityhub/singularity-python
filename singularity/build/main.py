@@ -95,12 +95,12 @@ def run_build(build_dir,params,verbose=True):
 
     os.chdir(build_dir)
     if params['branch'] != None:
-        bot.info('Checking out branch %s',params['branch'])
+        bot.info('Checking out branch %s' %params['branch'])
         os.system('git checkout %s' %(params['branch']))
 
     # Commit
     if params['commit'] not in [None,'']:
-        bot.info('Checking out commit %s',params['commit'])
+        bot.info('Checking out commit %s' %params['commit'])
         os.system('git checkout %s .' %(params['commit']))
 
     # From here on out commit is used as a unique id, if we don't have one, we use current
@@ -119,7 +119,6 @@ def run_build(build_dir,params,verbose=True):
         # START TIMING
         start_time = datetime.now()
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
-                                sudopw='', # with root should not need sudo
                                 build_dir=build_dir,
                                 isolated=True,
                                 sandbox=False,

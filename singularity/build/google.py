@@ -219,6 +219,7 @@ def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
                 {'key': 'logfile', 'value': logfile }]
 
     # Obtain values from build
+    bot.log("BUILD PARAMETERS:")
     params = get_build_params(metadata)
     params['debug'] = debug
     
