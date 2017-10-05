@@ -282,7 +282,7 @@ def run_build(logfile=None):
                     "metadata": json.dumps(metadata)}
 
         # Did the user specify a specific log file?
-        logfile = get_build_metadata(key='logfile', logfile)
+        logfile = get_build_metadata('logfile')
         if logfile is not None:
             response['logfile'] = logfile
 
