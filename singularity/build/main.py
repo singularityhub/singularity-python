@@ -37,6 +37,7 @@ from singularity.package import (
     package
 )
 
+from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
     get_singularity_version,
     stop_if_result_none,
