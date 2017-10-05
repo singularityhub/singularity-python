@@ -36,6 +36,7 @@ from singularity.utils import (
 )
 
 from singularity.cli import Singularity
+
 from singularity.analysis.reproduce import (
     delete_image_tar,
     get_image_tar,
@@ -79,8 +80,8 @@ def build_from_spec(spec_file=None,
     bot.debug("Building in directory %s" %build_dir)
 
     # Copy the spec to a temporary directory
-    bot.debug("Spec file set to %s" %spec_file)
-    spec_path = "%s/%s" %(build_dir,os.path.basename(spec_file))
+    bot.debug("Spec file set to %s" % spec_file)
+    spec_path = os.abspath(spec_file)
     bot.debug("Spec file for build should be in %s" %spec_path)
     image_path = "%s/build.simg" %(build_dir)
     
@@ -100,7 +101,7 @@ def build_from_spec(spec_file=None,
     # If image, rename based on hash
     if sandbox is False:
         version = get_image_file_hash(image_path)
-        final_path = "%s/%s" %(build_dir,version)
+        final_path = "%s/%s.simg" %(build_dir,version)
         os.rename(image_path,final_path)
         image_path = final_path
 

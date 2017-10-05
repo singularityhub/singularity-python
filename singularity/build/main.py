@@ -44,6 +44,7 @@ from singularity.build.utils import (
 )
 
 
+from singularity.analysis.reproduce import get_image_file_hash
 from singularity.utils import download_repo
 from singularity.analysis.classify import (
     get_tags,
@@ -62,6 +63,7 @@ import pickle
 import re
 import requests
 
+from singularity.registry.auth import generate_header_signature
 from retrying import retry
 # https://cloud.google.com/storage/docs/exponential-backoff
 
@@ -124,13 +126,18 @@ def run_build(build_dir,params,verbose=True):
                                 sandbox=False,
                                 debug=params['debug'])
 
+        # Save has for metadata (also is image name)
+        version = get_image_file_hash(image_path)
+
+        # The image name without extension
+
         final_time = (datetime.now() - start_time).seconds
         bot.info("Final time of build %s seconds." %final_time)  
 
         # Did the container build successfully?
         test_result = test_container(image)
-        if test_result['return_code'] == 255:
-            bot.error("Image failed to bootstrap, cancelling build.")
+        if test_result['return_code'] != 0:
+            bot.error("Image failed to build, cancelling.")
             sys.exit(1)
 
         # Get singularity version
@@ -140,7 +147,6 @@ def run_build(build_dir,params,verbose=True):
         image_package = package(image_path=image,
                                 spec_path=params['spec_file'],
                                 output_folder=build_dir,
-                                sudopw='',
                                 remove_image=True,
                                 verbose=True,
                                 old_version=True)
@@ -151,19 +157,18 @@ def run_build(build_dir,params,verbose=True):
         # Inspect to get labels and other metadata
         cli = Singularity(debug=params['debug'])
         inspect = cli.inspect(image_path=image)
-        apps = cli.apps(image_path=image)
 
-        # Get tags for services, executables
-        interesting_folders = ['init','init.d','bin','systemd']
-        tags = get_tags(search_folders=interesting_folders,
-                        diff=diff)
+        # Get information on apps
+        app_names = cli.apps(image_path=image)
+        apps = extract_apps(image_path=image, 
+                            app_names=app_names, S=cli)
 
         # Count file types, and extensions
         counts = dict()
         counts['readme'] = file_counts(diff=diff)
         counts['copyright'] = file_counts(diff=diff,patterns=['copyright'])
         counts['authors-thanks-credit'] = file_counts(diff=diff,
-                                                      patterns=['authors','thanks','credit'])
+                                                      patterns=['authors','thanks','credit','contributors'])
         counts['todo'] = file_counts(diff=diff,patterns=['todo'])
         extensions = extension_counts(diff=diff)
 
@@ -175,14 +180,15 @@ def run_build(build_dir,params,verbose=True):
                    'singularity_python_version':singularity_python_version, 
                    'estimated_os': most_similar,
                    'os_sims':os_sims['SCORE'].to_dict(),
-                   'tags':tags,
                    'file_counts':counts,
                    'file_ext':extensions,
-                   'inspect':inspect }
+                   'inspect':inspect,
+                   'version': version }
 
         if apps is not None:
-            metrics['apps'] = apps
-    
+            metrics['apps'] = json.dumps(apps)
+            metrics['tags'] = app_names
+  
         output = {'image':image,
                   'image_package':image_package,
                   'metadata':metrics,
@@ -200,15 +206,22 @@ def run_build(build_dir,params,verbose=True):
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def send_build_data(build_dir,data,response_url=None,clean_up=True):
+def send_build_data(build_dir, data, secret, 
+                    response_url=None,clean_up=True):
     '''finish build sends the build and data (response) to a response url
     :param build_dir: the directory of the build
     :response_url: where to send the response. If None, won't send
     :param data: the data object to send as a post
     :param clean_up: If true (default) removes build directory
     '''
-    if response_url != None:
-        finish = requests.post(response_url,data=data)    
+    # Send with Authentication header
+    signature = generate_header_signature(secret=secret,
+                                          payload=data,
+                                          request_type="push")
+    headers = {'Authorization': signature }
+
+    if response_url is not None:
+        finish = requests.post(response_url,data=data, headers=headers)
     else:
         bot.warning("response_url set to None, skipping sending of build.")
 
@@ -221,29 +234,23 @@ def send_build_data(build_dir,data,response_url=None,clean_up=True):
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,retry_on_result=stop_if_result_none)
-def send_build_close(params,response_url=None):
+def send_build_close(params,response_url):
     '''send build close sends a final response (post) to the server to bring down
     the instance. The following must be included in params:
 
     repo_url, logfile, repo_id, secret, log_file, token
-
-    if response_url is None, this is skipped entirely.
     '''
+    # Finally, package everything to send back to shub
+    response = {"log": json.dumps(params['log_file']),
+                "repo_url": params['repo_url'],
+                "logfile": params['logfile'],
+                "repo_id": params['repo_id'],
+                "secret": params['secret']}
 
-    if response_url != None:
+    signature = generate_header_signature(secret=secret,
+                                          payload=data,
+                                          request_type="finish")
+    headers = {'Authorization': signature }
 
-        # Finally, package everything to send back to shub
-        response = {"log": json.dumps(params['log_file']),
-                    "repo_url": params['repo_url'],
-                    "logfile": params['logfile'],
-                    "repo_id": params['repo_id'],
-                    "secret": params['secret']}
-
-        if params['token'] != None:
-            response['token'] = params['token']
-
-        # Send it back!
-        return requests.post(response_url,data=response)
-    
-    bot.warning("Response url set to none, cannot send build close.")
-    return None
+    # Send it back!
+    return requests.post(response_url,data=response, headers=headers)

@@ -163,9 +163,7 @@ def get_image_path(repo_url,commit):
 
 
 
-def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
-              repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
-              logfile=None,logging_url=None):
+def run_build(logfile=None):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
@@ -206,16 +204,16 @@ def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
     bot.warning('Build directory not set, using %s' %build_dir)
 
     # Get variables from the instance metadata API
-    metadata = [{'key': 'repo_url', 'value': repo_url },
-                {'key': 'repo_id', 'value': repo_id },
-                {'key': 'response_url', 'value': response_url},
-                {'key': 'bucket_name', 'value': bucket_name },
-                {'key': 'token', 'value': token },
-                {'key': 'commit', 'value': commit },
-                {'key': 'secret', 'value': secret},
-                {'key': 'branch', 'value': branch },
-                {'key': 'spec_file', 'value': spec_file},
-                {'key': 'logging_url', 'value': logging_url },
+    metadata = [{'key': 'repo_url', 'value': None },
+                {'key': 'repo_id', 'value': None },
+                {'key': 'response_url', 'value': None },
+                {'key': 'bucket_name', 'value': None },
+                {'key': 'container_id', 'value': None },
+                {'key': 'commit', 'value': None },
+                {'key': 'secret', 'value': None},
+                {'key': 'branch', 'value': None },
+                {'key': 'spec_file', 'value': None},
+                {'key': 'logging_url', 'value': None },
                 {'key': 'logfile', 'value': logfile }]
 
     # Obtain values from build
@@ -235,15 +233,14 @@ def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
 
     # Output includes:
     image_package = output['image_package']
-    compressed_image = output['image']
+    finished_image = output['image']
     metadata = output['metadata']  
     params = output['params']  
 
     # Upload image package files to Google Storage
     if os.path.exists(image_package):
         bot.info("Package %s successfully built" %image_package)
-        dest_dir = "%s/build" %(build_dir)
-        os.mkdir(dest_dir)
+        dest_dir = tempfile.mkdtemp(prefix='build')
         with zipfile.ZipFile(image_package) as zf:
             zf.extractall(dest_dir)
 
@@ -251,7 +248,7 @@ def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
         image_path = get_image_path(params['repo_url'],params['commit'])
 
         build_files = glob("%s/*" %(dest_dir))
-        build_files.append(compressed_image)
+        build_files.append(finished_image)
         bot.info("Sending build files %s to storage",'\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
@@ -279,11 +276,13 @@ def run_build(spec_file=None,repo_url=None,token=None,bucket_name=None,
                     "repo_url": params['repo_url'],
                     "commit": params['commit'],
                     "repo_id": params['repo_id'],
+                    "container_id": params['container_id']
+                    "spec_file":params['spec_file'],
                     "secret": params['secret'],
                     "metadata": json.dumps(metadata)}
 
         # Did the user specify a specific log file?
-        logfile = get_build_metadata(key='logfile')
+        logfile = get_build_metadata(key='logfile', logfile)
         if logfile is not None:
             response['logfile'] = logfile
 

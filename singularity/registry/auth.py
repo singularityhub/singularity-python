@@ -97,3 +97,17 @@ def read_client_secrets(secrets=None,required=True):
 
     bot.warning(message)
     return None
+
+
+def generate_header_signature(secret, payload, request_type):
+    '''Authorize a client based on encrypting the payload with the client
+       secret, timestamp, and other metadata
+     '''
+
+    # Use the payload to generate a digest   push|collection|name|tag|user
+    timestamp = generate_timestamp()
+    credential = "%s/%s" %(request_type,timestamp)
+    payload = "%s|%s|" %(request_type, credential)
+
+    signature = generate_signature(payload,secret)
+    return "SREGISTRY-HMAC-SHA256 Credential=%s,Signature=%s" %(credential,signature)

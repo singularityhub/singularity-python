@@ -128,7 +128,7 @@ def delete_image_tar(file_obj):
         if os.path.exists(file_obj):
             os.remove(file_obj)
             deleted = True
-            bot.debug('Deleted file system tar.')   
+            bot.debug('Deleted temporary tar.')   
     return deleted
 
 

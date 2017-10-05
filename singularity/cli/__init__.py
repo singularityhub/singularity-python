@@ -50,9 +50,12 @@ class Singularity:
         for sudo and exiting on error if needed
         :param cmd: the command to run
         :param sudo: does the command require sudo?
+        On success, returns result. Otherwise, exists on error
         '''
         result = run_command(cmd,sudo=sudo)
         message = result['message']
+        return_code = result['return_code']
+        
         if result['return_code'] == 0:
             if isinstance(message,bytes):
                 message=message.decode('utf-8')
@@ -109,13 +112,18 @@ class Singularity:
         return image_path
 
 
-    def apps(self,image_path):
+    def apps(self,image_path, full_path=False):
         '''return list of singularity apps in image
+        :param full_path: if True, return relative to scif base folder
+        :parm image_path: full path to the image
         '''
         cmd = ['singularity','apps',image_path]
         output = self.run_command(cmd)
         if output not in ['', None]:   
             self.println(output)
+            output = output.strip().split('\n')
+            if full_path is True:
+                output = ['/scif/apps/%s' %x for x in output]
             return output
 
 
@@ -236,24 +244,24 @@ class Singularity:
         return image_path
 
 
-    def inspect(self,image_path,json=True,labels=True,
-                runscript=True,test=True,deffile=True,
-                environment=True,quiet=False):
+    def inspect(self,image_path, json=True, quiet=False, app=None):
+
         '''inspect will show labels, defile, runscript, and tests for an image
         :param image_path: path of image to inspect
         :param json: print json instead of raw text (default True)
-        :param labels: show labels (default True):
-        :param runscript: show runscript (default True)
-        :param test: show test file (default True)
-        :param environment: show environment (default True)
+        :param app: if defined, return help in context of an app
         '''
+
         cmd = ['singularity','--quiet','inspect']
-        options = locals()
-        acceptable = ['environment','json','deffile','labels','runscript','test']
-        for key,option in options.items():
-            if key in acceptable:
-                if option is True:
-                    cmd.append('--%s' %(key))
+
+        if app is not None:
+            cmd = cmd + ['--app', app]
+
+        options = ['e','d','l','r','hf','t']
+        [cmd.append('-%s' % x) for x in options]
+
+        if json is True:
+            cmd.append('--json')
 
         cmd.append(image_path)
         output = self.run_command(cmd)
