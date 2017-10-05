@@ -81,7 +81,7 @@ def build_from_spec(spec_file=None,
 
     # Copy the spec to a temporary directory
     bot.debug("Spec file set to %s" % spec_file)
-    spec_path = os.abspath(spec_file)
+    spec_path = os.path.abspath(spec_file)
     bot.debug("Spec file for build should be in %s" %spec_path)
     image_path = "%s/build.simg" %(build_dir)
     
