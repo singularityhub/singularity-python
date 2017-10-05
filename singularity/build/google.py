@@ -276,7 +276,7 @@ def run_build(logfile=None):
                     "repo_url": params['repo_url'],
                     "commit": params['commit'],
                     "repo_id": params['repo_id'],
-                    "container_id": params['container_id']
+                    "container_id": params['container_id'],
                     "spec_file":params['spec_file'],
                     "secret": params['secret'],
                     "metadata": json.dumps(metadata)}
