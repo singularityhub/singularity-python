@@ -134,7 +134,7 @@ def package(image_path,
                                   write_file=old_version)
 
     members = tar.getmembers()
-    image_name = os.path.basename(image_path)
+    image_name, ext = os.path.splitext(os.path.basename(image_path))
     zip_name = "%s.zip" %(image_name.replace(" ","_"))
 
     # Include the image in the package?

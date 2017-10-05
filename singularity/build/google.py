@@ -289,9 +289,6 @@ def run_build(logfile=None):
         if params['branch'] is not None:
             response['branch'] = params['branch']
 
-        if params['token'] is not None:
-            response['token'] = params['token']
-
         # Send final build data to instance
         send_build_data(build_dir=build_dir,
                         response_url=params['response_url'],
