@@ -27,7 +27,6 @@ SOFTWARE.
 
 
 from singularity.logger import bot
-from singularity.package.utils import get_image_tar
 
 from singularity.analysis.reproduce import (
     delete_image_tar,
