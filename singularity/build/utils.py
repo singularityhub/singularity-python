@@ -171,6 +171,7 @@ def sniff_extension(file_path,verbose=True):
                       "swf": 'application/x-shockwave-flash',
                       "mp3": 'audio/mpeg',
                       "zip": 'application/zip',
+                      "simg": 'application/zip',
                       "rar": 'application/rar',
                       "tar": 'application/tar',
                       "arj": 'application/arj',

@@ -263,13 +263,6 @@ def run_build(logfile=None):
                                        bucket_path=image_path,
                                        file_name=build_file)  
             files.append(storage_file)
-
-        # Upload the package as well
-        package_file = upload_file(storage_service,
-                                   bucket=bucket,
-                                   bucket_path=image_path,
-                                   file_name=image_package)
-        files.append(package_file)
                 
         # Finally, package everything to send back to shub
         response = {"files": json.dumps(files),
@@ -323,9 +316,9 @@ def finish_build(verbose=True):
     
     # Upload the log file
     params['log_file'] = upload_file(storage_service,
-                         bucket=bucket,
-                         bucket_path=image_path,
-                         file_name=params['logfile'])
+                                     bucket=bucket,
+                                     bucket_path=image_path,
+                                     file_name=params['logfile'])
                 
     # Close up shop
     send_build_close(params=params,
