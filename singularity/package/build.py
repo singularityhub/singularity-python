@@ -88,7 +88,7 @@ def build_from_spec(spec_file=None,
 
     # Run create image and bootstrap with Singularity command line tool.
     cli = Singularity(debug=debug)
-    print("\nCreating and bootstrapping image...")
+    print("\nBuilding image...")
 
     # Does the user want to "build" into a folder or image?
     result = cli.build(image_path=image_path,

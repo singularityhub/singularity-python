@@ -127,7 +127,7 @@ def run_build(build_dir,params,verbose=True):
                                 debug=params['debug'])
 
         # Save has for metadata (also is image name)
-        version = get_image_file_hash(image_path)
+        version = get_image_file_hash(image)
 
         # The image name without extension
 
