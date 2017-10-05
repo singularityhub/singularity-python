@@ -201,7 +201,6 @@ def run_build(logfile=None):
 
     # Uaw /tmp for build directory
     build_dir = tempfile.mkdtemp()
-    bot.warning('Build directory not set, using %s' %build_dir)
 
     # Get variables from the instance metadata API
     metadata = [{'key': 'repo_url', 'value': None },
@@ -249,7 +248,8 @@ def run_build(logfile=None):
 
         build_files = glob("%s/*" %(dest_dir))
         build_files.append(finished_image)
-        bot.info("Sending build files %s to storage",'\n'.join(build_files))
+        bot.info("Sending build files %s to storage") 
+        bot.info('\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
         storage_service = get_google_service() # default is "storage" "v1"
