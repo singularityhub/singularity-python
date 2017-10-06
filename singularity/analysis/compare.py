@@ -170,7 +170,8 @@ def compare_containers(container1=None,container2=None,by=None,
     # Do the comparison for each metric
     comparisons = dict()
     for b in by:
-        comparisons[b] = compare_lists(container1_guts[b],container2_guts[b])
+        if b in container1_guts and b in container2_guts:
+            comparisons[b] = compare_lists(container1_guts[b],container2_guts[b])
 
     return comparisons
 

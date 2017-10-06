@@ -48,7 +48,6 @@ from singularity.build.utils import (
 from singularity.analysis.reproduce import get_image_file_hash
 from singularity.utils import download_repo
 from singularity.analysis.classify import (
-    get_tags,
     get_diff,
     estimate_os,
     file_counts,
@@ -100,6 +99,8 @@ def run_build(build_dir,params,verbose=True):
     if params['branch'] != None:
         bot.info('Checking out branch %s' %params['branch'])
         os.system('git checkout %s' %(params['branch']))
+    else:
+        params['branch'] = "master"
 
     # Commit
     if params['commit'] not in [None,'']:
@@ -188,7 +189,6 @@ def run_build(build_dir,params,verbose=True):
 
         if apps is not None:
             metrics['apps'] = json.dumps(apps)
-            metrics['tags'] = app_names
   
         output = {'image':image,
                   'image_package':image_package,
@@ -206,7 +206,7 @@ def run_build(build_dir,params,verbose=True):
         sys.exit(1)
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
 def send_build_data(build_dir, data, secret, 
                     response_url=None,clean_up=True):
     '''finish build sends the build and data (response) to a response url

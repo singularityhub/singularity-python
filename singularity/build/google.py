@@ -126,16 +126,18 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     body = {'name': upload_path }
 
     # Create media object with correct mimetype
-    mimetype = sniff_extension(file_name,verbose=verbose)
-    media = http.MediaFileUpload(file_name,
-                                 mimetype=mimetype,
-                                 resumable=True)
-    request = storage_service.objects().insert(bucket=bucket['id'], 
-                                               body=body,
-                                               predefinedAcl="publicRead",
-                                               media_body=media)
-    return request.execute()
+    if os.oath.exists(file_name):
+        mimetype = sniff_extension(file_name,verbose=verbose)
+        media = http.MediaFileUpload(file_name,
+                                     mimetype=mimetype,
+                                     resumable=True)
+        request = storage_service.objects().insert(bucket=bucket['id'], 
+                                                   body=body,
+                                                   predefinedAcl="publicRead",
+                                                   media_body=media)
+        return request.execute()
 
+    bot.warning('%s requested for upload does not exist, skipping' %file_name)
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def list_bucket(bucket,storage_service):
@@ -207,6 +209,7 @@ def run_build(logfile=None):
                 {'key': 'repo_id', 'value': None },
                 {'key': 'response_url', 'value': None },
                 {'key': 'bucket_name', 'value': None },
+                {'key': 'tag', 'value': None },
                 {'key': 'container_id', 'value': None },
                 {'key': 'commit', 'value': None },
                 {'key': 'secret', 'value': None},
@@ -226,6 +229,9 @@ def run_build(logfile=None):
         
     if params['bucket_name'] == None:
         params['bucket_name'] = "singularityhub"
+
+    if params['tag'] == None:
+        params['tag'] = "latest"
 
     output = run_build_main(build_dir=build_dir,
                             params=params)
@@ -279,12 +285,10 @@ def run_build(logfile=None):
         if logfile is not None:
             response['logfile'] = logfile
 
-        if params['branch'] is not None:
-            response['branch'] = params['branch']
-
         # Send final build data to instance
         send_build_data(build_dir=build_dir,
                         response_url=params['response_url'],
+                        secret=params['secret'],
                         data=response)
 
         # Dump final params, for logger to retrieve
