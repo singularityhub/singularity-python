@@ -190,7 +190,11 @@ def run_build(build_dir,params,verbose=True):
         if apps is not None:
             metrics['apps'] = json.dumps(apps)
   
-        output = {'image':image,
+        # Compress Image
+        compressed_image = "%s.img.gz" %image
+        os.system('gzip -c -9 %s > %s' %(image,compressed_image))
+
+        output = {'image':compressed_image,
                   'image_package':image_package,
                   'metadata':metrics,
                   'params':params }
