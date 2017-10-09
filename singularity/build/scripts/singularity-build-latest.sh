@@ -11,11 +11,16 @@ sudo apt-get -y install git \
                    autoconf \
                    python3-pip >> /tmp/.install-log
 
+
+# Singularity python development
+cd /tmp && git clone -b development https://www.github.com/vsoch/singularity-python.git
+cd /tmp/singularity-python && sudo python3 setup.py install
+
 # Pip3 installs
 sudo pip3 install --upgrade pip &&
 sudo pip3 install --upgrade google-api-python-client &&
 sudo pip3 install --upgrade google &&
-sudo pip3 install singularity --upgrade &&
+#sudo pip3 install singularity --upgrade &&
 sudo pip3 install oauth2client==3.0.0
 
 # Main running script
