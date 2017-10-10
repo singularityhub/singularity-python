@@ -52,7 +52,9 @@ from singularity.registry.auth import (
 
 def push(self, path, name, tag=None, compress=True):
     '''push an image to Singularity Registry'''
+
     path = os.path.abspath(path)
+    bot.debug("PUSH %s" % path)
 
     if not os.path.exists(path):
         bot.error('%s does not exist.' %path)
@@ -65,23 +67,31 @@ def push(self, path, name, tag=None, compress=True):
     # Try to add the size
     try:
         image_size = os.path.getsize(path) >> 20
-        metadata['data']['attributes']['labels']['SREGISTRY_SIZE_MB'] = image_size
+        if metadata['data']['attributes']['labels'] is None:
+            metadata['data']['attributes']['labels'] = {'SREGISTRY_SIZE_MB': image_size }
+        else:
+            metadata['data']['attributes']['labels']['SREGISTRY_SIZE_MB'] = image_size
+
     except:
         bot.warning("Cannot load metadata to add calculated size.")
         pass
 
 
-    try:
-        fromimage = parse_header(metadata['data']['attributes']['deffile'],
-                                 header="from",
-                                 remove_header=True) 
-        metadata['data']['attributes']['labels']['SREGISTRY_FROM'] = fromimage
-    except:
-        bot.warning("Cannot load metadata to parse From: line.")
-        pass
+    if "deffile" in metadata['data']['attributes']:
+        if metadata['data']['attributes']['deffile'] is not None:
+            fromimage = parse_header(metadata['data']['attributes']['deffile'],
+                                     header="from",
+                                     remove_header=True) 
+            metadata['data']['attributes']['labels']['SREGISTRY_FROM'] = fromimage
+            bot.debug("%s was built from a definition file." % image)
+
+    if compress is True:
+        ext = 'img.gz'  # ext3 format
+    else:
+        ext = 'simg'  # ext3 format
 
     metadata = json.dumps(metadata)
-    names = parse_image_name(name,tag=tag, ext="img.gz")
+    names = parse_image_name(name,tag=tag, ext=ext)
     url = '%s/push/' % self.base
 
     if compress is True:
