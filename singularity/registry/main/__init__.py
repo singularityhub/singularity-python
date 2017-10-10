@@ -114,6 +114,10 @@ def get_parser():
                        help='custom name for image', 
                        type=str, default=None)
 
+    pull.add_argument('--no-decompress', dest="nodecompress", 
+                      help="extract a gzip compressed image", 
+                      default=False, action='store_true')
+
     # List or search labels
     labels = subparsers.add_parser("labels",
                                     help="query for labels")

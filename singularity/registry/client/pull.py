@@ -36,23 +36,36 @@ import sys
 import os
 
 
-def pull(self, images, file_name=None):
+def pull(self, images, file_name=None, decompress=True):
+
+    bot.debug('Execution of PULL for %s images' %len(images))
 
     for image in images:
 
-        q = parse_image_name(image, ext='img.gz')
+        # If we need to decompress, it's old ext3 format
+        if decompress is True:
+            ext = 'img.gz'
+        else:
+            ext = 'simg'  # squashfs
+
+        q = parse_image_name(image, ext=ext)
 
         # Verify image existence, and obtain id
         url = "%s/container/%s/%s:%s" %(self.base, q['collection'], q['image'], q['tag'])
-        result = self.get(url)
+        bot.debug('Retrieving manifest at %s' %url)
+
+        manifest = self.get(url)
+        bot.debug(manifest)
+
         if file_name is None:
             file_name = q['storage'].replace('/','-')
     
-        image_file = self.download(url=result['image'],
+        image_file = self.download(url=manifest['image'],
                                    file_name=file_name,
                                    show_progress=True)
 
-        if os.path.exists(image_file):
+        bot.debug('Retrieved image file %s' %image_file)
+        if os.path.exists(image_file) and decompress is True:
             # If compressed, decompress   
             try:
                 cli = Singularity()
