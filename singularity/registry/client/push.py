@@ -59,13 +59,7 @@ def push(self, path, name, tag=None, compress=True):
         sys.exit(1)
 
     cli = Singularity()
-    metadata = cli.inspect(path, 
-                           deffile=True,
-                           runscript=True,
-                           test=True,
-                           quiet=True,
-                           environment=True)
-
+    metadata = cli.inspect(image_path=path, quiet=True)
     metadata = json.loads(metadata)
 
     # Try to add the size

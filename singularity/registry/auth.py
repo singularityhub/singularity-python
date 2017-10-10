@@ -79,7 +79,7 @@ def read_client_secrets(secrets=None,required=True):
 
     # If token file not provided, check environment
     if secrets is None:
-        secrets = os.environ.get("SREGISTRY_CLIENT_SECRETS", None)
+        secrets = os.environ.get("SREGISTRY_CLIENT_SECRETS")
 
     # Fall back to default
     if secrets is None:
@@ -90,7 +90,7 @@ def read_client_secrets(secrets=None,required=True):
         if os.path.exists(secrets):
             return read_json(secrets)
 
-    message = 'Client secrets file not found at %s or $SREGISTRY_CLIENT_SECRETS.'
+    message = 'Client secrets file not found at %s or $SREGISTRY_CLIENT_SECRETS.' %secrets
     if required:
         bot.error(message)
         sys.exit(1)
