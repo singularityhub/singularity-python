@@ -62,6 +62,7 @@ import os
 import pickle
 import re
 import requests
+from urllib.parse import urlencode
 
 from singularity.registry.auth import generate_header_signature
 from retrying import retry
@@ -222,9 +223,16 @@ def send_build_data(build_dir, data, secret,
     :param clean_up: If true (default) removes build directory
     '''
     # Send with Authentication header
+    body = '%s|%s|%s|%s|%s' %(data['container_id'],
+                              data['commit'],
+                              data['branch'],
+                              data['token'],
+                              data['tag']) 
+
     signature = generate_header_signature(secret=secret,
-                                          payload=data,
+                                          payload=body,
                                           request_type="push")
+
     headers = {'Authorization': signature }
 
     if response_url is not None:
@@ -252,10 +260,16 @@ def send_build_close(params,response_url):
                 "repo_url": params['repo_url'],
                 "logfile": params['logfile'],
                 "repo_id": params['repo_id'],
-                "secret": params['token']}
+                "container_id": params['container_id']}
+
+    body = '%s|%s|%s|%s|%s' %(params['container_id'],
+                              params['commit'],
+                              params['branch'],
+                              params['token'],
+                              params['tag']) 
 
     signature = generate_header_signature(secret=params['token'],
-                                          payload=response,
+                                          payload=body,
                                           request_type="finish")
 
     headers = {'Authorization': signature }
