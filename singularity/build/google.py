@@ -126,7 +126,7 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     body = {'name': upload_path }
 
     # Create media object with correct mimetype
-    if os.oath.exists(file_name):
+    if os.path.exists(file_name):
         mimetype = sniff_extension(file_name,verbose=verbose)
         media = http.MediaFileUpload(file_name,
                                      mimetype=mimetype,
@@ -136,7 +136,6 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
                                                    predefinedAcl="publicRead",
                                                    media_body=media)
         return request.execute()
-
     bot.warning('%s requested for upload does not exist, skipping' %file_name)
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
@@ -212,7 +211,7 @@ def run_build(logfile=None):
                 {'key': 'tag', 'value': None },
                 {'key': 'container_id', 'value': None },
                 {'key': 'commit', 'value': None },
-                {'key': 'secret', 'value': None},
+                {'key': 'token', 'value': None},
                 {'key': 'branch', 'value': None },
                 {'key': 'spec_file', 'value': None},
                 {'key': 'logging_url', 'value': None },
@@ -264,6 +263,7 @@ def run_build(logfile=None):
         # For each file, upload to storage
         files = []
         for build_file in build_files:
+            bot.info("Uploading %s to storage..." %build_file)
             storage_file = upload_file(storage_service,
                                        bucket=bucket,
                                        bucket_path=image_path,
@@ -275,9 +275,11 @@ def run_build(logfile=None):
                     "repo_url": params['repo_url'],
                     "commit": params['commit'],
                     "repo_id": params['repo_id'],
+                    "branch": params['branch'],
+                    "tag": params['tag'],
                     "container_id": params['container_id'],
                     "spec_file":params['spec_file'],
-                    "secret": params['secret'],
+                    "secret": params['token'],
                     "metadata": json.dumps(metadata)}
 
         # Did the user specify a specific log file?
@@ -288,7 +290,7 @@ def run_build(logfile=None):
         # Send final build data to instance
         send_build_data(build_dir=build_dir,
                         response_url=params['response_url'],
-                        secret=params['secret'],
+                        secret=params['token'],
                         data=response)
 
         # Dump final params, for logger to retrieve

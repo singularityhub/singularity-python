@@ -76,7 +76,7 @@ shub_api = "http://www.singularity-hub.org/api"
 
 from singularity.logger import bot
 
-def run_build(build_dir,params,verbose=True):
+def run_build(build_dir,params,verbose=True, compress_image=False):
     '''run_build takes a build directory and params dictionary, and does the following:
       - downloads repo to a temporary directory
       - changes branch or commit, if needed
@@ -191,10 +191,12 @@ def run_build(build_dir,params,verbose=True):
             metrics['apps'] = json.dumps(apps)
   
         # Compress Image
-        compressed_image = "%s.img.gz" %image
-        os.system('gzip -c -9 %s > %s' %(image,compressed_image))
+        if compress_image is True:
+            compressed_image = "%s.gz" %image
+            os.system('gzip -c -9 %s > %s' %(image,compressed_image))
+            image = compressed_image
 
-        output = {'image':compressed_image,
+        output = {'image':image,
                   'image_package':image_package,
                   'metadata':metrics,
                   'params':params }
@@ -250,11 +252,12 @@ def send_build_close(params,response_url):
                 "repo_url": params['repo_url'],
                 "logfile": params['logfile'],
                 "repo_id": params['repo_id'],
-                "secret": params['secret']}
+                "secret": params['token']}
 
-    signature = generate_header_signature(secret=secret,
-                                          payload=data,
+    signature = generate_header_signature(secret=params['token'],
+                                          payload=response,
                                           request_type="finish")
+
     headers = {'Authorization': signature }
 
     # Send it back!
