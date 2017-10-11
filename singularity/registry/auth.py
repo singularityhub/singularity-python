@@ -107,7 +107,6 @@ def generate_header_signature(secret, payload, request_type):
     # Use the payload to generate a digest   push|collection|name|tag|user
     timestamp = generate_timestamp()
     credential = "%s/%s" %(request_type,timestamp)
-    payload = "%s|%s|" %(request_type, credential)
 
     signature = generate_signature(payload,secret)
     return "SREGISTRY-HMAC-SHA256 Credential=%s,Signature=%s" %(credential,signature)

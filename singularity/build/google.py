@@ -253,7 +253,7 @@ def run_build(logfile=None):
 
         build_files = glob("%s/*" %(dest_dir))
         build_files.append(finished_image)
-        bot.info("Sending build files %s to storage") 
+        bot.info("Sending build files to storage:") 
         bot.info('\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
@@ -279,7 +279,7 @@ def run_build(logfile=None):
                     "tag": params['tag'],
                     "container_id": params['container_id'],
                     "spec_file":params['spec_file'],
-                    "secret": params['token'],
+                    "token": params['token'],
                     "metadata": json.dumps(metadata)}
 
         # Did the user specify a specific log file?

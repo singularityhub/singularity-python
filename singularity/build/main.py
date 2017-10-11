@@ -188,6 +188,7 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
                    'inspect':inspect,
                    'version': version }
 
+
         if apps is not None:
             metrics['apps'] = json.dumps(apps)
   

@@ -13,7 +13,7 @@ sudo apt-get -y install git \
 
 
 # Singularity python development
-cd /tmp && git clone -b development https://www.github.com/vsoch/singularity-python.git
+cd /tmp && git clone -b development https://www.github.com/vsoch/singularity-python.git &&
 cd /tmp/singularity-python && sudo python3 setup.py install
 
 # Pip3 installs
