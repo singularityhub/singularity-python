@@ -50,7 +50,7 @@ import json
 
 
 
-def extract_apps(image_path, app_names, S=None):
+def extract_apps(image_path, app_names, S=None, verbose=True):
     ''' extract app will extract metadata for one or more apps
      
     Parameters
@@ -58,7 +58,6 @@ def extract_apps(image_path, app_names, S=None):
     image_path: the absolute path to the image
     app_name: the name of the app under /scif/apps
     '''
-
     if S is None:
         S = Singularity(debug=verbose,sudo=True)
 
@@ -67,7 +66,6 @@ def extract_apps(image_path, app_names, S=None):
 
     file_obj, tar = get_image_tar(image_path, S=S, write_file=True)
     members = tar.getmembers()
-
     apps = dict()
 
     for app_name in app_names:
@@ -77,7 +75,6 @@ def extract_apps(image_path, app_names, S=None):
             inspection = json.loads(S.inspect(image_path, app=app_name))
             del inspection['data']['attributes']['deffile']
             metadata['inspect'] = inspection
-
         # If illegal characters prevent load, not much we can do
         except:
             pass
