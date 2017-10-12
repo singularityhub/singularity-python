@@ -24,8 +24,8 @@ sudo pip3 install --upgrade google &&
 sudo pip3 install oauth2client==3.0.0
 
 # Main running script
-python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1
+sudo python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1 &&
 
 # Finish by sending log
 export command=$(echo "from singularity.build.google import finish_build; finish_build()") &&
-python3 -c "$command"
+sudo python3 -c "$command"

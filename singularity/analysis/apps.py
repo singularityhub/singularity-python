@@ -65,7 +65,7 @@ def extract_apps(image_path, app_names, S=None):
     if not isinstance(app_names,list):
         app_names = [app_names]
 
-    file_obj, tar = get_image_tar(image_path,S=S, write_file=True)
+    file_obj, tar = get_image_tar(image_path, S=S, write_file=True)
     members = tar.getmembers()
 
     apps = dict()
@@ -84,3 +84,4 @@ def extract_apps(image_path, app_names, S=None):
         metadata['files'] = [x.path for x in members if base in x.path]
         apps[app_name] = metadata
 
+    return apps
