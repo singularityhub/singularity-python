@@ -95,7 +95,7 @@ def get_build_template(template_name,params=None,to_file=None):
         # Will need to read in file instead of copying below
         # if params != None:
  
-        if to_file != None:
+        if to_file is not None:
             shutil.copyfile(template_file,to_file)
             bot.debug("Template file saved to %s" %to_file)
             return to_file
@@ -107,7 +107,6 @@ def get_build_template(template_name,params=None,to_file=None):
 
     else:
         bot.warning("Template %s not found." %template_file)
-        return None
 
 
 ######################################################################################
@@ -120,20 +119,20 @@ def get_singularity_version(singularity_version=None):
     first, an environmental variable is looked at, followed by using the system
     version.
     '''
-    if singularity_version == None:        
-        singularity_version = os.environ.get("SINGULARITY_VERSION",None)
+
+    if singularity_version is None:        
+        singularity_version = os.environ.get("SINGULARITY_VERSION")
         
-    # Next get from system
-    installed = True
-    if singularity_version == None:
+    if singularity_version is None:
         try:
             cmd = ['singularity','--version']
             output = run_command(cmd)
 
             if isinstance(output['message'],bytes):
                 output['message'] = output['message'].decode('utf-8')
-            bot.info("Singularity %s being used." % output['message'].strip('\n'))
-
+            singularity_version = output['message'].strip('\n')
+            bot.info("Singularity %s being used." % singularity_version)
+            
         except:
             singularity_version = None
             bot.warning("Singularity version not found, so it's likely not installed.")

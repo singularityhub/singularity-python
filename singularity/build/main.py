@@ -132,8 +132,6 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
         # Save has for metadata (also is image name)
         version = get_image_file_hash(image)
 
-        # The image name without extension
-
         final_time = (datetime.now() - start_time).seconds
         bot.info("Final time of build %s seconds." %final_time)  
 
@@ -163,8 +161,7 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
 
         # Get information on apps
         app_names = cli.apps(image_path=image)
-        apps = extract_apps(image_path=image, 
-                            app_names=app_names, S=cli)
+        apps = extract_apps(image_path=image, app_names=app_names)
 
         # Count file types, and extensions
         counts = dict()

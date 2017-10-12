@@ -60,7 +60,7 @@ def extract_apps(image_path, app_names, S=None):
     '''
 
     if S is None:
-        S = Singularity(debug=verbose)
+        S = Singularity(debug=verbose,sudo=True)
 
     if not isinstance(app_names,list):
         app_names = [app_names]
@@ -77,6 +77,7 @@ def extract_apps(image_path, app_names, S=None):
             inspection = json.loads(S.inspect(image_path, app=app_name))
             del inspection['data']['attributes']['deffile']
             metadata['inspect'] = inspection
+
         # If illegal characters prevent load, not much we can do
         except:
             pass

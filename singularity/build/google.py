@@ -124,7 +124,6 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
         upload_path = "%s/" %(upload_path)
     upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
     body = {'name': upload_path }
-
     # Create media object with correct mimetype
     if os.path.exists(file_name):
         mimetype = sniff_extension(file_name,verbose=verbose)
@@ -135,7 +134,8 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
                                                    body=body,
                                                    predefinedAcl="publicRead",
                                                    media_body=media)
-        return request.execute()
+        result = request.execute()
+        return result
     bot.warning('%s requested for upload does not exist, skipping' %file_name)
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
