@@ -23,8 +23,17 @@ sudo pip3 install --upgrade google &&
 #sudo pip3 install singularity --upgrade &&
 sudo pip3 install oauth2client==3.0.0
 
-# Main running script
-sudo python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1
+# Main running script, kill after 2 hours and clean up
+
+echo "Start Time: $(date)." > /tmp/.shub-log 2>&1
+timeout -s KILL 2h sudo python3 -c "from singularity.build.google import run_build; run_build()" >> /tmp/.shub-log 2>&1
+
+if [ $? -eq 137 ]
+then
+    echo "Killed: $(date)." >> /tmp/.shub-log 2>&1
+else
+    echo "End Time: $(date)." >> /tmp/.shub-log 2>&1
+fi
 
 # Finish by sending log
 sudo python3 -c "from singularity.build.google import finish_build; finish_build()"
