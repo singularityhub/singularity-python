@@ -29,8 +29,8 @@ sudo pip3 install --upgrade google &&
 sudo pip3 install oauth2client==3.0.0
 
 # Install Singularity from Github
-cd /tmp && git clone -b feature-squashbuild-secbuild https://github.com/cclerget/singularity.git &&
-cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install && sudo make secbuildimg
+# cd /tmp && git clone -b feature-squashbuild-secbuild https://github.com/cclerget/singularity.git &&
+# cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install && sudo make secbuildimg
 
 # Singularity python development
 cd /tmp && git clone -b development https://www.github.com/vsoch/singularity-python.git &&
