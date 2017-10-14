@@ -131,6 +131,8 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
 
         # Save has for metadata (also is image name)
         version = get_image_file_hash(image)
+        params['version'] = version
+        pickle.dump(params,open(passing_params,'wb'))
 
         final_time = (datetime.now() - start_time).seconds
         bot.info("Final time of build %s seconds." %final_time)  
