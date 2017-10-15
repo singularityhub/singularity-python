@@ -47,8 +47,6 @@ install_dir = get_installdir()
 def remove_unicode_dict(input_dict):
     '''remove unicode keys and values from dict, encoding in utf8
     '''
-    #if isinstance(input_dict, basestring):
-    #    return str(input_dict)
     if isinstance(input_dict, collections.Mapping):
         return dict(map(remove_unicode_dict, input_dict.iteritems()))
     elif isinstance(input_dict, collections.Iterable):
@@ -86,5 +84,5 @@ def update_dict_sum(input_dict,key,increment=None,initial_value=None):
     if key in input_dict:
         input_dict[key] += increment
     else:
-        input_dict[key] = initial_value
+        input_dict[key] = initial_value + increment
     return input_dict

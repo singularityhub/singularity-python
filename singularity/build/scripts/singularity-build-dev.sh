@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Instance Preparation
+# Instance Update and build
 # For Google cloud, Stackdriver/logging should have Write, 
 #                   Google Storage should have Full
 #                   All other APIs None,

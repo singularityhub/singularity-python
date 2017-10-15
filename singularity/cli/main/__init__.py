@@ -142,7 +142,7 @@ def get_subparsers(parser):
     for action in actions:
         # get all subparsers and print help
         for choice, subparser in action.choices.items():
-            subs[choice] = subparser
+            subparsers[choice] = subparser
 
     return subparsers
 
@@ -170,7 +170,6 @@ def main():
         print(singularity.__version__)
         sys.exit(0)
 
-
     if args.command == "compare":
         from .compare import main
 
@@ -185,10 +184,12 @@ def main():
 
 
     # Pass on to the correct parser
-    main(args=args,
-         parser=parser,
-         subparser=subparsers[args.command])
-
+    if args.command is not None:
+        main(args=args,
+             parser=parser,
+             subparser=subparsers[args.command])
+    else:
+        parser.print_help()
 
 
 if __name__ == '__main__':

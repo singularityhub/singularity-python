@@ -238,7 +238,7 @@ class Singularity:
         :param input_source: input source or file
         :param import_type: if not specified, imports whatever function is given
         '''
-        cmd = ['singularity','import',image_path,input_source]
+        cmd = ['singularity','image.import',image_path,input_source]
         output = self.run_command(cmd,sudo=False)
         self.println(output)        
         return image_path
@@ -354,10 +354,13 @@ class Singularity:
     def get_labels(self,image_path):
         '''get_labels will return all labels defined in the image
         '''
-        cmd = ['singularity','exec',image_path,'cat','/.singularity/labels.json']
-        labels = self.run_command(cmd)
-        if len(labels) > 0:
-            return json.loads(labels)
+        cmd = ['singularity','exec',image_path,'cat','/.singularity.d/labels.json']
+        try:
+            labels = self.run_command(cmd)
+            if len(labels) > 0:
+                return json.loads(labels)
+        except:
+            labels = dict()
         return labels
         
 
@@ -365,7 +368,6 @@ class Singularity:
         '''get_args will return the subset of labels intended to be arguments
         (in format SINGULARITY_RUNSCRIPT_ARG_*
         '''
-        labels = self.get_labels(image_path)
         args = dict()
         for label,values in labels.items():
             if re.search("^SINGULARITY_RUNSCRIPT_ARG",label):

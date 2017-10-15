@@ -1,5 +1,3 @@
-
-
 # Singularity Python
 
 [![Build Status](https://travis-ci.org/singularityware/singularity-python.svg?branch=master)](https://travis-ci.org/singularityware/singularity-python)
