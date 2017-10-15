@@ -1,0 +1,14 @@
+Bootstrap: {{ bootstrap }}
+From: {{ from }}
+
+%environment
+
+%labels
+
+%files
+
+%help
+
+%post
+
+%runscript
