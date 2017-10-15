@@ -50,22 +50,21 @@ import sys
 ##########################################################################
 
 
-def check_install(software=None):
-    '''check_install will attempt to run the singularity command, and return an error
-    if not installed. The command line utils will not run without this check.
+def check_install(software=None, quiet=True):
+    '''check_install will attempt to run the singularity command, and
+       return True if installed. The command line utils will not run 
+       without this check.
     '''
     if software is None:
         software = "singularity"
     cmd = [software, '--version']
-    version = run_command(
-        cmd,
-        error_message="Cannot find %s. Is it installed?" %
-        software)
+    version = run_command(cmd,software)
     if version is not None:
-        bot.info("Found %s version %s" % (software.upper(), version))
-        return True
-    else:
-        return False
+        if quiet is False and version['return_code'] == 0:
+            version = version['message']
+            bot.info("Found %s version %s" % (software.upper(), version))
+        return True 
+    return False
 
 
 def get_installdir():
@@ -145,12 +144,15 @@ def write_json(json_obj, filename, mode="w", print_pretty=True):
     return filename
 
 
-def read_file(filename, mode="r"):
+def read_file(filename, mode="r", readlines=True):
     '''write_file will open a file, "filename" and write content, "content"
     and properly close the file
     '''
     with open(filename, mode) as filey:
-        content = filey.readlines()
+        if readlines is True:
+            content = filey.readlines()
+        else:
+            content = filey.read()
     return content
 
 

@@ -351,6 +351,14 @@ class Singularity:
         return result
 
 
+    def version(self):
+        '''return the version of singularity
+        '''
+        from singularity.build.utils import get_singularity_version
+        return get_singularity_version()
+
+
+
     def get_labels(self,image_path):
         '''get_labels will return all labels defined in the image
         '''

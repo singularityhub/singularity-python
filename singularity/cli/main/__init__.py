@@ -116,6 +116,28 @@ def get_parser():
                           default=False, action='store_true')
 
 
+    # Create
+    create = subparsers.add_parser("create", help="create recipe templates")
+    create.add_argument("--recipe", dest='recipe', 
+                        help="create template recipe", 
+                        action='store_true', default=False)
+
+    create.add_argument("--app", dest='app', 
+                        help="the name of an app to include in the recipe", 
+                        type=str, default=None)
+
+    create.add_argument("--from", dest='bootstrap_from', 
+                        help="the bootstrap 'from', should coincide with 'bootstrap' type", 
+                        type=str, default=None)
+
+    create.add_argument("--bootstrap", dest='bootstrap', 
+                        help="the bootstrap type, default is docker", 
+                        type=str, default='docker')
+
+    create.add_argument("--outfolder", dest='outfolder', 
+                        help="full path to folder for output, stays in tmp (or pwd) if not specified", 
+                        type=str, default=None)
+
     # Inpsect
     inspect = subparsers.add_parser("inspect", help="inspect a single container.")
     inspect.add_argument("--image", dest='image', 
@@ -169,6 +191,9 @@ def main():
     if args.version is True:
         print(singularity.__version__)
         sys.exit(0)
+
+    if args.command == "create":
+        from .create import main
 
     if args.command == "compare":
         from .compare import main
