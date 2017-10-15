@@ -27,6 +27,10 @@ manifest = shub.get_manifest(container_id)
 # but we can also set download_folder to something:
 image = shub.get_container(container_id)
 
+# You can best pull with the Singularity Python client
+from singularity.cli import Singularity
+image = S.pull("shub://%s" %container_name)
+
 # You can also set the download_folder or name, eg:
 image = shub.pull_container(manifest,
                             download_folder='/tmp',

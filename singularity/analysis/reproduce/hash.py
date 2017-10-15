@@ -99,8 +99,8 @@ def get_image_hash(image_path,
                                 include_files=include_files)
                 
     cli = Singularity()
-    file_obj,tar = get_memory_tar(image_path,
-                                  write_file=not memory_tar)
+    file_obj,tar = get_image_tar(image_path,
+                                 write_file=not memory_tar)
     hasher = hashlib.md5()
 
     for member in tar:

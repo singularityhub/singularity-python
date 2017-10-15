@@ -36,7 +36,7 @@ import tempfile
 import sys
 
 
-def prepare_url(container_name,get_type=None):
+def prepare_url(container_name, get_type=None):
     '''get a container/collection or return None.
     '''
     if get_type == None:
@@ -115,9 +115,9 @@ def parse_container_name(image):
         repo_name = image[0]
         repo_tag = "latest"
 
-    bot.info("User: %s", user)
-    bot.info("Repo Name: %s", repo_name)
-    bot.info("Repo Tag: %s", repo_tag)
+    bot.info("User: %s" %user)
+    bot.info("Repo Name: %s" %repo_name)
+    bot.info("Repo Tag: %s" %repo_tag)
 
     parsed = {'repo_name':repo_name,
               'repo_tag':repo_tag,

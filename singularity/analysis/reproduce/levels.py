@@ -136,6 +136,7 @@ def get_levels(version=None):
                                                                     ",".join(valid_versions)))
 
     levels_file = os.path.abspath(os.path.join(get_installdir(),
+                                                           'analysis',
                                                            'reproduce',
                                                            'data',
                                                            'reproduce_levels.json'))

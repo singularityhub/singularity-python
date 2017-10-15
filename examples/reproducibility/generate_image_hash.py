@@ -7,7 +7,7 @@ from singularity.analysis.reproduce import (
     get_image_file_hash    
 )
 
-image_files = glob("*.img")
+image_files = glob("*.simg")
 image_path = image_files[0]
 
 ########################################################

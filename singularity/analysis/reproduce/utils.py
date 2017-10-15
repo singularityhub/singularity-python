@@ -144,6 +144,8 @@ def extract_content(image_path,member_name,cli=None,return_hash=False):
         cli = Singularity()
     content = cli.execute(image_path,'cat %s' %(member_name))
     if not isinstance(content,bytes):
+        if isinstance(content,str):
+            content = content.encode('utf-8')
         content = bytes(content)
     # If permissions don't allow read, return None
     if len(content) == 0:

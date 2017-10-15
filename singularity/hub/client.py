@@ -42,17 +42,28 @@ class Client(ApiConnection):
     def __init__(self, **kwargs):
         super(ApiConnection, self).__init__(**kwargs)
 
-        self.base = api_base 
+        self.base = api_base
+        if "registry" in kwargs:
+            self.base = kwargs['registry']
+            if not self.base.endswith('/api')
+                self.base = "%s/api" %self.base
+
         self.headers = None
-        if self.token is None:
+        if "token" in kwargs:
             self.token = authenticate()
         self.update_headers()
         
+    def __str__(self):
+        return "<singularity-hub-client>"        
+
+    def __repr__(self):
+        return "<singularity-hub-client>"        
+
 
     def get_manifest(self,container_name):
         '''get manifest
         '''
-        url = prepare_url(container_name,"container")
+        url = prepare_url(container_name, "container")
         manifest = self.get(url)
         if manifest is not None:      
             manifest['metrics'] = demjson.decode(manifest['metrics'])
