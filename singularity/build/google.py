@@ -43,6 +43,7 @@ import httplib2
 import inspect
 import imp
 import json
+import uuid
 
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
@@ -321,7 +322,12 @@ def finish_build(verbose=True):
     # Start the storage service, retrieve the bucket
     storage_service = get_google_service()
     bucket = get_bucket(storage_service,params['bucket_name'])
-    trailing_path = "%s/%s" %(params['commit'], params['version'])
+
+    # If version isn't in params, build failed
+    version = 'error-%s' % str(uuid.uuid4())
+    if 'version' in params:
+        version = params['version']
+    trailing_path = "%s/%s" %(params['commit'], version)
     image_path = get_image_path(params['repo_url'], trailing_path) 
 
     # Upload the log file

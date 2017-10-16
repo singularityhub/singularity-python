@@ -103,17 +103,17 @@ class Client(ApiConnection):
         return image_file
 
 
-    def get_collection(self,container_name):
+    def get_collection(self, name):
         '''get a container collection or return None.
         '''
-        url = prepare_url(container_name,"collection")
-        return self.get(url)
+        url = prepare_url(name, "collection")
+        return self.get("%s/%s" %(self.base, url))
 
 
     def get_collections(self):
         '''get all container collections
         '''
-        results = paginate_get(url='%s/collections/?format=json' %(self.base))
+        results = self.paginate_get(url='%s/collections/?format=json' %(self.base))
         print("Found %s collections." %(len(results)))
         # TODO: The shub API needs to have this endpoint expanded
         return results
@@ -121,7 +121,7 @@ class Client(ApiConnection):
 
     def get_containers(self,latest=True):
         '''get all containers'''
-        results = paginate_get(url='%s/containers/?format=json' %(self.base))
+        results = self.paginate_get(url='%s/containers/?format=json' %(self.base))
         print("Found %s containers." %(len(results)))
         containers = dict()
         if latest == True:
