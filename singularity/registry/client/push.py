@@ -54,6 +54,7 @@ def push(self, path, name, tag=None, compress=True):
     '''push an image to Singularity Registry'''
 
     path = os.path.abspath(path)
+    image = os.path.basename(path)
     bot.debug("PUSH %s" % path)
 
     if not os.path.exists(path):

@@ -1,4 +1,5 @@
 pandas
+python-dateutil
 requests
 requests-toolbelt
 retrying

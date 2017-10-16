@@ -29,7 +29,7 @@ SOFTWARE.
 from singularity.logger import bot
 from singularity.registry.utils import parse_image_name
 from singularity.hub import ApiConnection
-from datetime import datetime
+from dateutil import parser
 
 import json
 import sys
@@ -210,9 +210,8 @@ def container_search(self, query, across_collections=False, environment=False,
     for c in result:        
 
         # Convert date to readable thing
-        datetime_object = datetime.strptime(c['add_date'], '%Y-%m-%dT%H:%M:%S.%fZ')
+        datetime_object = parser.parse(c['add_date'])
         print_date = datetime_object.strftime('%b %d, %Y %I:%M%p')
-
         rows.append([ '%s/%s' %(c['collection'], c['name']),
                       c['tag'],
                       print_date ])
