@@ -45,7 +45,7 @@ class Client(ApiConnection):
         self.base = api_base
         if "registry" in kwargs:
             self.base = kwargs['registry']
-            if not self.base.endswith('/api')
+            if not self.base.endswith('/api'):
                 self.base = "%s/api" %self.base
 
         self.headers = None
