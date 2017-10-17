@@ -14,9 +14,9 @@ which sregistry
 # Push
 ###################################################################
 
-sregistry push vsoch-hello-world-master.img --name dinosaur/avocado --tag delicious
-sregistry push vsoch-hello-world-master.img --name meowmeow/avocado --tag nomnomnom
-sregistry push vsoch-hello-world-master.img --name dinosaur/avocado --tag whatinthe
+sregistry push vsoch-hello-world-master.simg --name dinosaur/avocado --tag delicious
+sregistry push vsoch-hello-world-master.simg --name meowmeow/avocado --tag nomnomnom
+sregistry push vsoch-hello-world-master.simg --name dinosaur/avocado --tag whatinthe
 
 
 ###################################################################
@@ -39,22 +39,22 @@ sregistry list dinosaur/avocado
 sregistry list dinosaur/avocado:delicious
 
 # Show me environment
-sregistry list dinosaur/tacos:delicious --env
+sregistry list dinosaur/avocado:delicious --env
 
 # Add runscript
-sregistry list dinosaur/tacos:delicious --e --r
+sregistry list dinosaur/avocado:delicious --e --r
 
 # Definition recipe (Singularity) and test
-sregistry list dinosaur/tacos:delicious --d --t
+sregistry list dinosaur/avocado:delicious --d --t
 
 # All of them
-sregistry list dinosaur/tacos:delicious --e --r --d --t
+sregistry list dinosaur/avocado:delicious --e --r --d --t
 
 ###################################################################
 # Delete
 ###################################################################
 
-sregistry delete dinosaur/tacos:delicious
+sregistry delete dinosaur/avocado:delicious
 sregistry list
 
 ###################################################################
