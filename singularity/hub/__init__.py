@@ -207,8 +207,9 @@ class ApiConnection(object):
         :param return_json: return json if successful
         '''
  
-        if not isinstance(data,dict):
-            data = json.dumps(data)
+        if data is not None:
+            if not isinstance(data,dict):
+                data = json.dumps(data)
 
         response = func(url=url,
                         headers=self.headers,
