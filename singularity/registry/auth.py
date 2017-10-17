@@ -32,8 +32,8 @@ from singularity.utils import (
     write_json
 )
 
+from datetime import datetime, timezone
 import base64
-import datetime
 import hashlib
 import hmac
 import json
@@ -59,8 +59,11 @@ def generate_signature(payload, secret):
     return hmac.new(secret, digestmod=hashlib.sha256,
                     msg=payload).hexdigest()
 
+
 def generate_timestamp():
-    return datetime.datetime.utcnow().strftime('%Y%m%dT%HZ')
+    ts = datetime.now()
+    ts = ts.replace(tzinfo=timezone.utc)
+    return ts.strftime('%Y%m%dT%HZ')
 
 
 def generate_credential(s):
