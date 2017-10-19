@@ -41,6 +41,14 @@ import shutil
 import json
 import os
 
+
+from singularity.analysis.classify import (
+    get_diff, 
+    estimate_os,
+    file_counts,
+    extension_counts
+)
+
 class TestAnalysisClassify(unittest.TestCase):
 
     def setUp(self):
@@ -53,9 +61,6 @@ class TestAnalysisClassify(unittest.TestCase):
 
     def test_classify(self):
         print("Testing singularity.analysis.classify.get_diff")
-        from singularity.analysis.classify import ( get_diff, 
-             estimate_os, file_counts, extension_counts)
-
         diff = get_diff(self.container)
         self.assertTrue(len(diff)>0)
         print("Testing singularity.analysis.classify.estimate_os")

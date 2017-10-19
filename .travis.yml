@@ -14,7 +14,7 @@ matrix:
       env: PYTHON_VERSION=3
 
 before_install:
-  - chmod u+x .travis/*
+  - sudo chmod u+x .travis/*
   - .travis/before_install
 
 script:

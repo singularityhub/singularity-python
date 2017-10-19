@@ -47,12 +47,12 @@ def get_image(image,return_existed=False,size=None,debug=False,pull_folder=None)
             pull_folder = tempfile.mkdtemp()
 
         if image.startswith('docker://'):
-            image_name = "%s.img" %image.replace("docker://","").replace("/","-")
-            bot.info("Found docker image %s, creating and importing..." %image_name)
+            image_name = "%s.simg" %image.replace("docker://","").replace("/","-")
+            bot.info("Found docker image %s, pulling..." %image_name)
 
         elif image.startswith('shub://'):
-            image_name = "%s.img" %image.replace("shub://","").replace("/","-")
-            bot.info("Found shub image %s, creating and importing..." %image_name)
+            image_name = "%s.simg" %image.replace("shub://","").replace("/","-")
+            bot.info("Found shub image %s, pulling..." %image_name)
 
 
         image_path = "%s/%s" %(pull_folder,image_name)

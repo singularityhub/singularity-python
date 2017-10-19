@@ -27,8 +27,8 @@ SOFTWARE.
 
 from singularity.logger import bot
 
-from .utils import zip_up
-from .size import calculate_folder_size
+from singularity.package.utils import zip_up
+from singularity.package.size import calculate_folder_size
 from singularity.utils import (
     format_container_name,
     read_file, 
@@ -116,7 +116,7 @@ def package(image_path,
             remove_image=False,
             verbose=False,
             S=None,
-            old_version=False):
+            old_version=True):
 
     '''generate a zip (including the image) to a user specified output_folder.
     :param image_path: full path to singularity image file
@@ -130,8 +130,7 @@ def package(image_path,
     # Run create image and bootstrap with Singularity command line tool.
     S = Singularity(debug=verbose)
 
-    file_obj, tar = get_image_tar(image_path,S=S,
-                                  write_file=old_version)
+    file_obj, tar = get_image_tar(image_path,S=S,write_file=old_version)
 
     members = tar.getmembers()
     image_name, ext = os.path.splitext(os.path.basename(image_path))
