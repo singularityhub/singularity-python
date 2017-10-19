@@ -49,7 +49,8 @@ def prepare_url(name, get_type='container'):
                            image['user'],
                            image['repo_name'])
 
-        if image['repo_tag'] is not None and get_type is not "collection":
+        # Only add tag for containers, not collections
+        if image['repo_tag'] is not None and get_type != "collection":
             url = "%s:%s" %(url,image['repo_tag'])
 
     return url
@@ -120,26 +121,22 @@ def parse_container_name(image):
 
 
 
-def get_image_name(manifest,extension='img.gz',use_hash=False):
-    '''get_image_name will return the image name for a manifest
-    :param manifest: manifest with 'image' as key with download link
-    :param use_hash: use the image hash instead of name
+def get_image_name(manifest,extension='simg', use_commit=False, use_hash=False):
+    '''get_image_name will return the image name for a manifest. The user
+       can name based on a hash or commit, or a name with the collection,
+       namespace, branch, and tag.
     '''
+    if use_hash:
+        image_name = "%s.%s" %(manifest['version'], extension)
 
-    if not use_hash:
-        image_name = "%s-%s.%s" %(manifest['name'].replace('/','-'),
-                                  manifest['branch'].replace('/','-'),
-                                  extension)
+    elif use_commit:
+        image_name = "%s.%s" %(manifest['commit'], extension)
+
     else:
-        image_url = os.path.basename(unquote(manifest['image']))
-        image_name = re.findall(".+[.]%s" %(extension),image_url)
-
-        if len(image_name) > 0:
-            image_name = image_name[0]
-
-        else:
-            bot.error("Image not found with expected extension %s, exiting." %extension)
-            sys.exit(1)
+        image_name = "%s-%s-%s.%s" %(manifest['name'].replace('/','-'),
+                                     manifest['branch'].replace('/','-'),
+                                     manifest['tag'].replace('/',''),
+                                     extension)
             
     bot.info("Singularity Hub Image: %s" %image_name)
     return image_name

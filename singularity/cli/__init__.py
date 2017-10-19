@@ -24,11 +24,12 @@ SOFTWARE.
 
 '''
 
-from .utils import get_image
+from singularity.cli.utils import get_image
 from singularity.utils import run_command
 from singularity.logger import bot
 
 from glob import glob
+import tempfile
 import json
 import sys
 import os
@@ -225,7 +226,7 @@ class Singularity:
         '''
         if tmptar is None:
             tmptar = "/%s/tmptar.tar" %(tempfile.mkdtemp())
-        cmd = ['singularity' 'image.export', '-f',tmptar, image_path]
+        cmd = ['singularity', 'image.export', '-f',tmptar, image_path]
         output = self.run_command(cmd,sudo=False)
         return tmptar
 

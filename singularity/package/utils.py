@@ -152,8 +152,6 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
         if image_package == None:
             image_package = package(image_path=container,
                                     output_folder=tmpdir,
-                                    runscript=False,
-                                    software=True,
                                     remove_image=True)
      
         guts = load_package(image_package,get=gets)

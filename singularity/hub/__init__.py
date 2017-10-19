@@ -129,9 +129,14 @@ class ApiConnection(object):
         results = []
         while get is not None:
             result = self.get(url, headers=headers, return_json=return_json)
-            if 'results' in result:
-                results = results + result['results']
-            get = result['next']
+            # If we have pagination:
+            if isinstance(result, dict):
+                if 'results' in result:
+                    results = results + result['results']
+                get = result['next']
+            # No pagination is a list
+            else:
+                return result
         return results
         
 

@@ -28,7 +28,10 @@ SOFTWARE.
 from singularity.logger import bot
 from singularity.utils import clean_up
 from singularity.hub import ApiConnection
-from singularity.hub.utils import prepare_url
+from singularity.hub.utils import (
+    get_image_name,
+    prepare_url
+)
 
 import demjson
 import json
@@ -63,24 +66,21 @@ class Client(ApiConnection):
     def get_manifest(self,container_name):
         '''get manifest
         '''
-        url = prepare_url(container_name, "container")
-        manifest = self.get(url)
-        if manifest is not None:      
-            manifest['metrics'] = demjson.decode(manifest['metrics'])
-        return manifest
+        url = prepare_url(container_name, "container/details")
+        return self.get('%s/%s' %(self.base,url))
 
 
-    def get_container(self,container_id,download_folder=None,extract=True,name=None):
+    def get_container(self,uri,name=None,download_folder=None):
         '''download singularity image from singularity hub to a download_folder, 
-        named based on the image version (commit id)
+        named based on the image version or a custom name
         '''
-        manifest = self.get_manifest(container_id)
+        manifest = self.get_manifest(uri)
 
         image_file = get_image_name(manifest)
         if name is not None:
             image_file = name
  
-        print("Found image %s:%s" %(manifest['name'],manifest['branch']))
+        print("Found image %s:%s" %(manifest['name'],manifest['tag']))
         print("Downloading image... %s" %(image_file))
 
         if download_folder is not None:
@@ -88,18 +88,6 @@ class Client(ApiConnection):
         url = manifest['image']
 
         image_file = self.download(url,file_name=image_file)
-    
-        if extract == True:
-            if not bot.is_quiet():
-                print("Decompressing %s" %image_file)
-            output = run_command(['gzip','-d','-f',image_file])
-            image_file = image_file.replace('.gz','')
-
-            # Any error in extraction (return code not 0) will return None
-            if output is None:
-                bot.error('Error extracting image, cleaning up.')
-                clean_up([image_file,"%s.gz" %image_file])
-
         return image_file
 
 
@@ -115,24 +103,4 @@ class Client(ApiConnection):
         '''
         results = self.paginate_get(url='%s/collections/?format=json' %(self.base))
         print("Found %s collections." %(len(results)))
-        # TODO: The shub API needs to have this endpoint expanded
         return results
-
-
-    def get_containers(self,latest=True):
-        '''get all containers'''
-        results = self.paginate_get(url='%s/containers/?format=json' %(self.base))
-        print("Found %s containers." %(len(results)))
-        containers = dict()
-        if latest == True:
-            for container in results:
-                if container['name'] in containers:
-                    if container['branch'] in containers[container['name']]:
-                        if containers[container['name']][container['branch']]['id'] < container['id']:
-                            containers[container['name']][container['branch']] = container
-                    else:
-                        containers[container['name']][container['branch']] = container
-                else:
-                    containers[container['name']] = {container['branch']: container}
-        return containers
-
