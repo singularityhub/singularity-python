@@ -224,9 +224,8 @@ class Singularity:
         :param export_format: the export format (only tar currently supported)
         '''
         if tmptar is None:
-            tmptar = "/tmp/tmptar.tar"
-        cmd = 'sudo singularity image.export %s >> %s 2>/dev/null' %(image_path,
-                                                                     tmptar)
+            tmptar = "/%s/tmptar.tar" %(tempfile.mkdtemp())
+        cmd = 'singularity image.export %s >> %s 2>/dev/null' %(image_path, tmptar)
         result = os.system(cmd)
         if result == 0:
             return tmptar
