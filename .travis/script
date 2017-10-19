@@ -1,0 +1,3 @@
+#!/bin/bash
+python -m unittest discover -s $TRAVIS_BUILD_DIR/singularity/tests/ -p '[t|T]est*.py'
+
