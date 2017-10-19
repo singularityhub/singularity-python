@@ -225,10 +225,9 @@ class Singularity:
         '''
         if tmptar is None:
             tmptar = "/%s/tmptar.tar" %(tempfile.mkdtemp())
-        cmd = 'singularity image.export %s >> %s 2>/dev/null' %(image_path, tmptar)
-        result = os.system(cmd)
-        if result == 0:
-            return tmptar
+        cmd = ['singularity' 'image.export', '-f',tmptar, image_path]
+        output = self.run_command(cmd,sudo=False)
+        return tmptar
 
 
     def importcmd(self,image_path,input_source):
