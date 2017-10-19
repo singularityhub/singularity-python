@@ -58,7 +58,10 @@ def check_install(software=None, quiet=True):
     if software is None:
         software = "singularity"
     cmd = [software, '--version']
-    version = run_command(cmd,software)
+    try:
+        version = run_command(cmd,software)
+    except FileNotFoundError:
+        return False
     if version is not None:
         if quiet is False and version['return_code'] == 0:
             version = version['message']
