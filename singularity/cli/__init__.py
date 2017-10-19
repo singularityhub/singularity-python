@@ -308,7 +308,7 @@ class Singularity:
             if size is not None:
                 cmd = cmd + ["--size",size]
             if image_name is None:
-                image_name = "%s.img" %image_path.replace("docker://","").replace("/","-")
+                image_name = "%s.simg" %image_path.replace("docker://","").replace("/","-")
             if pull_folder is not None:
                 image_name = "%s/%s" %(pull_folder,image_name)
             cmd = cmd + ["--name",image_name]

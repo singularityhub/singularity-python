@@ -28,7 +28,7 @@ import tempfile
 import os
 
 
-def get_image(image,return_existed=False,size=None,debug=False,pull_folder=None):
+def get_image(image,return_existed=False,debug=False,pull_folder=None):
     '''get_image will return the file, if it exists, or if it's docker or
     shub, will use the Singularity command line tool to generate a temporary image
     :param image: the image file or path (eg, docker://)
@@ -58,8 +58,7 @@ def get_image(image,return_existed=False,size=None,debug=False,pull_folder=None)
         image_path = "%s/%s" %(pull_folder,image_name)
         cli.pull(image_path=image,
                  pull_folder=pull_folder,
-                 image_name=image_name,
-                 size=size)
+                 image_name=image_name)
 
         image = image_path
 
