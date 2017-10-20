@@ -42,6 +42,8 @@ import shutil
 import json
 import os
 
+print("\n\n##################################################### test_client\n")
+
 class TestClient(unittest.TestCase):
 
     def setUp(self):

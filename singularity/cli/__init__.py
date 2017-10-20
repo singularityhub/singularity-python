@@ -304,7 +304,9 @@ class Singularity:
             elif name_by_hash is True:
                 bot.debug("user specified naming by hash.")
                 cmd.append("--hash")
- 
+            else:
+                image_name = "%s" %image_path.replace("shub://","").replace("/","-") 
+
         elif image_path.startswith('docker://'):
             if size is not None:
                 cmd = cmd + ["--size",size]

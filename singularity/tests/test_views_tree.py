@@ -46,10 +46,17 @@ class TestViewsTree(unittest.TestCase):
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
-        self.container = get_image('docker://ubuntu:16.04')
-        self.comparator = get_image('docker://ubuntu:12.04')
+        self.cli = Singularity()
+        self.container = self.cli.pull('docker://ubuntu:16.04', 
+                                       pull_folder=self.tmpdir)
+
+        self.comparator = self.cli.pull('docker://ubuntu:12.04',
+                                         pull_folder=self.tmpdir)
+        
         
     def tearDown(self):
+        os.remove(self.container)
+        os.remove(self.comparator)
         shutil.rmtree(self.tmpdir)
 
 
