@@ -53,11 +53,9 @@ class TestBuildUtils(unittest.TestCase):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
         self.spec = "%s/tests/data/Singularity" %(self.pwd)
-        print("\n---START----------------------------------------")
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-        print("\n---END------------------------------------------")
 
 
     def test_stop_if_result_none(self):
@@ -74,25 +72,6 @@ class TestBuildUtils(unittest.TestCase):
         self.assertTrue(do_retry)
 
 
-    def test_test_container(self):
-        '''the retry function should return None if result is None
-        '''
-        from singularity.build.utils import test_container
-        from singularity.cli import Singularity
-        cli = Singularity()
-       
-        unfinished_container = cli.create("%s/container.img" %self.tmpdir)
-        print("Case 1: Testing that errored container does not run")
-        result = test_container(unfinished_container)
-        self.assertEqual(result["return_code"], 255)
-        
-        print("Case 2: Testing that finished container does run")
-        finished_container = cli.importcmd(unfinished_container,'docker://ubuntu')
-        result = test_container(finished_container)
-        self.assertEqual(result["return_code"], 0)
-
-
-
     def test_get_singularity_version(self):
         '''ensure that singularity --version returns a valid version string
         '''
@@ -106,6 +85,7 @@ class TestBuildUtils(unittest.TestCase):
         os.environ['SINGULARITY_VERSION'] = "2.xx"
         version = get_singularity_version()
         self.assertEqual(version,"2.xx")
+
 
     def test_sniff_extension(self):
         '''sniff extension should return the correct file type based
