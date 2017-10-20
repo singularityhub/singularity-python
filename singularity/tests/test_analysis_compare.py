@@ -59,7 +59,7 @@ class TestAnalysisCompare(unittest.TestCase):
         shutil.rmtree(self.tmpdir)
 
 
-    def test_container_similarity_vector(self):
+    def test_container_similarity(self):
         print("Testing singularity.analysis.compare.container_similarity_vector")
         import pandas
         from singularity.analysis.compare import container_similarity_vector
@@ -70,17 +70,12 @@ class TestAnalysisCompare(unittest.TestCase):
         self.assertTrue('files.txt' in vector)
         self.assertTrue(isinstance(vector['files.txt'],pandas.DataFrame))
 
-
-    def test_compare_singularity_images(self):
-        import pandas
         print("Testing singularity.analysis.compare.compare_singularity_images")
         from singularity.analysis.compare import compare_singularity_images
         sim = compare_singularity_images(self.container,self.comparator)
         self.assertTrue(isinstance(sim,pandas.DataFrame))
         self.assertTrue(sim.loc[self.container,self.comparator] - 0.4803262269280298 < 0.01)
 
-
-    def test_compare_containers(self):
         print("Testitng singularity.analysis.compare.compare_containers")
         from singularity.analysis.compare import compare_containers
         comparison = compare_containers(self.container,self.comparator)
@@ -88,15 +83,11 @@ class TestAnalysisCompare(unittest.TestCase):
         for key in ['total1', 'total2', 'intersect', 'unique2', 'unique1']:
             self.assertTrue(key in comparison['files.txt'])
      
-
-    def test_calculate_similarity(self):
         print("Testing singularity.analysis.compare.calculate_similarity")
         from singularity.analysis.compare import calculate_similarity
         sim = calculate_similarity(self.container,self.comparator)
         self.assertTrue(sim['files.txt'] -0.4921837537163134 < 0.01)
 
-
-    def test_compare_packages(self):
         print("Testing singularity.analysis.compare.compare_packages")
         from singularity.analysis.compare import compare_packages
         pwd = get_installdir()

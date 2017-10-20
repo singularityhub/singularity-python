@@ -292,9 +292,10 @@ class Singularity:
         else:
             cmd = ['singularity','pull']
 
+        if pull_folder is not None:
+            os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
+
         if image_path.startswith('shub://'):
-            if pull_folder is not None:
-                os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
             if image_name is not None:
                 bot.debug("user specified naming pulled image %s" %image_name)
                 cmd = cmd +["--name",image_name]
@@ -310,14 +311,12 @@ class Singularity:
                 cmd = cmd + ["--size",size]
             if image_name is None:
                 image_name = "%s.simg" %image_path.replace("docker://","").replace("/","-")
-            if pull_folder is not None:
-                image_name = "%s/%s" %(pull_folder,image_name)
             cmd = cmd + ["--name",image_name]
  
-
         cmd.append(image_path)
+        bot.debug(' '.join(cmd))
         output = self.run_command(cmd)
-        return output.split("Container is at:")[-1].strip('\n').strip()
+        return image_name
         
 
 

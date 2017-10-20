@@ -37,11 +37,14 @@ def get_image(image,return_existed=False,debug=False,pull_folder=None):
     :param sudopw: needed to create an image, if docker:// provided
     '''
     from singularity.cli import Singularity
-    existed = True
 
-    # Is the image a docker or singularity hub image?
-    if image.startswith('docker://') or image.startswith('shub://'):
-        existed = False
+    # Return if it's an image file
+    existed = False
+    if os.path.exists(image):
+        existed = True
+
+    elif image.startswith('docker://') or image.startswith('shub://'):
+
         cli = Singularity(debug=debug)
         if pull_folder is None:
             pull_folder = tempfile.mkdtemp()
@@ -54,22 +57,15 @@ def get_image(image,return_existed=False,debug=False,pull_folder=None):
             image_name = "%s.simg" %image.replace("shub://","").replace("/","-")
             bot.info("Found shub image %s, pulling..." %image_name)
 
-
         image_path = "%s/%s" %(pull_folder,image_name)
-        cli.pull(image_path=image,
-                 pull_folder=pull_folder,
-                 image_name=image_name)
+        image = cli.pull(image_path=image,
+                         pull_folder=pull_folder,
+                         image_name=image_path)
 
-        image = image_path
-
-
-    if os.path.exists(image):
-        image = os.path.abspath(image)
-        if return_existed == True:
-            return image,existed
-        return image
-    return None
-
+    bot.debug(image)
+    if return_existed == True:
+        return image,existed
+    return image
 
 
 def clean_up(image,existed):
