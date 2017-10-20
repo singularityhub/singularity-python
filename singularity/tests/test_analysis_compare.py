@@ -43,7 +43,7 @@ import shutil
 import json
 import os
 
-print("\n\n########################################### test_analysis_compare\n")
+print("################################################# test_analysis_compare")
 
 class TestAnalysisCompare(unittest.TestCase):
 

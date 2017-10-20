@@ -48,7 +48,7 @@ import shutil
 import json
 import os
 
-print("\n\n##################################################### test_package\n")
+print("########################################################## test_package")
 
 class TestPackage(unittest.TestCase):
 
@@ -89,21 +89,6 @@ class TestPackage(unittest.TestCase):
         self.assertTrue(os.path.exists(image1_extraction))
         shutil.rmtree(os.path.dirname(image1_extraction))
 
-    '''
-    def test_estimate_from_size(self):
-        """test estimate from size will ensure that we correctly estimate the size
-        of a container build plus some optional padding
-        Note: we currently can't test this in CI due to needing 
-        sudo password for bootstrap
-        """
-        from singularity.package import estimate_image_size
-        spec = "From: ubuntu:16.04\nBootstrap: docker"        
-        spec_file = "%s/Singularity" %(self.tmpdir)
-        spec_file = write_file(spec_file,spec)     
-        print("Case 1: Testing that no specification of padding uses default 200")   
-        image_size = estimate_image_size(spec_file)        
-
-    '''
     def test_package(self):
         '''test package will ensure that we can generate an image package'''
         from singularity.package import package

@@ -46,7 +46,7 @@ import shutil
 import json
 import os
 
-print("\n\n####################################################### test_build\n")
+print("############################################################ test_build")
 
 class TestBuildTemplate(unittest.TestCase):
 

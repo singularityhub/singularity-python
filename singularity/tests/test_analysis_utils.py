@@ -40,7 +40,7 @@ import shutil
 import json
 import os
 
-print("\n\n############################################# test_analysis_utils\n")
+print("################################################### test_analysis_utils")
 
 class TestAnalysis(unittest.TestCase):
 

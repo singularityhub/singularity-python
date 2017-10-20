@@ -41,7 +41,7 @@ import shutil
 import json
 import os
 
-print("\n\n##################################################### test_shub\n")
+print("############################################################# test_shub")
 
 class TestClient(unittest.TestCase):
 
