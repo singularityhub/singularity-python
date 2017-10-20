@@ -267,7 +267,7 @@ class Singularity:
         return output
 
 
-    def pull(self,image_path,pull_folder=None,
+    def pull(self,image_path,pull_folder='',
                              name_by_hash=False,
                              name_by_commit=False,
                              image_name=None,
@@ -291,7 +291,7 @@ class Singularity:
         else:
             cmd = ['singularity','pull']
 
-        if pull_folder is not None:
+        if pull_folder not in [None,'']:
             os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
 
         if image_path.startswith('shub://'):
@@ -313,10 +313,10 @@ class Singularity:
             cmd = cmd + ["--name",image_name]
  
         cmd.append(image_path)
+        image_path = "%s/%s" %(pull_folder,image_name)  
         bot.debug(' '.join(cmd))
         output = self.run_command(cmd)
-        return image_name
-        
+        return image_path
 
 
     def run(self,image_path,args=None,writable=False,contain=False):

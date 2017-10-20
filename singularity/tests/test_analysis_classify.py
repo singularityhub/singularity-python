@@ -56,10 +56,12 @@ class TestAnalysisClassify(unittest.TestCase):
         self.cli = Singularity()
         self.container = self.cli.pull('docker://ubuntu:16.04', 
                                        pull_folder=self.tmpdir)
+        print(self.container)
 
         self.comparator = self.cli.pull('docker://ubuntu:12.04',
                                          pull_folder=self.tmpdir)
-        
+        print(self.comparator)        
+
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
