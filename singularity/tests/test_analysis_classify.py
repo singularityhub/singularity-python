@@ -34,7 +34,7 @@ from numpy.testing import (
     assert_equal
 )
 
-from singularity.cli import get_image
+from singularity.cli import Singularity
 import unittest
 import tempfile
 import shutil
@@ -53,8 +53,12 @@ class TestAnalysisClassify(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.container = get_image('docker://ubuntu:16.04', pull_folder=self.tmpdir)
-        self.comparator = get_image('docker://ubuntu:12.04', pull_folder=self.tmpdir)
+        self.cli = Singularity()
+        self.container = self.cli.pull('docker://ubuntu:16.04', 
+                                       pull_folder=self.tmpdir)
+
+        self.comparator = self.cli.pull('docker://ubuntu:12.04',
+                                         pull_folder=self.tmpdir)
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)

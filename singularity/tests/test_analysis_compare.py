@@ -35,7 +35,7 @@ from numpy.testing import (
 )
 
 from singularity.utils import get_installdir
-from singularity.cli import get_image
+from singularity.cli import Singularity
 import unittest
 import pandas
 import tempfile
@@ -47,11 +47,12 @@ class TestAnalysisCompare(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.container = get_image('docker://ubuntu:16.04', 
-                                    pull_folder=self.tmpdir)
+        self.cli = Singularity()
+        self.container = self.cli.pull('docker://ubuntu:16.04', 
+                                       pull_folder=self.tmpdir)
 
-        self.comparator = get_image('docker://ubuntu:12.04',
-                                    pull_folder=self.tmpdir)
+        self.comparator = self.cli.pull('docker://ubuntu:12.04',
+                                         pull_folder=self.tmpdir)
         
     def tearDown(self):
         os.remove(self.container)

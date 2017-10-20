@@ -24,7 +24,6 @@ SOFTWARE.
 
 '''
 
-from singularity.cli.utils import get_image
 from singularity.utils import run_command
 from singularity.logger import bot
 
@@ -275,7 +274,7 @@ class Singularity:
                              size=None):
 
         '''pull will pull a singularity hub image
-        :param image_path: full path to image
+        :param image_path: full path to image / uris
         :param name_by: can be one of commit or hash, default is by image name
         ''' 
 
@@ -287,7 +286,7 @@ class Singularity:
             bot.error("pull is only valid for docker and shub, %s is invalid." %image_name)
             sys.exit(1)           
 
-        if self.debug == True:
+        if self.debug is True:
             cmd = ['singularity','--debug','pull']
         else:
             cmd = ['singularity','pull']

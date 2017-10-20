@@ -34,7 +34,6 @@ from numpy.testing import (
     assert_equal
 )
 
-from singularity.cli import get_image
 from singularity.utils import get_installdir
 import unittest
 import tempfile

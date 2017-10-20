@@ -22,7 +22,6 @@ SOFTWARE.
 
 '''
 
-from singularity.cli import get_image
 from singularity.utils import read_json
 from singularity.logger import bot
 from singularity.registry.auth import read_client_secrets

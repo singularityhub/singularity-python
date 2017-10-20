@@ -8,7 +8,7 @@
 #
 ################################################################################
 
-sudo apt-get update > /tmp/.install-log
+sudo apt-get update &&
 sudo apt-get -y install git \
                    build-essential \
                    libtool \
@@ -18,7 +18,7 @@ sudo apt-get -y install git \
                    autoconf \
                    debootstrap \
                    yum \
-                   python3-pip >> /tmp/.install-log
+                   python3-pip
 
 
 # Pip3 installs

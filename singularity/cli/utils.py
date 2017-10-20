@@ -27,47 +27,6 @@ from glob import glob
 import tempfile
 import os
 
-
-def get_image(image,return_existed=False,debug=False,pull_folder=None):
-    '''get_image will return the file, if it exists, or if it's docker or
-    shub, will use the Singularity command line tool to generate a temporary image
-    :param image: the image file or path (eg, docker://)
-    :param return_existed: if True, will return image_path,existed to tell if
-    an image is temporary (if existed==False)
-    :param sudopw: needed to create an image, if docker:// provided
-    '''
-    from singularity.cli import Singularity
-
-    # Return if it's an image file
-    existed = False
-    if os.path.exists(image):
-        existed = True
-
-    elif image.startswith('docker://') or image.startswith('shub://'):
-
-        cli = Singularity(debug=debug)
-        if pull_folder is None:
-            pull_folder = tempfile.mkdtemp()
-
-        if image.startswith('docker://'):
-            image_name = "%s.simg" %image.replace("docker://","").replace("/","-")
-            bot.info("Found docker image %s, pulling..." %image_name)
-
-        elif image.startswith('shub://'):
-            image_name = "%s.simg" %image.replace("shub://","").replace("/","-")
-            bot.info("Found shub image %s, pulling..." %image_name)
-
-        image_path = "%s/%s" %(pull_folder,image_name)
-        image = cli.pull(image_path=image,
-                         pull_folder=pull_folder,
-                         image_name=image_path)
-
-    bot.debug(image)
-    if return_existed == True:
-        return image,existed
-    return image
-
-
 def clean_up(image,existed):
     '''clean up will remove an image file if existed is False (meaning it was
     created as temporary for the script

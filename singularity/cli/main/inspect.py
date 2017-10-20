@@ -25,7 +25,7 @@ SOFTWARE.
 from singularity.utils import check_install
 from singularity.package import package
 from singularity.logger import bot
-from singularity.cli import get_image
+from singularity.cli import Singularity
 from singularity.cli.utils import clean_up
 import sys
 import os
@@ -43,14 +43,12 @@ def main(args,parser,subparser):
     if args.outfolder is not None:
         output_folder = os.getcwd()
 
-
-
     # If we are given an image, ensure full path
     if args.image is not None:
 
-        image,existed = get_image(args.image,
-                                  return_existed=True,
-                                  size=args.size)
+        if not os.path.exists(args.image):
+            cli = Singularity(debug=args.debug)
+            image = cli.pull(args.image)
 
         if image is None:
             bot.error("Cannot find image. Exiting.")

@@ -22,7 +22,6 @@ SOFTWARE.
 
 '''
 
-from singularity.cli import get_image
 from singularity.utils import check_install           
 from singularity.logger import bot
 import sys
@@ -47,16 +46,17 @@ def main(args,parser,subparser):
         image1,image2 = args.images.split(',')
         bot.debug("Image1: %s" %image1)
         bot.debug("Image2: %s" %image2)
-        image1,existed1 = get_image(image1,
-                                    return_existed=True,
-                                    size=args.size)
-        image2,existed2 = get_image(image2,
-                                    return_existed=True,
-                                    size=args.size)
 
-        if image1 is None or image2 is None:
-            bot.error("Cannot find image. Exiting.")
-            sys.exit(1)
+        images = []
+        cli = Singularity(debug=args.debug)
+        for image in [image1,image2]:
+            if not os.path.exists(image):
+                image = cli.pull(image)
+            images.append(image)
+
+        # Just for clarity
+        image1 = images[0]
+        image2 = images[1]
 
         # the user wants to make a similarity tree
         if args.simtree is True:
