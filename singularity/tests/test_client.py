@@ -42,7 +42,7 @@ import shutil
 import json
 import os
 
-print("\n\n##################################################### test_client\n")
+print("########################################################### test_client")
 
 class TestClient(unittest.TestCase):
 

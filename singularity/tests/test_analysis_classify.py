@@ -49,7 +49,7 @@ from singularity.analysis.classify import (
     extension_counts
 )
 
-print("\n\n########################################## test_analysis_classify\n")
+print("################################################ test_analysis_classify")
 
 class TestAnalysisClassify(unittest.TestCase):
 

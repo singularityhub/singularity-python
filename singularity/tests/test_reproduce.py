@@ -47,7 +47,7 @@ import shutil
 import json
 import os
 
-print("\n\n################################################## test_reproduce\n")
+print("######################################################## test_reproduce")
 
 class TestReproduce(unittest.TestCase):
 

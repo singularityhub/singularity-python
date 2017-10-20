@@ -45,7 +45,7 @@ import shutil
 import json
 import os
 
-print("\n\n################################################ test_build_utils\n")
+print("###################################################### test_build_utils")
 
 class TestBuildUtils(unittest.TestCase):
 
