@@ -89,13 +89,6 @@ class TestPackage(unittest.TestCase):
         self.assertTrue(os.path.exists(image1_extraction))
         shutil.rmtree(os.path.dirname(image1_extraction))
 
-    def test_package(self):
-        '''test package will ensure that we can generate an image package'''
-        from singularity.package import package
-        container = self.cli.create("%s/container.img" %self.tmpdir)
-        container = self.cli.importcmd(container,"docker://ubuntu")
-        image_package = package(image_path=container,output_folder=self.tmpdir,S=self.cli)
-        self.assertTrue(os.path.exists(image_package))
 
 
 if __name__ == '__main__':
