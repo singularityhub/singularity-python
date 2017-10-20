@@ -45,6 +45,8 @@ import shutil
 import json
 import os
 
+print("\n\n################################################ test_build_utils\n")
+
 class TestBuildUtils(unittest.TestCase):
 
     def setUp(self):

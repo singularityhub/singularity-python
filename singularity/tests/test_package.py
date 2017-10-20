@@ -48,6 +48,8 @@ import shutil
 import json
 import os
 
+print("\n\n##################################################### test_package\n")
+
 class TestPackage(unittest.TestCase):
 
     def setUp(self):

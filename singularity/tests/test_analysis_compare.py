@@ -43,6 +43,8 @@ import shutil
 import json
 import os
 
+print("\n\n########################################### test_analysis_compare\n")
+
 class TestAnalysisCompare(unittest.TestCase):
 
     def setUp(self):

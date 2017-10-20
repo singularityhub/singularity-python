@@ -35,17 +35,17 @@ import shutil
 import json
 import os
 
+print("\n\n############################################## test_package_utils\n")
+
 class TestUtils(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
         self.spec = "%s/tests/data/Singularity" %(self.pwd)
-        print("\n---START----------------------------------------")
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-        print("\n---END------------------------------------------")
 
 
     def test_calculate_folder_size(self):

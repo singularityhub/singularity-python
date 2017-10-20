@@ -41,6 +41,8 @@ import shutil
 import json
 import os
 
+print("\n\n################################################# test_views_tree\n")
+
 class TestViewsTree(unittest.TestCase):
 
     def setUp(self):

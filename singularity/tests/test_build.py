@@ -46,17 +46,17 @@ import shutil
 import json
 import os
 
+print("\n\n####################################################### test_build\n")
+
 class TestBuildTemplate(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
         self.spec = "%s/tests/data/Singularity" %(self.pwd)
-        print("\n---START----------------------------------------")
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-        print("\n---END------------------------------------------")
 
     def test_read_template(self):
         '''test_read_template should read in a template script, and

@@ -40,6 +40,8 @@ import shutil
 import json
 import os
 
+print("\n\n############################################# test_analysis_utils\n")
+
 class TestAnalysis(unittest.TestCase):
 
     def setUp(self):

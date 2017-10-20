@@ -40,18 +40,18 @@ import shutil
 import json
 import os
 
+print("\n\n###################################################### test_utils\n")
+
 class TestUtils(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
         self.spec = "%s/tests/data/Singularity" %(self.pwd)
-        print("\n---START----------------------------------------")
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-        print("\n---END------------------------------------------")
-
+        
 
     def test_write_read_files(self):
         '''test_write_read_files will test the functions write_file and read_file
