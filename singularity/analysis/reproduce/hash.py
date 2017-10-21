@@ -28,9 +28,9 @@ SOFTWARE.
 
 from singularity.cli import Singularity
 from singularity.logger import bot
-from .criteria import *
-from .levels import *
-from .utils import (
+from singularity.analysis.reproduce.criteria import *
+from singularity.analysis.reproduce.levels import *
+from singularity.analysis.reproduce.utils import (
     get_image_tar,
     delete_image_tar,
     extract_guts
@@ -130,7 +130,8 @@ def get_image_hash(image_path,
 def get_content_hashes(image_path,
                        level=None,
                        regexp=None,
-                       include_files=None,tag_root=True,
+                       include_files=None,
+                       tag_root=True,
                        level_filter=None,
                        skip_files=None,
                        version=None,

@@ -304,7 +304,7 @@ class Singularity:
             elif name_by_hash is True:
                 bot.debug("user specified naming by hash.")
                 cmd.append("--hash")
-            else:
+            else: # otherwise let the Singularity client determine own name
                 image_name = "%s" %image_path.replace("shub://","").replace("/","-") 
 
         elif image_path.startswith('docker://'):
@@ -315,11 +315,10 @@ class Singularity:
             cmd = cmd + ["--name", image_name]
  
         cmd.append(image_path)
-        image_path = "%s/%s.img" %(pull_folder,image_name)  
         bot.debug(' '.join(cmd))
         output = self.run_command(cmd)
         self.println(output)
-        return image_path
+        return output.split('Container is at:')[-1].strip('\n')
 
 
     def run(self,image_path,args=None,writable=False,contain=False):

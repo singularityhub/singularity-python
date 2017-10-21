@@ -56,9 +56,8 @@ class TestPackage(unittest.TestCase):
         self.pwd = get_installdir()
         self.cli = Singularity()
         self.tmpdir = tempfile.mkdtemp()
-        self.image1 = "%s/tests/data/busybox-2016-02-16.img" %(self.pwd)
-        self.image2 = "%s/tests/data/cirros-2016-01-04.img" %(self.pwd)
-        # We can't test creating the packages, because requires sudo :/
+        self.image1 = "%s/tests/data/busybox-2017-10-21.simg" %(self.pwd)
+        self.image2 = "%s/tests/data/cirros-2017-10-21.simg" %(self.pwd)
         self.pkg1 = "%s/tests/data/busybox-2016-02-16.img.zip" %(self.pwd)
         self.pkg2 = "%s/tests/data/cirros-2016-01-04.img.zip" %(self.pwd)
 

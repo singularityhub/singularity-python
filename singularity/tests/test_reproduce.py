@@ -55,8 +55,8 @@ class TestReproduce(unittest.TestCase):
         self.pwd = get_installdir()
         self.cli = Singularity()
         self.tmpdir = tempfile.mkdtemp()
-        self.image1 = "%s/tests/data/busybox-2016-02-16.img" %(self.pwd)
-        self.image2 = "%s/tests/data/cirros-2016-01-04.img" %(self.pwd)
+        self.image1 = "%s/tests/data/busybox-2017-10-21.simg" %(self.pwd)
+        self.image2 = "%s/tests/data/cirros-2017-10-21.simg" %(self.pwd)
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)

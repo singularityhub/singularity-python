@@ -37,7 +37,8 @@ import re
 def assess_differences(image_file1,
                        image_file2,
                        levels=None,
-                       version=None,size_heuristic=False,
+                       version=None,
+                       size_heuristic=False,
                        guts1=None,
                        guts2=None):
 
@@ -62,15 +63,13 @@ def assess_differences(image_file1,
         # Compare the dictionary of file:hash between two images, and get root owned lookup
         if guts1 is None:
             guts1 = get_content_hashes(image_path=image_file1,
-                                       level_filter=level_filter,
-                                       tag_root=True,
-                                       include_sizes=True)
+                                       level_filter=level_filter)
+                                       # tag_root=True
+                                       # include_sizes=True
         
         if guts2 is None:
             guts2 = get_content_hashes(image_path=image_file2,
-                                       level_filter=level_filter,
-                                       tag_root=True,
-                                       include_sizes=True)
+                                       level_filter=level_filter)
       
         files = list(set(list(guts1['hashes'].keys()) + list(guts2['hashes'].keys())))
 
