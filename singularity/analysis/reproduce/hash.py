@@ -32,6 +32,7 @@ from singularity.analysis.reproduce.criteria import *
 from singularity.analysis.reproduce.levels import *
 from singularity.analysis.reproduce.utils import (
     get_image_tar,
+    extract_content,
     delete_image_tar,
     extract_guts
 )
