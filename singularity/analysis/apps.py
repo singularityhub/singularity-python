@@ -64,7 +64,7 @@ def extract_apps(image_path, app_names, S=None, verbose=True):
     if not isinstance(app_names,list):
         app_names = [app_names]
 
-    file_obj, tar = get_image_tar(image_path, S=S, write_file=True)
+    file_obj, tar = get_image_tar(image_path, S=S)
     members = tar.getmembers()
     apps = dict()
 

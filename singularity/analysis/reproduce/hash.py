@@ -64,8 +64,7 @@ def get_image_hash(image_path,
                    level=None,level_filter=None,
                    include_files=None,
                    skip_files=None,
-                   version=None,
-                   memory_tar=False):
+                   version=None):
 
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
@@ -100,8 +99,7 @@ def get_image_hash(image_path,
                                 include_files=include_files)
                 
     cli = Singularity()
-    file_obj,tar = get_image_tar(image_path,
-                                 write_file=not memory_tar)
+    file_obj,tar = get_image_tar(image_path)
     hasher = hashlib.md5()
 
     for member in tar:
@@ -136,8 +134,7 @@ def get_content_hashes(image_path,
                        level_filter=None,
                        skip_files=None,
                        version=None,
-                       include_sizes=True,
-                       memory_tar=False):
+                       include_sizes=True):
 
     '''get_content_hashes is like get_image_hash, but it returns a complete dictionary 
     of file names (keys) and their respective hashes (values). This function is intended
@@ -158,8 +155,7 @@ def get_content_hashes(image_path,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
-    file_obj,tar = get_image_tar(image_path,
-                                 write_file=not memory_tar)
+    file_obj,tar = get_image_tar(image_path)
 
     results = extract_guts(image_path=image_path,
                            tar=tar,

@@ -88,7 +88,9 @@ def extract_guts(image_path,tar,file_filter,tag_root=True,include_sizes=True):
 
 
 def get_memory_tar(image_path):
-    '''get an in memory tar of an image (does not require sudo!)'''
+    '''get an in memory tar of an image. Use carefully, not as reliable
+       as get_image_tar
+    '''
     cli = Singularity()
     byte_array = cli.export(image_path)
     file_object = io.BytesIO(byte_array)
@@ -96,28 +98,19 @@ def get_memory_tar(image_path):
     return (file_object,tar)
 
 
-def get_image_tar(image_path,write_file=True,S=None):
+def get_image_tar(image_path,S=None):
     '''get an image tar, either written in memory or to
     the file system. file_obj will either be the file object,
     or the file itself.
     '''
-
-    # Singularity 2.3 and up
-    if not write_file:
-        file_obj,tar = get_memory_tar(image_path)
-        bot.debug('Generate in memory tar...')   
-
-    # Singularity < version 2.3
-    else:
-        bot.debug('Generate file system tar...')   
-        if S is None:
-            S = Singularity()
-        file_obj = S.export(image_path=image_path)
-        if file_obj is None:
-            bot.error("Error generating tar, exiting.")
-            sys.exit(1)
-        tar = tarfile.open(file_obj)
-
+    bot.debug('Generate file system tar...')   
+    if S is None:
+        S = Singularity()
+    file_obj = S.export(image_path=image_path)
+    if file_obj is None:
+        bot.error("Error generating tar, exiting.")
+        sys.exit(1)
+    tar = tarfile.open(file_obj)
     return file_obj, tar
 
 
@@ -149,8 +142,7 @@ def extract_content(image_path,member_name,cli=None,return_hash=False):
         cli = Singularity()
     content = cli.execute(image_path,'cat %s' %(member_name))
     if not isinstance(content,bytes):
-        if isinstance(content,str):
-            content = content.encode('utf-8')
+        content = content.encode('utf-8')
         content = bytes(content)
     # If permissions don't allow read, return None
     if len(content) == 0:

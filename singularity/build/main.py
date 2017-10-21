@@ -151,8 +151,7 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
                                 spec_path=params['spec_file'],
                                 output_folder=build_dir,
                                 remove_image=True,
-                                verbose=True,
-                                old_version=True)
+                                verbose=True)
 
         # Derive software tags by subtracting similar OS
         diff = get_diff(image_package=image_package)

@@ -115,8 +115,7 @@ def package(image_path,
             software=True,
             remove_image=False,
             verbose=False,
-            S=None,
-            old_version=True):
+            S=None):
 
     '''generate a zip (including the image) to a user specified output_folder.
     :param image_path: full path to singularity image file
@@ -130,7 +129,7 @@ def package(image_path,
     # Run create image and bootstrap with Singularity command line tool.
     S = Singularity(debug=verbose)
 
-    file_obj, tar = get_image_tar(image_path,S=S,write_file=old_version)
+    file_obj, tar = get_image_tar(image_path,S=S)
 
     members = tar.getmembers()
     image_name, ext = os.path.splitext(os.path.basename(image_path))

@@ -71,6 +71,7 @@ def assess_differences(image_file1,
             guts2 = get_content_hashes(image_path=image_file2,
                                        level_filter=level_filter)
       
+        print(level_name)
         files = list(set(list(guts1['hashes'].keys()) + list(guts2['hashes'].keys())))
 
         for file_name in files:

@@ -129,18 +129,18 @@ class TestReproduce(unittest.TestCase):
         hashes = get_content_hashes(self.image1)
         for key in ['hashes','sizes','root_owned']:
             self.assertTrue(key in hashes)
-        self.assertEqual(len(hashes['hashes']),372)
+        self.assertEqual(len(hashes['hashes']),395)
 
 
     def test_extract_guts(self):
         from singularity.analysis.reproduce.utils import extract_guts
         from singularity.analysis.reproduce import (
-            get_memory_tar,
+            get_image_tar,
             get_levels )
 
         print("Testing singularity.analysis.reproduce.extract_guts")
         levels = get_levels()
-        file_obj,tar = get_memory_tar(self.image1)
+        file_obj,tar = get_image_tar(self.image1)
         guts = extract_guts(image_path=self.image1,
                             tar=tar,
                             file_filter=levels['REPLICATE'])
@@ -151,7 +151,7 @@ class TestReproduce(unittest.TestCase):
         from singularity.analysis.reproduce import get_image_file_hash
         print("Testing singularity.analysis.reproduce.get_image_file_hash")
         hashy = get_image_file_hash(self.image1)
-        self.assertEqual('9d2edcd19328d09f51c86192990050c5',hashy)
+        self.assertEqual('843929a1c92d53656fa744c6b831f59b',hashy)
 
 
 if __name__ == '__main__':
