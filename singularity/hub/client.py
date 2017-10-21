@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 client.py: simple client for singularity hub api
 
@@ -27,90 +25,82 @@ SOFTWARE.
 
 '''
 
-from singularity.hub.auth import (
-    get_headers
+from singularity.logger import bot
+from singularity.utils import clean_up
+from singularity.hub import ApiConnection
+from singularity.hub.utils import (
+    get_image_name,
+    prepare_url
 )
-
-from singularity.logman import bot
-from singularity.hub.base import (
-    api_base,
-    get_template,
-    download_image
-)
-
-from singularity.hub.utils import paginate_get
-
 
 import demjson
+import json
+import sys
 
-class Client(object):
+
+api_base = "https://singularity-hub.org/api"
+
+class Client(ApiConnection):
+
+    def __init__(self, **kwargs):
+        super(ApiConnection, self).__init__(**kwargs)
+
+        self.base = api_base
+        if "registry" in kwargs:
+            self.base = kwargs['registry']
+            if not self.base.endswith('/api'):
+                self.base = "%s/api" %self.base
+
+        self.headers = None
+        if "token" in kwargs:
+            self.token = authenticate()
+        self.update_headers()
+        
+    def __str__(self):
+        return "<singularity-hub-client>"        
+
+    def __repr__(self):
+        return "<singularity-hub-client>"        
 
 
-    def __init__(self, token=None):
+    def get_manifest(self,container_name):
+        '''get manifest
+        '''
+        url = prepare_url(container_name, "container/details")
+        return self.get('%s/%s' %(self.base,url))
+
+
+    def get_container(self,uri,name=None,download_folder=None):
+        '''download singularity image from singularity hub to a download_folder, 
+        named based on the image version or a custom name
+        '''
+        manifest = self.get_manifest(uri)
+
+        image_file = get_image_name(manifest)
+        if name is not None:
+            image_file = name
  
-        if token is not None:
-            self.token = token
-        # currently not used
-        self.headers = get_headers(token=token)
+        print("Found image %s:%s" %(manifest['name'],manifest['tag']))
+        print("Downloading image... %s" %(image_file))
+
+        if download_folder is not None:
+            image_file = "%s/%s" %(download_folder,image_file)
+        url = manifest['image']
+
+        image_file = self.download(url,file_name=image_file)
+        return image_file
 
 
-    def update_headers(self, headers):
-        '''update_headers will add headers to the client
-        :param headers: should be a dictionary of key,value to update/add to header
-        '''
-        for key,value in headers.items():
-            self.client.headers[key] = item
-
-    def load_metrics(self,manifest):
-        '''load metrics about a container build from the manifest
-        '''
-        return demjson.decode(manifest['metrics'])
-
-
-    def get_container(self,container_name):
-        '''get a container or return None.
-        '''
-        return get_template(container_name,"container")
-
-
-    def pull_container(self,manifest,download_folder=None,extract=True,name=None):
-        '''pull a container to the local machine'''
-        return download_image(manifest=manifest,
-                              download_folder=download_folder,
-                              extract=extract,
-                              name=name)
-
-
-
-    def get_collection(self,container_name):
+    def get_collection(self, name):
         '''get a container collection or return None.
         '''
-        return get_template(container_name,"collection")
+        url = prepare_url(name, "collection")
+        return self.get("%s/%s" %(self.base, url))
 
 
     def get_collections(self):
         '''get all container collections
         '''
-        results = paginate_get(url='%s/collections/?format=json' %(api_base))
+        results = self.paginate_get(url='%s/collections/?format=json' %(self.base))
         print("Found %s collections." %(len(results)))
-        # TODO: The shub API needs to have this endpoint expanded
         return results
-
-
-    def get_containers(self,latest=True):
-        '''get all containers'''
-        results = paginate_get(url='%s/containers/?format=json' %(api_base))
-        print("Found %s containers." %(len(results)))
-        containers = dict()
-        if latest == True:
-            for container in results:
-                if container['name'] in containers:
-                    if container['branch'] in containers[container['name']]:
-                        if containers[container['name']][container['branch']]['id'] < container['id']:
-                            containers[container['name']][container['branch']] = container
-                    else:
-                        containers[container['name']][container['branch']] = container
-                else:
-                    containers[container['name']] = {container['branch']: container}
-        return containers
-

@@ -41,6 +41,8 @@ import shutil
 import json
 import os
 
+print("############################################################# test_shub")
+
 class TestClient(unittest.TestCase):
 
 
@@ -56,34 +58,13 @@ class TestClient(unittest.TestCase):
     def test_get_collection(self):
         print('Testing client.get_collection command')
         result = self.cli.get_collection(self.collection)
-        for key in ['add_date', 'container_set', 'id', 'metadata', 
-                    'modify_date', 'repo', 'build_debug', 'build_padding', 
-                    'owner', 'build_size']:
+        for key in ['add_date', 'name', 'enabled', 'modify_date']:
             self.assertTrue(key in result)
-
 
     def test_get_container(self):
         print("Testing client.get_container")
         container = self.cli.get_container(self.collection)
-        for key in ['files', 'version', 'id', 'metrics', 'spec',
-                    'image', 'name', 'branch', 'collection']:
-            self.assertTrue(key in container)
-        metrics = self.cli.load_metrics(container)
-        for key in ['build_time_seconds', 'estimated_os', 'os_sims', 
-                    'singularity_python_version', 'file_counts', 'size', 
-                    'singularity_version', 'file_ext']:
-            self.assertTrue(key in metrics)
-
-
-    def test_pull_container(self):
-        print("Testing client.pull_container")
-        container = self.cli.get_container(self.collection)
-        pulled_container = self.cli.pull_container(manifest=container,
-                                                   download_folder = self.tmpdir)
-        self.assertTrue(os.path.exists(pulled_container))
-        self.assertEqual(os.path.dirname(pulled_container),self.tmpdir)
-
-
+        self.assertTrue(os.path.exists(container))
 
 if __name__ == '__main__':
     unittest.main()

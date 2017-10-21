@@ -1,9 +1,9 @@
-flask
-flask-restful
 pandas
+python-dateutil
+demjson
 requests
+requests-toolbelt
 retrying
-selenium
 simplejson
 scikit-learn
 pygments

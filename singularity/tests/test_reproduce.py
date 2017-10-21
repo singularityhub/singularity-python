@@ -47,31 +47,22 @@ import shutil
 import json
 import os
 
+print("######################################################## test_reproduce")
+
 class TestReproduce(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
         self.cli = Singularity()
         self.tmpdir = tempfile.mkdtemp()
-        self.image1 = "%s/tests/data/busybox-2016-02-16.img" %(self.pwd)
-        self.image2 = "%s/tests/data/cirros-2016-01-04.img" %(self.pwd)
+        self.image1 = "%s/tests/data/busybox-2017-10-21.simg" %(self.pwd)
+        self.image2 = "%s/tests/data/cirros-2017-10-21.simg" %(self.pwd)
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
-    def test_get_memory_tar(self):
-        from singularity.reproduce import get_memory_tar
-        import io
-        import tarfile
-
-        print("Case 1: Testing functionality of get memory tar...")
-        file_obj,tar = get_memory_tar(self.image1)
-        self.assertTrue(isinstance(file_obj,io.BytesIO))
-        self.assertTrue(isinstance(tar,tarfile.TarFile))
-        file_obj.close()                
-
     def test_get_image_hashes(self):
-        from singularity.reproduce import get_image_hashes, get_image_hash
+        from singularity.analysis.reproduce import get_image_hashes, get_image_hash
 
         print("Case 1: No specification of version returns latest")
         hashes = get_image_hashes(self.image1)
@@ -90,7 +81,7 @@ class TestReproduce(unittest.TestCase):
 
 
     def test_assess_differences(self):
-        from singularity.reproduce import assess_differences
+        from singularity.analysis.reproduce import assess_differences
 
         print("Testing function to calculate hash differences between two images")
         diffs = assess_differences(image_file1=self.image1,image_file2=self.image2)
@@ -98,8 +89,8 @@ class TestReproduce(unittest.TestCase):
         self.assertTrue('scores' in diffs)
 
     def test_get_custom_level(self):
-        from singularity.reproduce import get_custom_level
-        print("Testing singularity.reproduce.get_custom_level")
+        from singularity.analysis.reproduce import get_custom_level
+        print("Testing singularity.analysis.reproduce.get_custom_level")
         mylevel = get_custom_level(regexp="*",
                                    description="This is my new level",
                                    skip_files=["/usr/bin","/.singularity.d"],
@@ -110,15 +101,15 @@ class TestReproduce(unittest.TestCase):
         self.assertTrue(isinstance(mylevel['include_files'],set))
 
     def test_get_level(self):
-        from singularity.reproduce import get_level
-        print("Testing singularity.reproduce.get_level")
+        from singularity.analysis.reproduce import get_level
+        print("Testing singularity.analysis.reproduce.get_level")
         level = get_level('REPLICATE')
         for key in ['assess_content','skip_files','regexp','description']:
             self.assertTrue(key in level)
 
     def test_get_levels(self):
-        from singularity.reproduce import get_levels
-        print("Testing singularity.reproduce.get_levels")
+        from singularity.analysis.reproduce import get_levels
+        print("Testing singularity.analysis.reproduce.get_levels")
 
         print("Case 1: Singularity version 2.3 and up")
         levels = get_levels()
@@ -133,23 +124,23 @@ class TestReproduce(unittest.TestCase):
 
 
     def test_get_content_hashes(self):
-        from singularity.reproduce import get_content_hashes
-        print("Testing singularity.reproduce.get_content_hashes")
+        from singularity.analysis.reproduce import get_content_hashes
+        print("Testing singularity.analysis.reproduce.get_content_hashes")
         hashes = get_content_hashes(self.image1)
         for key in ['hashes','sizes','root_owned']:
             self.assertTrue(key in hashes)
-        self.assertEqual(len(hashes['hashes']),372)
+        self.assertEqual(len(hashes['hashes']),395)
 
 
     def test_extract_guts(self):
-        from singularity.reproduce import (
-            extract_guts, 
-            get_memory_tar,
+        from singularity.analysis.reproduce.utils import extract_guts
+        from singularity.analysis.reproduce import (
+            get_image_tar,
             get_levels )
 
-        print("Testing singularity.reproduce.extract_guts")
+        print("Testing singularity.analysis.reproduce.extract_guts")
         levels = get_levels()
-        file_obj,tar = get_memory_tar(self.image1)
+        file_obj,tar = get_image_tar(self.image1)
         guts = extract_guts(image_path=self.image1,
                             tar=tar,
                             file_filter=levels['REPLICATE'])
@@ -157,10 +148,10 @@ class TestReproduce(unittest.TestCase):
             self.assertTrue(key in guts)
 
     def test_get_image_file_hash(self):
-        from singularity.reproduce import get_image_file_hash
-        print("Testing singularity.reproduce.get_image_file_hash")
+        from singularity.analysis.reproduce import get_image_file_hash
+        print("Testing singularity.analysis.reproduce.get_image_file_hash")
         hashy = get_image_file_hash(self.image1)
-        self.assertEqual('9d2edcd19328d09f51c86192990050c5',hashy)
+        self.assertEqual('843929a1c92d53656fa744c6b831f59b',hashy)
 
 
 if __name__ == '__main__':

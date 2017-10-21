@@ -1,9 +1,9 @@
 # A quick example of making a package tree with data derived from calculate_similarity.py
 # Set environment variable MESSAGELEVEL to CRITICAL to disable debug output
 
-from singularity.views.trees import make_package_tree
+from singularity.views import make_package_tree
 from singularity.analysis.compare import compare_packages
-from singularity.analysis.utils import get_packages
+from singularity.package import get_packages
 import pickle
 
 # Compare your own data

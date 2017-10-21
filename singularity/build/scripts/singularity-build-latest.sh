@@ -1,25 +1,25 @@
 #!/bin/bash
-# This install script assumes using an image with Singularity software installed
-sudo apt-get update > /tmp/.install-log
-sudo apt-get -y install git \
-                   build-essential \
-                   libtool \
-                   autotools-dev \
-                   debootstrap \
-                   automake \
-                   autoconf \
-                   python3-pip >> /tmp/.install-log
 
-# Pip3 installs
-sudo pip3 install --upgrade pip &&
-sudo pip3 install --upgrade google-api-python-client &&
-sudo pip3 install --upgrade google &&
-sudo pip3 install singularity --upgrade &&
-sudo pip3 install oauth2client==3.0.0
+################################################################################
+# Build Latest, only runs build without updating software
+# For Google cloud, Stackdriver/logging should have Write, 
+#                   Google Storage should have Full
+#                   All other APIs None,
+#
+################################################################################
 
-# Main running script
-python3 -c "from singularity.build.google import run_build; run_build()" > /tmp/.shub-log 2>&1
+echo "Start Time: $(date)." > /tmp/.shub-log 2>&1
+timeout -s KILL 2h sudo python3 -c "from singularity.build.google import run_build; run_build()" >> /tmp/.shub-log 2>&1
+ret=$?
+
+echo "Return value of ${ret}." >> /tmp/.shub-log 2>&1
+
+if [ $ret -eq 137 ]
+then
+    echo "Killed: $(date)." >> /tmp/.shub-log 2>&1
+else
+    echo "End Time: $(date)." >> /tmp/.shub-log 2>&1
+fi
 
 # Finish by sending log
-export command=$(echo "from singularity.build.google import finish_build; finish_build()") &&
-python3 -c "$command"
+sudo python3 -c "from singularity.build.google import finish_build; finish_build()"

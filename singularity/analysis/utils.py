@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 analysis/utils.py: part of singularity package
 utilities for working with analysis / data
@@ -35,7 +33,7 @@ import requests
 
 import shutil
 import simplejson
-from singularity.logman import bot
+from singularity.logger import bot
 from singularity.utils import get_installdir
 import sys
 
@@ -45,40 +43,46 @@ import zipfile
 
 install_dir = get_installdir()
 
-######################################################################################
-# Package Data
-######################################################################################
 
-
-def get_packages(family=None):
-    '''get packages will return a list of packages (under some family)
-    provided by singularity python.If no name is specified, the default (os) will
-    be used.
-    :param name: the name of the package family to load
+def remove_unicode_dict(input_dict):
+    '''remove unicode keys and values from dict, encoding in utf8
     '''
-    package_base = "%s/analysis/packages" %(install_dir)
-    package_folders = glob("%s/*" %(package_base))
-    package_families = [os.path.basename(x) for x in package_folders]
-    if family == None:
-        family = "docker-os"
-    family = family.lower()
-    if family in package_families:
-        package_folder = "%s/%s" %(package_base,family)
-        packages = glob("%s/*.zip" %(package_folder))
-        bot.logger.info("Found %s packages in family %s",len(packages),family)
-        return packages
-
-    bot.logger.warning("Family %s not included. Options are %s",family,", ".join(package_families))
-    return None
+    if isinstance(input_dict, collections.Mapping):
+        return dict(map(remove_unicode_dict, input_dict.iteritems()))
+    elif isinstance(input_dict, collections.Iterable):
+        return type(input_dict)(map(remove_unicode_dict, input_dict))
+    else:
+        return input_dict
 
 
-def list_package_families():
-    '''return a list of package families (folders) provided by singularity python
+def update_dict(input_dict,key,value):
+    '''update_dict will update lists in a dictionary. If the key is not included,
+    if will add as new list. If it is, it will append.
+    :param input_dict: the dict to update
+    :param value: the value to update with
     '''
-    package_base = "%s/analysis/packages" %(install_dir)
-    return glob("%s/*" %(package_base))
+    if key in input_dict:
+        input_dict[key].append(value)
+    else:
+        input_dict[key] = [value]
+    return input_dict
 
 
-def get_package_base():
-    '''returns base folder of packages'''
-    return "%s/analysis/packages" %(install_dir)
+def update_dict_sum(input_dict,key,increment=None,initial_value=None):
+    '''update_dict sum will increment a dictionary key 
+    by an increment, and add a value of 0 if it doesn't exist
+    :param input_dict: the dict to update
+    :param increment: the value to increment by. Default is 1
+    :param initial_value: value to start with. Default is 0
+    '''
+    if increment == None:
+        increment = 1
+
+    if initial_value == None:
+        initial_value = 0
+
+    if key in input_dict:
+        input_dict[key] += increment
+    else:
+        input_dict[key] = initial_value + increment
+    return input_dict

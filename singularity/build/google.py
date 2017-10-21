@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 build/google.py: build functions for singularity hub google compute engine
 
@@ -45,6 +43,7 @@ import httplib2
 import inspect
 import imp
 import json
+import uuid
 
 from oauth2client import client
 from oauth2client.service_account import ServiceAccountCredentials
@@ -63,7 +62,7 @@ import zipfile
 shub_api = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
-from singularity.logman import bot
+from singularity.logger import bot
 
 ##########################################################################################
 # GOOGLE GENERAL API #####################################################################
@@ -126,18 +125,19 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
         upload_path = "%s/" %(upload_path)
     upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
     body = {'name': upload_path }
-
     # Create media object with correct mimetype
-    mimetype = sniff_extension(file_name,verbose=verbose)
-    media = http.MediaFileUpload(file_name,
-                                 mimetype=mimetype,
-                                 resumable=True)
-    request = storage_service.objects().insert(bucket=bucket['id'], 
-                                               body=body,
-                                               predefinedAcl="publicRead",
-                                               media_body=media)
-    return request.execute()
-
+    if os.path.exists(file_name):
+        mimetype = sniff_extension(file_name,verbose=verbose)
+        media = http.MediaFileUpload(file_name,
+                                     mimetype=mimetype,
+                                     resumable=True)
+        request = storage_service.objects().insert(bucket=bucket['id'], 
+                                                   body=body,
+                                                   predefinedAcl="publicRead",
+                                                   media_body=media)
+        result = request.execute()
+        return result
+    bot.warning('%s requested for upload does not exist, skipping' %file_name)
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def list_bucket(bucket,storage_service):
@@ -152,22 +152,20 @@ def list_bucket(bucket,storage_service):
     return objects
 
 
-def get_image_path(repo_url,commit):
+def get_image_path(repo_url, trailing_path):
     '''get_image_path will determine an image path based on a repo url, removing
     any token, and taking into account urls that end with .git.
     :param repo_url: the repo url to parse:
-    :param commit: the commit to use
+    :param trailing_path: the trailing path (commit then hash is common)
     '''
     repo_url = repo_url.split('@')[-1].strip()
     if repo_url.endswith('.git'):
         repo_url =  repo_url[:-4]
-    return "%s/%s" %(re.sub('^http.+//www[.]','',repo_url),commit)
+    return "%s/%s" %(re.sub('^http.+//www[.]','',repo_url), trailing_path)
 
 
 
-def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,bucket_name=None,
-              repo_id=None,commit=None,verbose=True,response_url=None,secret=None,branch=None,
-              padding=None,logfile=None,logging_url=None):
+def run_build(logfile=None):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
@@ -178,7 +176,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     :param repo_url: the url to download the repo from
     :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
     :param commit: the commit to checkout. If none provided, will use most recent.
-    :param size: the size of the image to build. If none set, builds folder size + 200MB padding
     :param bucket_name: the name of the bucket to send files to
     :param verbose: print out extra details as we go (default True)    
     :param token: a token to send back to the server to authenticate the collection
@@ -186,7 +183,6 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     :param response_url: the build url to send the response back to. Should also come
     from metadata. If not specified, no response is sent
     :param branch: the branch to checkout for the build.
-    :param padding: size (in MB) to add to image for padding. If not defined, 200
 
     :: note: this function is currently configured to work with Google Compute
     Engine metadata api, and should (will) be customized if needed to work elsewhere 
@@ -203,31 +199,27 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
     enable_debug = get_build_metadata(key='debug')
     if enable_debug == None:
         debug = False
-    bot.logger.info('DEBUG %s', debug)
+    bot.info('DEBUG %s' %debug)
 
-    # If no build directory is specified, make a temporary one
-    if build_dir == None:
-        build_dir = tempfile.mkdtemp()
-        bot.logger.warning('Build directory not set, using %s',build_dir)
-    else:
-        bot.logger.info('Build directory set to %s', build_dir)
+    # Uaw /tmp for build directory
+    build_dir = tempfile.mkdtemp()
 
     # Get variables from the instance metadata API
-    metadata = [{'key': 'repo_url', 'value': repo_url },
-                {'key': 'repo_id', 'value': repo_id },
-                {'key': 'response_url', 'value': response_url},
-                {'key': 'bucket_name', 'value': bucket_name },
-                {'key': 'token', 'value': token },
-                {'key': 'commit', 'value': commit },
-                {'key': 'secret', 'value': secret},
-                {'key': 'size', 'value': size },
-                {'key': 'branch', 'value': branch },
-                {'key': 'spec_file', 'value': spec_file},
-                {'key': 'padding', 'value': padding },
-                {'key': 'logging_url', 'value': logging_url },
+    metadata = [{'key': 'repo_url', 'value': None },
+                {'key': 'repo_id', 'value': None },
+                {'key': 'response_url', 'value': None },
+                {'key': 'bucket_name', 'value': None },
+                {'key': 'tag', 'value': None },
+                {'key': 'container_id', 'value': None },
+                {'key': 'commit', 'value': None },
+                {'key': 'token', 'value': None},
+                {'key': 'branch', 'value': None },
+                {'key': 'spec_file', 'value': None},
+                {'key': 'logging_url', 'value': None },
                 {'key': 'logfile', 'value': logfile }]
 
     # Obtain values from build
+    bot.log("BUILD PARAMETERS:")
     params = get_build_params(metadata)
     params['debug'] = debug
     
@@ -236,34 +228,37 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         params['spec_file'] = "Singularity"
         
     if params['bucket_name'] == None:
-        params['bucket_name'] = "singularity-hub-regional"
+        params['bucket_name'] = "singularityhub"
 
-    if params['padding'] == None:
-        params['padding'] = 200
+    if params['tag'] == None:
+        params['tag'] = "latest"
 
     output = run_build_main(build_dir=build_dir,
                             params=params)
 
     # Output includes:
     image_package = output['image_package']
-    compressed_image = output['image']
+    finished_image = output['image']
     metadata = output['metadata']  
     params = output['params']  
 
     # Upload image package files to Google Storage
     if os.path.exists(image_package):
-        bot.logger.info("Package %s successfully built",image_package)
-        dest_dir = "%s/build" %(build_dir)
-        os.mkdir(dest_dir)
+        bot.info("Package %s successfully built" %image_package)
+        dest_dir = tempfile.mkdtemp(prefix='build')
         with zipfile.ZipFile(image_package) as zf:
             zf.extractall(dest_dir)
 
         # The path to the images on google drive will be the github url/commit folder
-        image_path = get_image_path(params['repo_url'],params['commit'])
+        trailing_path = "%s/%s" %(params['commit'], params['version'])
+        image_path = get_image_path(params['repo_url'], trailing_path) 
+                                                         # commits are no longer unique
+                                                         # storage is by commit
 
         build_files = glob("%s/*" %(dest_dir))
-        build_files.append(compressed_image)
-        bot.logger.info("Sending build files %s to storage",'\n'.join(build_files))
+        build_files.append(finished_image)
+        bot.info("Sending build files to storage:") 
+        bot.info('\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
         storage_service = get_google_service() # default is "storage" "v1"
@@ -272,41 +267,34 @@ def run_build(build_dir=None,spec_file=None,repo_url=None,token=None,size=None,b
         # For each file, upload to storage
         files = []
         for build_file in build_files:
+            bot.info("Uploading %s to storage..." %build_file)
             storage_file = upload_file(storage_service,
                                        bucket=bucket,
                                        bucket_path=image_path,
                                        file_name=build_file)  
             files.append(storage_file)
-
-        # Upload the package as well
-        package_file = upload_file(storage_service,
-                                   bucket=bucket,
-                                   bucket_path=image_path,
-                                   file_name=image_package)
-        files.append(package_file)
                 
         # Finally, package everything to send back to shub
         response = {"files": json.dumps(files),
                     "repo_url": params['repo_url'],
                     "commit": params['commit'],
                     "repo_id": params['repo_id'],
-                    "secret": params['secret'],
+                    "branch": params['branch'],
+                    "tag": params['tag'],
+                    "container_id": params['container_id'],
+                    "spec_file":params['spec_file'],
+                    "token": params['token'],
                     "metadata": json.dumps(metadata)}
 
         # Did the user specify a specific log file?
-        logfile = get_build_metadata(key='logfile')
+        logfile = get_build_metadata('logfile')
         if logfile is not None:
             response['logfile'] = logfile
-
-        if params['branch'] is not None:
-            response['branch'] = params['branch']
-
-        if params['token'] is not None:
-            response['token'] = params['token']
 
         # Send final build data to instance
         send_build_data(build_dir=build_dir,
                         response_url=params['response_url'],
+                        secret=params['token'],
                         data=response)
 
         # Dump final params, for logger to retrieve
@@ -334,13 +322,19 @@ def finish_build(verbose=True):
     # Start the storage service, retrieve the bucket
     storage_service = get_google_service()
     bucket = get_bucket(storage_service,params['bucket_name'])
-    image_path = get_image_path(params['repo_url'],params['commit'])
-    
+
+    # If version isn't in params, build failed
+    version = 'error-%s' % str(uuid.uuid4())
+    if 'version' in params:
+        version = params['version']
+    trailing_path = "%s/%s" %(params['commit'], version)
+    image_path = get_image_path(params['repo_url'], trailing_path) 
+
     # Upload the log file
     params['log_file'] = upload_file(storage_service,
-                         bucket=bucket,
-                         bucket_path=image_path,
-                         file_name=params['logfile'])
+                                     bucket=bucket,
+                                     bucket_path=image_path,
+                                     file_name=params['logfile'])
                 
     # Close up shop
     send_build_close(params=params,
@@ -359,12 +353,8 @@ def get_build_metadata(key):
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
     response = requests.get(url=url,headers=headers)
-    # Successful query returns the result
     if response.status_code == 200:
         return response.text
-    else:
-        bot.logger.debug("Metadata %s not present, returned response %s", key,
-                                                                          response.status_code)
     return None
 
 
@@ -385,6 +375,6 @@ def get_build_params(metadata):
             response = get_build_metadata(key=item['key'])
             item['value'] = response
         params[item['key']] = item['value']
-        if item['key'] != 'credential':
-            bot.logger.info('%s is set to %s',item['key'],item['value'])        
+        if item['key'] not in ['token', 'secret', 'credential']:
+            bot.info('%s is set to %s' %(item['key'],item['value']))        
     return params

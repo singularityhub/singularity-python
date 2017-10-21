@@ -11,36 +11,46 @@ S = Singularity()
 S.help()
 
 # These are the defaults, which can be specified
-S = Singularity(sudo=False,sudopw=None,debug=False)
+S = Singularity(sudo=False,debug=False)
 
-# Create an image
-image = S.create('myimage.img')
+# Note that the "create" and "import" workflow is deprecated in favor of build
+# https://singularityware.github.io/docs-build
 
-# Import into it
+image = S.build('myimage.simg', 'docker://ubuntu:latest') # requires sudo
+
+# (Deprecated) create an image and import into it
+image = S.create('myimage.simg')
 S.importcmd(image,'docker://ubuntu:latest')
 
 # Execute command to container
 result = S.execute(image,command='cat /singularity')
 print(result)
 '''
-#!/bin/sh
-
-if test -x /bin/bash; then
-    exec /bin/bash "$@"
-elif test -x /bin/sh; then
-    exec /bin/sh "$@"
-else
-    echo "ERROR: No valid shell within container"
-    exit 255
-fi
+'#!/bin/sh\n\nexec "/bin/bash"\n'
 '''
 
 # For any function you can get the docs:
 S.help(command="exec")
 
-# export an image as a byte array
-byte_array = S.export(image)
+# export an image to tar
+tar = S.export(image)
 
-# Get an in memory tar
-from singularity.reproduce import get_memory_tar
-tar = get_memory_tar(image)
+# Show apps and inspect
+S.apps(image)
+S.inspect(image)
+
+'''
+{
+    "data": {
+        "attributes": {
+            "deffile": null,
+            "help": null,
+            "labels": null,
+            "environment": "# Custom environment shell code should follow\n\n",
+            "runscript": "#!/bin/sh\n\nexec \"/bin/bash\"\n",
+            "test": null
+        },
+        "type": "container"
+    }
+}
+'''

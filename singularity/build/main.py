@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 build/main.py: main runner for Singularity Hub builds
 
@@ -31,14 +29,15 @@ from singularity.version import (
     __version__ as singularity_python_version
 )
 
+from singularity.cli import Singularity
+
 from singularity.package import (
     build_from_spec, 
     estimate_image_size,
     package
 )
 
-from singularity.build.converter import dockerfile_to_singularity
-
+from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
     get_singularity_version,
     stop_if_result_none,
@@ -46,9 +45,9 @@ from singularity.build.utils import (
 )
 
 
+from singularity.analysis.reproduce import get_image_file_hash
 from singularity.utils import download_repo
 from singularity.analysis.classify import (
-    get_tags,
     get_diff,
     estimate_os,
     file_counts,
@@ -63,7 +62,9 @@ import os
 import pickle
 import re
 import requests
+from urllib.parse import urlencode
 
+from singularity.registry.auth import generate_header_signature
 from retrying import retry
 # https://cloud.google.com/storage/docs/exponential-backoff
 
@@ -74,9 +75,9 @@ import time
 
 shub_api = "http://www.singularity-hub.org/api"
 
-from singularity.logman import bot
+from singularity.logger import bot
 
-def run_build(build_dir,params,verbose=True):
+def run_build(build_dir,params,verbose=True, compress_image=False):
     '''run_build takes a build directory and params dictionary, and does the following:
       - downloads repo to a temporary directory
       - changes branch or commit, if needed
@@ -97,82 +98,50 @@ def run_build(build_dir,params,verbose=True):
 
     os.chdir(build_dir)
     if params['branch'] != None:
-        bot.logger.info('Checking out branch %s',params['branch'])
+        bot.info('Checking out branch %s' %params['branch'])
         os.system('git checkout %s' %(params['branch']))
+    else:
+        params['branch'] = "master"
 
     # Commit
     if params['commit'] not in [None,'']:
-        bot.logger.info('Checking out commit %s',params['commit'])
+        bot.info('Checking out commit %s' %params['commit'])
         os.system('git checkout %s .' %(params['commit']))
 
     # From here on out commit is used as a unique id, if we don't have one, we use current
     else:
         params['commit'] = os.popen('git log -n 1 --pretty=format:"%H"').read()
-        bot.logger.warning("commit not specified, setting to current %s", params['commit'])
+        bot.warning("commit not specified, setting to current %s" %params['commit'])
 
     # Dump some params for the builder, in case it fails after this
     passing_params = "/tmp/params.pkl"
     pickle.dump(params,open(passing_params,'wb'))
 
-    # If there is not a specfile, but is a Dockerfile, try building that
-    if not os.path.exists(params['spec_file']) and os.path.exists('Dockerfile'):
-        bot.logger.warning("Build file %s not found in repository",params['spec_file'])
-        bot.logger.warning("Dockerfile found in repository, will attempt build.")
-        dockerfile = dockerfile_to_singularity(dockerfile_path='Dockerfile', 
-                                               output_dir=build_dir)
-
-        if dockerfile is not None:
-            bot.logger.info("""\n
-                                --------------------------------------------------------------
-                                Dockerfile
-                                --------------------------------------------------------------
-                                \n%s""" %(dockerfile))        
-
     # Now look for spec file
     if os.path.exists(params['spec_file']):
-        bot.logger.info("Found spec file %s in repository",params['spec_file'])
-
-        # If size is None, set default of 800
-        if params['size'] in [None,'']:
-            bot.logger.info("""\n
-                            --------------------------------------------------------------
-                            Size not detected for build. Will first try to estimate, and then
-                            use default of 800MB padding. If your build still fails, you should 
-                            try setting the size manually under collection --> edit builder
-                            ---------------------------------------------------------------------
-                            \n""")
-
-            # Testing estimation of size
-            try:
-                params['size'] = estimate_image_size(spec_file=os.path.abspath(params['spec_file']),
-                                                     sudopw='',
-                                                     padding=params['padding'])
-                bot.logger.info("Size estimated as %s",params['size'])  
-            except:
-                params['size'] = 800
-                bot.logger.info("Size estimation didn't work, using default %s",params['size'])  
+        bot.info("Found spec file %s in repository" %params['spec_file'])
 
         # START TIMING
-        os.chdir(build_dir)
         start_time = datetime.now()
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
-                                size=params['size'],
-                                sudopw='', # with root should not need sudo
                                 build_dir=build_dir,
+                                isolated=True,
+                                sandbox=False,
                                 debug=params['debug'])
 
+        # Save has for metadata (also is image name)
+        version = get_image_file_hash(image)
+        params['version'] = version
+        pickle.dump(params,open(passing_params,'wb'))
+
         final_time = (datetime.now() - start_time).seconds
-        bot.logger.info("Final time of build %s seconds.",final_time)  
+        bot.info("Final time of build %s seconds." %final_time)  
 
         # Did the container build successfully?
         test_result = test_container(image)
-        if test_result['return_code'] == 255:
-            bot.logger.error("Image failed to bootstrap, cancelling build.")
+        if test_result['return_code'] != 0:
+            bot.error("Image failed to build, cancelling.")
             sys.exit(1)
-
-        # Compress image
-        compressed_image = "%s.img.gz" %image
-        os.system('gzip -c -9 %s > %s' %(image,compressed_image))
 
         # Get singularity version
         singularity_version = get_singularity_version()
@@ -181,42 +150,50 @@ def run_build(build_dir,params,verbose=True):
         image_package = package(image_path=image,
                                 spec_path=params['spec_file'],
                                 output_folder=build_dir,
-                                sudopw='',
                                 remove_image=True,
-                                verbose=True,
-                                old_version=True)
+                                verbose=True)
 
         # Derive software tags by subtracting similar OS
         diff = get_diff(image_package=image_package)
 
-        # Get tags for services, executables
-        interesting_folders = ['init','init.d','bin','systemd']
-        tags = get_tags(search_folders=interesting_folders,
-                        diff=diff)
+        # Inspect to get labels and other metadata
+        cli = Singularity(debug=params['debug'])
+        inspect = cli.inspect(image_path=image)
+
+        # Get information on apps
+        app_names = cli.apps(image_path=image)
+        apps = extract_apps(image_path=image, app_names=app_names)
 
         # Count file types, and extensions
         counts = dict()
         counts['readme'] = file_counts(diff=diff)
         counts['copyright'] = file_counts(diff=diff,patterns=['copyright'])
         counts['authors-thanks-credit'] = file_counts(diff=diff,
-                                                      patterns=['authors','thanks','credit'])
+                                                      patterns=['authors','thanks','credit','contributors'])
         counts['todo'] = file_counts(diff=diff,patterns=['todo'])
         extensions = extension_counts(diff=diff)
 
         os_sims = estimate_os(image_package=image_package,return_top=False)
         most_similar = os_sims['SCORE'].idxmax()
 
-        metrics = {'size': params['size'],
-                   'build_time_seconds':final_time,
+        metrics = {'build_time_seconds':final_time,
                    'singularity_version':singularity_version,
                    'singularity_python_version':singularity_python_version, 
                    'estimated_os': most_similar,
                    'os_sims':os_sims['SCORE'].to_dict(),
-                   'tags':tags,
                    'file_counts':counts,
-                   'file_ext':extensions }
-      
-        output = {'image':compressed_image,
+                   'file_ext':extensions,
+                   'inspect':inspect,
+                   'version': version,
+                   'apps': apps}
+  
+        # Compress Image
+        if compress_image is True:
+            compressed_image = "%s.gz" %image
+            os.system('gzip -c -9 %s > %s' %(image,compressed_image))
+            image = compressed_image
+
+        output = {'image':image,
                   'image_package':image_package,
                   'metadata':metrics,
                   'params':params }
@@ -226,24 +203,38 @@ def run_build(build_dir,params,verbose=True):
     else:
         # Tell the user what is actually there
         present_files = glob("*")
-        bot.logger.error("Build file %s not found in repository",params['spec_file'])
-        bot.logger.info("Found files are %s","\n".join(present_files))
+        bot.error("Build file %s not found in repository" %params['spec_file'])
+        bot.info("Found files are %s" %"\n".join(present_files))
         # Params have been exported, will be found by log
         sys.exit(1)
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def send_build_data(build_dir,data,response_url=None,clean_up=True):
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=5)
+def send_build_data(build_dir, data, secret, 
+                    response_url=None,clean_up=True):
     '''finish build sends the build and data (response) to a response url
     :param build_dir: the directory of the build
     :response_url: where to send the response. If None, won't send
     :param data: the data object to send as a post
     :param clean_up: If true (default) removes build directory
     '''
-    if response_url != None:
-        finish = requests.post(response_url,data=data)    
+    # Send with Authentication header
+    body = '%s|%s|%s|%s|%s' %(data['container_id'],
+                              data['commit'],
+                              data['branch'],
+                              data['token'],
+                              data['tag']) 
+
+    signature = generate_header_signature(secret=secret,
+                                          payload=body,
+                                          request_type="push")
+
+    headers = {'Authorization': signature }
+
+    if response_url is not None:
+        finish = requests.post(response_url,data=data, headers=headers)
     else:
-        bot.logger.warning("response_url set to None, skipping sending of build.")
+        bot.warning("response_url set to None, skipping sending of build.")
 
     if clean_up == True:
         shutil.rmtree(build_dir)
@@ -254,29 +245,30 @@ def send_build_data(build_dir,data,response_url=None,clean_up=True):
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,retry_on_result=stop_if_result_none)
-def send_build_close(params,response_url=None):
+def send_build_close(params,response_url):
     '''send build close sends a final response (post) to the server to bring down
     the instance. The following must be included in params:
 
     repo_url, logfile, repo_id, secret, log_file, token
-
-    if response_url is None, this is skipped entirely.
     '''
+    # Finally, package everything to send back to shub
+    response = {"log": json.dumps(params['log_file']),
+                "repo_url": params['repo_url'],
+                "logfile": params['logfile'],
+                "repo_id": params['repo_id'],
+                "container_id": params['container_id']}
 
-    if response_url != None:
+    body = '%s|%s|%s|%s|%s' %(params['container_id'],
+                              params['commit'],
+                              params['branch'],
+                              params['token'],
+                              params['tag']) 
 
-        # Finally, package everything to send back to shub
-        response = {"log": json.dumps(params['log_file']),
-                    "repo_url": params['repo_url'],
-                    "logfile": params['logfile'],
-                    "repo_id": params['repo_id'],
-                    "secret": params['secret']}
+    signature = generate_header_signature(secret=params['token'],
+                                          payload=body,
+                                          request_type="finish")
 
-        if params['token'] != None:
-            response['token'] = params['token']
+    headers = {'Authorization': signature }
 
-        # Send it back!
-        return requests.post(response_url,data=response)
-    
-    bot.logger.warning("Response url set to none, cannot send build close.")
-    return None
+    # Send it back!
+    return requests.post(response_url,data=response, headers=headers)

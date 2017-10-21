@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 '''
 compare.py: part of singularity package
 functions to compare packages and images
@@ -28,27 +26,24 @@ SOFTWARE.
 
 '''
 
-from glob import glob
-import json
 import os
 import re
-import requests
-from singularity.logman import bot
+from singularity.logger import bot
 from singularity.utils import get_installdir
-from singularity.analysis.utils import get_packages
-from singularity.views.utils import get_container_contents
-from singularity.reproduce import get_memory_tar
-
 from singularity.package import (
+    get_packages,
+    get_container_contents,
     load_package,
     package as make_package
 )
+from singularity.analysis.reproduce import (
+    get_image_tar,
+    delete_image_tar
+)
+
+from .metrics import information_coefficient
 
 import pandas
-import shutil
-import sys
-import tempfile
-import zipfile
 
 
 ###################################################################################
@@ -83,7 +78,7 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     comparisons = dict()
 
     for b in by:
-        bot.logger.debug("Starting comparisons for %s",b)
+        bot.debug("Starting comparisons for %s" %b)
         df = pandas.DataFrame(columns=packages_set)
         for package2 in packages_set:
             sim = calculate_similarity(container1=container1,
@@ -91,7 +86,7 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
                                        by=b)[b]
            
             name1 = os.path.basename(package2).replace('.img.zip','')
-            bot.logger.debug("container vs. %s: %s" %(name1,sim))
+            bot.debug("container vs. %s: %s" %(name1,sim))
             df.loc["container",package2] = sim
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]
         comparisons[b] = df
@@ -118,7 +113,8 @@ def compare_singularity_images(image_paths1,image_paths2=None):
 
     comparisons_done = []
     for image1 in image_paths1:
-        fileobj1,tar1 = get_memory_tar(image1)
+        fileobj1,tar1 = get_image_tar(image1)
+
         members1 = [x.name for x in tar1]
         for image2 in image_paths2:
             comparison_id = [image1,image2]
@@ -128,16 +124,17 @@ def compare_singularity_images(image_paths1,image_paths2=None):
                 if image1 == image2:
                     sim = 1.0
                 else:
-                    fileobj2,tar2 = get_memory_tar(image2)
+                    fileobj2,tar2 = get_image_tar(image2)
                     members2 = [x.name for x in tar2]
                     c = compare_lists(members1,members2)
                     sim = information_coefficient(c['total1'],c['total2'],c['intersect'])
-                    fileobj2.close()
+                    delete_image_tar(fileobj2)
+                        
                 dfs.loc[image1,image2] = sim
                 if repeat:
                     dfs.loc[image2,image1] = sim
                 comparisons_done.append(comparison_id)
-        fileobj1.close()
+        delete_image_tar(fileobj1)
     return dfs
 
 
@@ -171,7 +168,8 @@ def compare_containers(container1=None,container2=None,by=None,
     # Do the comparison for each metric
     comparisons = dict()
     for b in by:
-        comparisons[b] = compare_lists(container1_guts[b],container2_guts[b])
+        if b in container1_guts and b in container2_guts:
+            comparisons[b] = compare_lists(container1_guts[b],container2_guts[b])
 
     return comparisons
 
@@ -263,7 +261,7 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
     comparisons = dict()
 
     for b in by:
-        bot.logger.debug("Starting comparisons for %s",b)
+        bot.debug("Starting comparisons for %s" %b)
         df = pandas.DataFrame(index=packages_set1,columns=packages_set2)
         for package1 in packages_set1:
             for package2 in packages_set2:
@@ -276,40 +274,10 @@ def compare_packages(packages_set1=None,packages_set2=None,by=None):
 
                 name1 = os.path.basename(package1).replace('.img.zip','')
                 name2 = os.path.basename(package2).replace('.img.zip','')
-                bot.logger.debug("%s vs. %s: %s" %(name1,name2,sim))
+                bot.debug("%s vs. %s: %s" %(name1,name2,sim))
                 df.loc[package1,package2] = sim
         df.index = [os.path.basename(x).replace('.img.zip','') for x in df.index.tolist()]
         df.columns = [os.path.basename(x).replace('.img.zip','') for x in df.columns.tolist()]
         comparisons[b] = df
     return comparisons
-
-
-###################################################################################
-# METRICS #########################################################################
-###################################################################################
-
-
-def information_coefficient(total1,total2,intersect):
-    '''a simple jacaard (information coefficient) to compare two lists of overlaps/diffs
-    '''
-    total = total1 + total2
-    return 2.0*len(intersect) / total
-
-
-
-def RSA(m1,m2):
-    '''RSA analysis will compare the similarity of two matrices
-    '''
-    from scipy.stats import pearsonr
-    import scipy.linalg
-    import numpy
-
-    # This will take the diagonal of each matrix (and the other half is changed to nan) and flatten to vector
-    vectorm1 = m1.mask(numpy.triu(numpy.ones(m1.shape)).astype(numpy.bool)).values.flatten()
-    vectorm2 = m2.mask(numpy.triu(numpy.ones(m2.shape)).astype(numpy.bool)).values.flatten()
-    # Now remove the nans
-    m1defined = numpy.argwhere(~numpy.isnan(numpy.array(vectorm1,dtype=float)))
-    m2defined = numpy.argwhere(~numpy.isnan(numpy.array(vectorm2,dtype=float)))
-    idx = numpy.intersect1d(m1defined,m2defined)
-    return pearsonr(vectorm1[idx],vectorm2[idx])[0]
 

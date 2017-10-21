@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 
 '''
 classify.py: part of singularity package
@@ -28,52 +27,42 @@ SOFTWARE.
 
 '''
 
-from glob import glob
-import json
+
 import os
 import re
-import requests
-from singularity.cli import Singularity
-from singularity.logman import bot
+from singularity.logger import bot
 from singularity.analysis.compare import (
     compare_packages,
     compare_containers,
     container_similarity_vector
 )
 
-from singularity.analysis.utils import get_package_base
-from singularity.package import package as make_package
+from singularity.package import (
+    get_container_contents,
+    package as make_package,
+    get_package_base
+)
 from singularity.utils import (
     get_installdir,
     remove_uri,
-    read_file,
+    read_file
+)
+
+from singularity.analysis.utils import (
     update_dict,
     update_dict_sum
 )
 
-from singularity.views.utils import get_container_contents
-
-from singularity.package import (
-    load_package,
-    package
-)
-
-import numpy
-import pandas
-import shutil
 import sys
-import tempfile
-import zipfile
 
 
 
-def get_diff(container=None,image_package=None,sudopw=None):
+def get_diff(container=None,image_package=None):
     '''get diff will return a dictionary of folder paths and files that
     are in an image or package vs. all standard operating systems. The
     algorithm is explained below. 
     :param container: if provided, will use container as image. Can also provide
     :param image_package: if provided, can be used instead of container
-    :param sudopw: needed if a package isn't provided (will prompt user)
 
     ::notes
   
@@ -85,7 +74,7 @@ def get_diff(container=None,image_package=None,sudopw=None):
     '''
     
     # Find the most similar os
-    most_similar = estimate_os(image_package=image_package,container=container,sudopw=sudopw)    
+    most_similar = estimate_os(image_package=image_package,container=container) 
     similar_package = "%s/docker-os/%s.img.zip" %(get_package_base(),most_similar)
 
     comparison = compare_containers(image_package1=image_package,
@@ -117,7 +106,7 @@ def get_diff(container=None,image_package=None,sudopw=None):
 ###################################################################################
 
 
-def estimate_os(container=None,image_package=None,sudopw=None,return_top=True):
+def estimate_os(container=None,image_package=None,return_top=True):
     '''estimate os will compare a package to singularity python's database of
     operating system images, and return the docker image most similar
     :param return_top: return only the most similar (estimated os) default True
@@ -130,7 +119,7 @@ def estimate_os(container=None,image_package=None,sudopw=None,return_top=True):
 
         # Visualization deployed local or elsewhere
         if SINGULARITY_HUB == "False":
-            image_package = make_package(container,remove_image=True,sudopw=sudopw)
+            image_package = make_package(container,remove_image=True)
             comparison = compare_packages(packages_set1=[image_package])['files.txt'].transpose()
         else:
             comparison = container_similarity_vector(container1=container)['files.txt'].transpose()
@@ -152,7 +141,7 @@ def estimate_os(container=None,image_package=None,sudopw=None,return_top=True):
 ###################################################################################
 
 
-def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,diff=None,
+def get_tags(container=None,image_package=None,search_folders=None,diff=None,
              return_unique=True):
     '''get tags will return a list of tags that describe the software in an image,
     meaning inside of a paricular folder. If search_folder is not defined, uses lib
@@ -174,8 +163,7 @@ def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,d
     '''
     if diff == None:
         diff = get_diff(container=container,
-                        image_package=image_package,
-                        sudopw=sudopw)
+                        image_package=image_package)
 
     if search_folders == None:
         search_folders = 'bin'
@@ -186,13 +174,13 @@ def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,d
     tags = []
     for search_folder in search_folders:
         if search_folder in diff:
-            bot.logger.info("Adding tags for folder %s",search_folder)
+            bot.info("Adding tags for folder %s" %search_folder)
             tags = tags + diff[search_folder]
         else:
-            bot.logger.info("Did not find folder %s in difference.",search_folder)
+            bot.info("Did not find folder %s in difference." %search_folder)
 
     if return_unique == True:
-        tags = numpy.unique(tags).tolist()
+        tags = list(set(tags))
     return tags
 
 
@@ -201,7 +189,7 @@ def get_tags(container=None,image_package=None,sudopw=None,search_folders=None,d
 ###################################################################################
 
         
-def file_counts(container=None,patterns=None,image_package=None,sudopw=None,diff=None):
+def file_counts(container=None,patterns=None,image_package=None,diff=None):
     '''file counts will return a list of files that match one or more regular expressions.
     if no patterns is defined, a default of readme is used. All patterns and files are made
     case insensitive.
@@ -213,8 +201,7 @@ def file_counts(container=None,patterns=None,image_package=None,sudopw=None,diff
     '''
     if diff == None:
         diff = get_diff(container=container,
-                        image_package=image_package,
-                        sudopw=sudopw)
+                        image_package=image_package)
 
     if patterns == None:
         patterns = 'readme'
@@ -226,11 +213,11 @@ def file_counts(container=None,patterns=None,image_package=None,sudopw=None,diff
     for folder, items in diff.items():
         for pattern in patterns:
             count += len([x for x in items if re.search(pattern.lower(),x.lower())])
-    bot.logger.info("Total files matching patterns is %s",count)
+    bot.info("Total files matching patterns is %s" %count)
     return count
 
 
-def extension_counts(container=None,image_package=None,sudopw=None,diff=None,return_counts=True):
+def extension_counts(container=None,image_package=None,diff=None,return_counts=True):
     '''extension counts will return a dictionary with counts of file extensions for
     an image.
     :param container: if provided, will use container as image. Can also provide
@@ -240,8 +227,7 @@ def extension_counts(container=None,image_package=None,sudopw=None,diff=None,ret
     '''
     if diff == None:
         diff = get_diff(container=container,
-                        image_package=image_package,
-                        sudopw=sudopw)
+                        image_package=image_package)
 
     extensions = dict()
     for folder, items in diff.items():

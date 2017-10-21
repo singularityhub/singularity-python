@@ -40,18 +40,18 @@ import shutil
 import json
 import os
 
+print("############################################################ test_utils")
+
 class TestUtils(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
         self.tmpdir = tempfile.mkdtemp()
         self.spec = "%s/tests/data/Singularity" %(self.pwd)
-        print("\n---START----------------------------------------")
         
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
-        print("\n---END------------------------------------------")
-
+        
 
     def test_write_read_files(self):
         '''test_write_read_files will test the functions write_file and read_file
@@ -71,19 +71,20 @@ class TestUtils(unittest.TestCase):
 
         from singularity.utils import write_json
         print("Testing utils.write_json...")
-        print("Case 1: Providing bad json")
+        print("...Case 1: Providing bad json")
         bad_json = {"Wakkawakkawakka'}":[{True},"2",3]}
         tmpfile = tempfile.mkstemp()[1]
         os.remove(tmpfile)        
         with self.assertRaises(TypeError) as cm:
             write_json(bad_json,tmpfile)
 
-        print("Case 2: Providing good json")        
+        print("...Case 2: Providing good json")        
         good_json = {"Wakkawakkawakka":[True,"2",3]}
         tmpfile = tempfile.mkstemp()[1]
         os.remove(tmpfile)
         write_json(good_json,tmpfile)
-        content = json.load(open(tmpfile,'r'))
+        with open(tmpfile,'r') as filey:
+            content = json.loads(filey.read())
         self.assertTrue(isinstance(content,dict))
         self.assertTrue("Wakkawakkawakka" in content)
 
@@ -91,6 +92,7 @@ class TestUtils(unittest.TestCase):
     def test_check_install(self):
         '''check install is used to check if a particular software is installed.
         If no command is provided, singularity is assumed to be the test case'''
+        print("Testing utils.check_install")
         from singularity.utils import check_install
         is_installed = check_install()
         self.assertTrue(is_installed)
@@ -102,26 +104,21 @@ class TestUtils(unittest.TestCase):
         '''get install directory should return the base of where singularity
         is installed
         '''
+        print("Testing utils.get_installdir")
         from singularity.utils import get_installdir
         whereami = get_installdir()
         self.assertTrue(whereami.endswith('singularity'))
 
 
-    def test_calculate_folder_size(self):
-        '''ensure that calculation of folder size is accurate
-        '''
-        from singularity.utils import calculate_folder_size
-        size_truncated = calculate_folder_size(self.tmpdir)
-        self.assertTrue(isinstance(size_truncated,int))
-
-
     def test_remove_uri(self):
+        print("Testing utils.remove_uri")
         from singularity.utils import remove_uri
         self.assertEqual(remove_uri('docker://ubuntu'),'ubuntu')
         self.assertEqual(remove_uri('shub://vanessa/singularity-images'),'vanessa/singularity-images')
 
 
     def test_download_repo(self):
+        print("Testing utils.download_repo")
         from singularity.utils import download_repo
         download_repo('https://github.com/singularityware/singularity',destination="%s/singularity" %self.tmpdir)
         self.assertTrue(os.path.exists("%s/singularity" %self.tmpdir))

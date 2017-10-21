@@ -1,10 +1,5 @@
-include README.md
-include LICENSE
-recursive-include singularity/tests *
-recursive-include singularity/hub *
-recursive-include singularity/templates *
-recursive-include singularity/static *
-recursive-include singularity/build *
-recursive-include singularity/analysis *
-recursive-include singularity/views *
-recursive-include singularity/testing *
+include README.md LICENSE
+recursive-include singularity *
+recursive-exclude * __pycache__
+recursive-exclude * *.pyc
+recursive-exclude * *.pyo

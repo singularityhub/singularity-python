@@ -1,0 +1,19 @@
+# Generation
+
+The cirros and busybox images were produced with Singularity 2.4, which has a much smaller image footprint. The file extractions for the package are from 2016, and were remade as one had become corrupt. More evidence for squashfs
+
+Singularity Python version 1.2.1 with Singularity Version 2.4
+
+## Images
+```
+sudo singularity build cirros-2017-10-21.simg docker://cirros
+sudo singularity build busybox-2017-10-21.simg docker://busybox
+```
+
+## Packages
+
+
+```
+shub package --image cirros-2017-10-21.simg
+shub package --image busybox-2017-10-21.simg
+```

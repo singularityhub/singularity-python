@@ -1,5 +1,3 @@
-
-
 # Singularity Python
 
 [![Build Status](https://travis-ci.org/singularityware/singularity-python.svg?branch=master)](https://travis-ci.org/singularityware/singularity-python)
@@ -12,4 +10,3 @@ Please see our [complete docs](https://github.com/singularityware/singularity-py
 
 ## Help and Contribution
 Please contribute to the package, or post feedback and questions as <a href="https://github.com/singularityware/singularity-python" target="_blank">issues</a>. For points that require discussion of the larger group, please use the <a href="https://groups.google.com/a/lbl.gov/forum/#!forum/singularity" target="_blank">Singularity List</a>
-

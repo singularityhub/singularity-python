@@ -79,9 +79,4 @@ for name in images:
     if not os.path.exists(package_name):
         image_package = package(image_path=image,
                                 output_folder=output_folder,
-                                remove_image=True,
-                                runscript=True,
-                                software=True)
-    tmpfolder = os.path.dirname(image)
-    shutil.rmtree(tmpfolder)
-
+                                old_version=True) # makes file tar instead of memory

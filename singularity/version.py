@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 AUTHOR = 'Vanessa Sochat'
 AUTHOR_EMAIL = 'vsochat@stanford.edu'
 NAME = 'singularity'
@@ -34,15 +34,13 @@ LICENSE = "LICENSE"
 INSTALL_REQUIRES = (
 
     ('demjson', {'min_version': None}),
-    ('flask', {'min_version': '0.12'}),
-    ('flask-restful', {'min_version': None}),
+    ('python-dateutil', {'min_version': None}),
     ('pandas', {'min_version': '0.19.2'}),
     ('requests', {'min_version': '2.12.4'}),
+    ('requests-toolbelt', {'min_version': '0.8.0'}),
     ('retrying', {'min_version': '1.3.3'}),
-    ('selenium', {'min_version': '3.0.2'}),
     ('simplejson', {'min_version': '3.10.0'}),
     ('pygments', {'min_version': '2.1.3'}),
-    ('scikit-learn', {'min_version': '0.18.1'}),
     ('google-api-python-client', {'min_version': None}),
     ('oauth2client', {'exact_version': '3.0'})
 )

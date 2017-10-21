@@ -32,7 +32,7 @@ import re
 
 import shutil
 import simplejson
-from singularity.logman import bot
+from singularity.logger import bot
 
 from singularity.utils import (
     get_installdir,
@@ -65,18 +65,14 @@ def stop_if_result_none(result):
 
 def test_container(image_path):
     '''test_container is a simple function to send a command to a container, and 
-    return the status code and any message run for the test. It does it by
-    way of sending an echo of some message, which (I think?) should
-    work in most linux.
+    return the status code and any message run for the test. This comes after
     :param image_path: path to the container image
     '''
+    from singularity.utils import run_command
+    bot.debug('Testing container exec with a list command.')
     testing_command = ["singularity", "exec", image_path, 'ls']
-    output = Popen(testing_command,stderr=STDOUT,stdout=PIPE)
-    t = output.communicate()[0],output.returncode
-    result = {'message':t[0],
-              'return_code':t[1]}
-    return result
-
+    return run_command(testing_command)
+    
 
 ######################################################################################
 # Build Templates
@@ -93,15 +89,15 @@ def get_build_template(template_name,params=None,to_file=None):
     template_folder = "%s/build/scripts" %(base)
     template_file = "%s/%s" %(template_folder,template_name)
     if os.path.exists(template_file):
-        bot.logger.debug("Found template %s",template_file)
+        bot.debug("Found template %s" %template_file)
 
         # Implement when needed - substitute params here
         # Will need to read in file instead of copying below
         # if params != None:
  
-        if to_file != None:
+        if to_file is not None:
             shutil.copyfile(template_file,to_file)
-            bot.logger.debug("Template file saved to %s",to_file)
+            bot.debug("Template file saved to %s" %to_file)
             return to_file
 
         # If the user wants a string
@@ -110,8 +106,7 @@ def get_build_template(template_name,params=None,to_file=None):
 
 
     else:
-        bot.logger.warning("Template %s not found.",template_file)
-        return None
+        bot.warning("Template %s not found." %template_file)
 
 
 ######################################################################################
@@ -124,18 +119,23 @@ def get_singularity_version(singularity_version=None):
     first, an environmental variable is looked at, followed by using the system
     version.
     '''
-    if singularity_version == None:        
-        singularity_version = os.environ.get("SINGULARITY_VERSION",None)
+
+    if singularity_version is None:        
+        singularity_version = os.environ.get("SINGULARITY_VERSION")
         
-    # Next get from system
-    if singularity_version == None:
+    if singularity_version is None:
         try:
             cmd = ['singularity','--version']
-            singularity_version = run_command(cmd,error_message="Cannot determine Singularity version!").decode('utf-8').strip('\n')
-            bot.logger.info("Singularity %s being used.",singularity_version)
+            output = run_command(cmd)
+
+            if isinstance(output['message'],bytes):
+                output['message'] = output['message'].decode('utf-8')
+            singularity_version = output['message'].strip('\n')
+            bot.info("Singularity %s being used." % singularity_version)
+            
         except:
             singularity_version = None
-            bot.logger.warning("Singularity version not found, so it's likely not installed.")
+            bot.warning("Singularity version not found, so it's likely not installed.")
 
     return singularity_version
 
@@ -170,6 +170,7 @@ def sniff_extension(file_path,verbose=True):
                       "swf": 'application/x-shockwave-flash',
                       "mp3": 'audio/mpeg',
                       "zip": 'application/zip',
+                      "simg": 'application/zip',
                       "rar": 'application/rar',
                       "tar": 'application/tar',
                       "arj": 'application/arj',
@@ -188,7 +189,7 @@ def sniff_extension(file_path,verbose=True):
         mime_type = mime_types['txt']
 
     if verbose==True:
-        bot.logger.info("%s --> %s", file_path, mime_type)
+        bot.info("%s --> %s" %(file_path, mime_type))
 
     return mime_type
 
@@ -203,5 +204,5 @@ def get_script(script_name):
     if os.path.exists(script_path):
         return script_path
     else:
-        bot.logger.error("Script %s is not included in singularity-python!", script_path)
+        bot.error("Script %s is not included in singularity-python!" %script_path)
         return None

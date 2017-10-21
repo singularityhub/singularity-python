@@ -5,20 +5,17 @@ sudo: true
 os: linux
 
 language: python
-python:
-  - "2.7"
-  - "3.5"
 
-install:
-  - pip install pylint
-  - cd $TRAVIS_BUILD_DIR/
-  - cd $TRAVIS_BUILD_DIR && pip install -r requirements.txt
-  - cd $TRAVIS_BUILD_DIR && pip3 install -r requirements.txt
-  - python setup.py sdist
-  - python setup.py install
-  - pylint --version
-  - cd /tmp && git clone -b development https://github.com/singularityware/singularity.git && cd singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
+matrix:
+  include:
+    - os: linux
+      env: PYTHON_VERSION=2
+    - os: linux
+      env: PYTHON_VERSION=3
+
+before_install:
+  - sudo chmod u+x .travis/*
+  - .travis/before_install
 
 script:
-  - python -m unittest discover -s $TRAVIS_BUILD_DIR/singularity/tests/ -p '[t|T]est*.py'
-  #bash $TRAVIS_BUILD_DIR/singularity/tests/run_tests.sh $TRAVIS_BUILD_DIR/singularity/tests /tmp
+  - .travis/script

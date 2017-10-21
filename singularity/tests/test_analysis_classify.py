@@ -34,50 +34,50 @@ from numpy.testing import (
     assert_equal
 )
 
-from singularity.cli import get_image
+from singularity.cli import Singularity
 import unittest
 import tempfile
 import shutil
 import json
 import os
 
+
+from singularity.analysis.classify import (
+    get_diff, 
+    estimate_os,
+    file_counts,
+    extension_counts
+)
+
+print("################################################ test_analysis_classify")
+
 class TestAnalysisClassify(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.container = get_image('docker://ubuntu:16.04')
-        self.comparator = get_image('docker://ubuntu:12.04')
-        
+        self.cli = Singularity()
+        self.container = self.cli.pull('docker://ubuntu:16.04', 
+                                       pull_folder=self.tmpdir)
+        print(self.container)
+
+        self.comparator = self.cli.pull('docker://ubuntu:12.04',
+                                         pull_folder=self.tmpdir)
+        print(self.comparator)        
+
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
-
-    def test_get_diff(self):
+    def test_classify(self):
         print("Testing singularity.analysis.classify.get_diff")
-        from singularity.analysis.classify import get_diff
         diff = get_diff(self.container)
         self.assertTrue(len(diff)>0)
-
-
-    def test_estimate_os(self):
         print("Testing singularity.analysis.classify.estimate_os")
-        from singularity.analysis.classify import estimate_os
         estimated_os = estimate_os(self.container)
         self.assertTrue(estimated_os.startswith('ubuntu'))
-
-
-    def test_file_counts(self):
-        print("Testing singularity.analysis.classify.file_counts")
-        from singularity.analysis.classify import file_counts
         counts = file_counts(self.container)
-
-
-    def test_extension_counts(self):
         print("Testing singularity.analysis.classify.extension_counts")
-        from singularity.analysis.classify import extension_counts
         counts = extension_counts(self.container)
         self.assertTrue(len(counts)>0)
-
 
 
 if __name__ == '__main__':
