@@ -305,11 +305,11 @@ def get_logging_level():
     (5) is assumed (all messages).
     '''
     try:
-        level = int(os.environ.get("MESSAGELEVEL", DEBUG))
+        level = int(os.environ.get("MESSAGELEVEL", INFO))
 
     except ValueError:
 
-        level = os.environ.get("MESSAGELEVEL", DEBUG)
+        level = os.environ.get("MESSAGELEVEL", INFO)
         if level == "CRITICAL":
             return CRITICAL
         elif level == "ABORT":

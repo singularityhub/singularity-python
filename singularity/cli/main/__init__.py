@@ -68,7 +68,11 @@ def get_parser():
 
     # Compare
     compare = subparsers.add_parser("compare",
-                                    help = "views and functions to compare two containers")
+                                    help = "views and functions to compare two containers. Default calculates score.")
+
+    compare.add_argument("--outfolder", dest='outfolder', 
+                         help="full path to folder for output, stays in tmp (or pwd) if not specified", 
+                         type=str, default=None)
 
     compare.add_argument("--images", dest='images', 
                          help="images, separated by commas", 
@@ -81,10 +85,6 @@ def get_parser():
     compare.add_argument('--subtract', dest='subtract', 
                          help="subtract one container image from the second to make a difference tree (use --images first,subtract)", 
                          default=False, action='store_true')
-
-    compare.add_argument('--simcalc', dest='simcalc', 
-                          help="calculate similarity (number) between images based on file contents.", 
-                          default=False, action='store_true')
 
 
 
@@ -100,6 +100,13 @@ def get_parser():
                           help="calculate similarity score for your container vs. docker library OS.", 
                           default=False, action='store_true')
 
+    analysis.add_argument("--outfolder", dest='outfolder', 
+                         help="full path to folder for output, stays in tmp (or pwd) if not specified", 
+                         type=str, default=None)
+
+    analysis.add_argument("--image", dest='image', 
+                          help="full path to singularity image", 
+                          type=str, default=None)
 
     analysis.add_argument('--osplot', dest="osplot", 
                            help="plot similarity scores for your container vs. docker library OS.", 

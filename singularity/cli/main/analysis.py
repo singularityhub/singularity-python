@@ -44,11 +44,14 @@ def main(args,parser,subparser):
 
 
     # If we are given an image, ensure full path
-    if args.image is not None:
+    image = args.image
+    if image is not None:
 
-        if not os.path.exists(args.image):
+        existed = True
+        if not os.path.exists(image):
             cli = Singularity(debug=args.debug)
-            image = cli.pull(args.image)
+            image = cli.pull(image)
+            existed = False
 
         if image is None:
             bot.error("Cannot find image. Exiting.")

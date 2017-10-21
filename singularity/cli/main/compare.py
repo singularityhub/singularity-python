@@ -24,6 +24,8 @@ SOFTWARE.
 
 from singularity.utils import check_install           
 from singularity.logger import bot
+from singularity.cli import Singularity
+from singularity.cli.utils import clean_up
 import sys
 import os
 
@@ -47,16 +49,17 @@ def main(args,parser,subparser):
         bot.debug("Image1: %s" %image1)
         bot.debug("Image2: %s" %image2)
 
-        images = []
+        images = dict()
         cli = Singularity(debug=args.debug)
         for image in [image1,image2]:
+            existed = True
             if not os.path.exists(image):
                 image = cli.pull(image)
-            images.append(image)
+                existed = False            
+            images[image] = existed
 
         # Just for clarity
-        image1 = images[0]
-        image2 = images[1]
+        image1,image2 = list(images.keys())
 
         # the user wants to make a similarity tree
         if args.simtree is True:
@@ -68,14 +71,14 @@ def main(args,parser,subparser):
             from singularity.cli.app import make_diff_tree
             make_diff_tree(image1,image2)
 
-        elif args.simcalc is True:
+        else: # If none specified, just print score
             from singularity.analysis.compare import calculate_similarity
             score = calculate_similarity(image1,image2,by="files.txt")
             print(score["files.txt"])
 
-        clean_up(image1,existed1)
-        clean_up(image2,existed2)
-
+        for image,existed in images.items():
+            clean_up(image,existed)
+   
     else:
         print("Please specify images to compare with --images")
         subparser.print_help()
