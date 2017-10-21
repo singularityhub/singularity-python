@@ -318,7 +318,7 @@ class Singularity:
         bot.debug(' '.join(cmd))
         output = self.run_command(cmd)
         self.println(output)
-        return output.split('Container is at:')[-1].strip('\n')
+        return output.split('Container is at:')[-1].strip('\n').strip()
 
 
     def run(self,image_path,args=None,writable=False,contain=False):
