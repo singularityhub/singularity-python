@@ -133,7 +133,7 @@ class TestReproduce(unittest.TestCase):
 
 
     def test_extract_guts(self):
-        from singularity.analysis.utils import extract_guts
+        from singularity.analysis.reproduce.utils import extract_guts
         from singularity.analysis.reproduce import (
             get_memory_tar,
             get_levels )

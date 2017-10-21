@@ -89,7 +89,7 @@ def zip_up(file_list,zip_name,output_folder=None):
             os.remove(filey)
 
         # If it's a string, do the same
-        elif isinstance(content,str):
+        elif isinstance(content,str) or filename.endswith('json'):
             filey = write_file("%s/%s" %(tmpdir,filename),content)
             zf.write(filey,filename)
             os.remove(filey)
