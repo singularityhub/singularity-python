@@ -58,8 +58,8 @@ class TestPackage(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp()
         self.image1 = "%s/tests/data/busybox-2017-10-21.simg" %(self.pwd)
         self.image2 = "%s/tests/data/cirros-2017-10-21.simg" %(self.pwd)
-        self.pkg1 = "%s/tests/data/busybox-2016-02-16.img.zip" %(self.pwd)
-        self.pkg2 = "%s/tests/data/cirros-2016-01-04.img.zip" %(self.pwd)
+        self.pkg1 = "%s/tests/data/busybox-2017-10-21.zip" %(self.pwd)
+        self.pkg2 = "%s/tests/data/cirros-2017-10-21.zip" %(self.pwd)
 
         
     def tearDown(self):
@@ -72,21 +72,14 @@ class TestPackage(unittest.TestCase):
         self.pkg1_includes = list_package(self.pkg1)
         self.pkg2_includes = list_package(self.pkg2)
 
-        includes = ['files.txt', 'VERSION', 'NAME', 'folders.txt']
+        includes = ['files.txt', 'runscript', 'folders.txt'] # VERSION only with spec_file
         for pkg_includes in [self.pkg1_includes,self.pkg2_includes]:
             [self.assertTrue(x in pkg_includes) for x in includes]
-        self.assertTrue(os.path.basename(self.image1) in self.pkg1_includes)
-        self.assertTrue(os.path.basename(self.image2) in self.pkg2_includes)
 
         print("TESTING loading packages...")
         pkg1_loaded = load_package(self.pkg1)
-        self.assertTrue(len(pkg1_loaded["files.txt"])==12)
-        self.assertTrue(len(pkg1_loaded["folders.txt"])==18)
- 
-        # Did it extract successfully?
-        image1_extraction = pkg1_loaded[os.path.basename(self.image1)]
-        self.assertTrue(os.path.exists(image1_extraction))
-        shutil.rmtree(os.path.dirname(image1_extraction))
+        self.assertEqual(len(pkg1_loaded["files.txt"]),20)
+        self.assertEqual(len(pkg1_loaded["folders.txt"]),20) 
 
 
 

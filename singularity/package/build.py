@@ -112,7 +112,6 @@ def build_from_spec(spec_file=None,
 def package(image_path,
             spec_path=None,
             output_folder=None,
-            software=True,
             remove_image=False,
             verbose=False,
             S=None):
@@ -155,12 +154,11 @@ def package(image_path,
         bot.warning("Trouble extracting container metadata with inspect.")
 
 
-    if software == True:
-        bot.info("Adding software list to package.")
-        files = [x.path for x in members if x.isfile()]
-        folders = [x.path for x in members if x.isdir()]
-        to_package["files.txt"] = files
-        to_package["folders.txt"] = folders
+    bot.info("Adding software list to package.")
+    files = [x.path for x in members if x.isfile()]
+    folders = [x.path for x in members if x.isdir()]
+    to_package["files.txt"] = files
+    to_package["folders.txt"] = folders
 
     # Do zip up here - let's start with basic structures
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)

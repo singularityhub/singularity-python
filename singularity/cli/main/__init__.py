@@ -24,7 +24,6 @@ SOFTWARE.
 
 '''
 
-import singularity
 import argparse
 import sys
 import os
@@ -43,7 +42,6 @@ def get_parser():
     parser.add_argument("--size", dest='size', 
                         help="If using Docker or shub image, you can change size (default is 1024)", 
                         type=int, default=1024)
-
 
     subparsers = parser.add_subparsers(help='shub actions',
                                        title='actions',
@@ -170,7 +168,6 @@ def main():
 
     parser = get_parser()
     subparsers = get_subparsers(parser)
-    print("Singularity Python Version: %s" % singularity.__version__)
 
     try:
         args = parser.parse_args()
@@ -183,6 +180,11 @@ def main():
     # if environment logging variable not set, make silent
     if args.debug is False:
         os.environ['MESSAGELEVEL'] = "CRITICAL"
+    
+    # Always print the version
+    from singularity.logger import bot
+    import singularity
+    bot.info("Singularity Python Version: %s" % singularity.__version__)
 
     if args.command == "create":
         from .create import main
