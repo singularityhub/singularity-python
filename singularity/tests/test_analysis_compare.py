@@ -91,15 +91,6 @@ class TestAnalysisCompare(unittest.TestCase):
         sim = calculate_similarity(self.container,self.comparator)
         self.assertTrue(sim['files.txt'] -0.4921837537163134 < 0.01)
 
-        print("Testing singularity.analysis.compare.compare_packages")
-        from singularity.analysis.compare import compare_packages
-        pwd = get_installdir()
-        pkg1 = "%s/tests/data/busybox-2016-02-16.img.zip" %(pwd)
-        pkg2 = "%s/tests/data/cirros-2016-01-04.img.zip" %(pwd)
-        comparison = compare_packages(pkg1,pkg2)
-        self.assertTrue('files.txt' in comparison)
-        self.assertTrue(isinstance(comparison['files.txt'],pandas.DataFrame))
-
     def test_information_coefficient(self):
         print("Testing singularity.analysis.metrics.information_coefficient")
         from singularity.analysis.metrics import information_coefficient

@@ -61,17 +61,6 @@ class TestReproduce(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
-    def test_get_memory_tar(self):
-        from singularity.analysis.reproduce import get_memory_tar
-        import io
-        import tarfile
-
-        print("Case 1: Testing functionality of get memory tar...")
-        file_obj,tar = get_memory_tar(self.image1)
-        self.assertTrue(isinstance(file_obj,io.BytesIO))
-        self.assertTrue(isinstance(tar,tarfile.TarFile))
-        file_obj.close()                
-
     def test_get_image_hashes(self):
         from singularity.analysis.reproduce import get_image_hashes, get_image_hash
 
@@ -144,8 +133,8 @@ class TestReproduce(unittest.TestCase):
 
 
     def test_extract_guts(self):
+        from singularity.analysis.utils import extract_guts
         from singularity.analysis.reproduce import (
-            extract_guts, 
             get_memory_tar,
             get_levels )
 

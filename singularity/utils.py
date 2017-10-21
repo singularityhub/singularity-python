@@ -60,7 +60,7 @@ def check_install(software=None, quiet=True):
     cmd = [software, '--version']
     try:
         version = run_command(cmd,software)
-    except FileNotFoundError:
+    except: # FileNotFoundError
         return False
     if version is not None:
         if quiet is False and version['return_code'] == 0:

@@ -33,6 +33,7 @@ from singularity.logger import bot
 from singularity.utils import get_installdir
 import json
 import sys
+import tempfile
 import zipfile
 
 install_dir = get_installdir()

@@ -27,6 +27,7 @@ SOFTWARE.
 '''
 
 from singularity.cli import Singularity
+from .criteria import assess_content
 from singularity.logger import bot
 import hashlib
 import tarfile

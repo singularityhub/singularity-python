@@ -51,7 +51,7 @@ class TestUtils(unittest.TestCase):
     def test_calculate_folder_size(self):
         '''ensure that calculation of folder size is accurate
         '''
-        from singularity.package.utils import calculate_folder_size
+        from singularity.package import calculate_folder_size
         size_truncated = calculate_folder_size(self.tmpdir)
         self.assertTrue(isinstance(size_truncated,int))
 
