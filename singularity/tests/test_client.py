@@ -67,7 +67,7 @@ class TestClient(unittest.TestCase):
         print("...Case 1: Testing naming pull by image name")
         image = self.cli.pull("shub://vsoch/singularity-images", pull_folder=self.tmpdir)
         self.assertTrue(os.path.exists(image))
-        self.assertTrue('vsoch-singularity-images-master-latest' in image)
+        self.assertTrue('vsoch-singularity-images-master' in image)
         print(image)
         os.remove(image)
 
