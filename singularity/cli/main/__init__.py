@@ -35,10 +35,6 @@ def get_parser():
 
 
     # Global Variables
-    parser.add_argument("--version", dest='version', 
-                        help="show software version", 
-                        default=False, action='store_true')
-
 
     parser.add_argument('--debug', dest="debug", 
                         help="use verbose logging to debug.", 

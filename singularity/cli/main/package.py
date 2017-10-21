@@ -42,13 +42,13 @@ def main(args,parser,subparser):
     if args.outfolder is not None:
         output_folder = os.getcwd()
 
-
     # If we are given an image, ensure full path
     if args.image is not None:
 
-        if not os.path.exists(args.image):
+        image = args.image
+        if not os.path.exists(image):
             cli = Singularity(debug=args.debug)
-            image = cli.pull(args.image)
+            image = cli.pull(image)
 
         if image is None:
             bot.error("Cannot find image. Exiting.")
