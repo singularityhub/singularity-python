@@ -174,6 +174,7 @@ def main():
 
     parser = get_parser()
     subparsers = get_subparsers(parser)
+    print("Singularity Python Version: %s" % singularity.__version__)
 
     try:
         args = parser.parse_args()
@@ -183,14 +184,9 @@ def main():
     # Not running in Singularity Hub environment
     os.environ['SINGULARITY_HUB'] = "False"
 
-
     # if environment logging variable not set, make silent
     if args.debug is False:
         os.environ['MESSAGELEVEL'] = "CRITICAL"
-
-    if args.version is True:
-        print(singularity.__version__)
-        sys.exit(0)
 
     if args.command == "create":
         from .create import main
