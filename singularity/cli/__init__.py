@@ -282,6 +282,8 @@ class Singularity:
             name_by_hash=False
             name_by_commit=False
 
+        final_image = None
+
         if not image_path.startswith('shub://') and not image_path.startswith('docker://'):
             bot.error("pull is only valid for docker and shub, %s is invalid." %image_name)
             sys.exit(1)           
@@ -293,6 +295,7 @@ class Singularity:
 
         if pull_folder not in [None,'']:
             os.environ['SINGULARITY_PULLFOLDER'] = pull_folder
+            pull_folder = "%s/" % pull_folder
 
         if image_path.startswith('shub://'):
             if image_name is not None:
@@ -304,21 +307,23 @@ class Singularity:
             elif name_by_hash is True:
                 bot.debug("user specified naming by hash.")
                 cmd.append("--hash")
-            else: # otherwise let the Singularity client determine own name
-                image_name = "%s" %image_path.replace("shub://","").replace("/","-") 
-
+            # otherwise let the Singularity client determine own name
+           
         elif image_path.startswith('docker://'):
             if size is not None:
                 cmd = cmd + ["--size",size]
             if image_name is None:
                 image_name = "%s" %image_path.replace("docker://","").replace("/","-")
+            final_image = "%s%s.img" %(pull_folder,image_name)
             cmd = cmd + ["--name", image_name]
  
         cmd.append(image_path)
         bot.debug(' '.join(cmd))
         output = self.run_command(cmd)
         self.println(output)
-        return output.split('Container is at:')[-1].strip('\n').strip()
+        if final_image is None: # shub
+            final_image = output.split('Container is at:')[-1].strip('\n').strip()
+        return final_image
 
 
     def run(self,image_path,args=None,writable=False,contain=False):
