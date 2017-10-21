@@ -60,7 +60,7 @@ class TestClient(unittest.TestCase):
         container = "%s/container.img" %(self.tmpdir)
         created_container = self.cli.create(container)
         self.assertEqual(created_container,container)
-        self.assertTrue(os.path.exists(container))
+        self.assertTrue(os.path.exists(created_container))
         os.remove(container)
 
         print("Testing client.pull command")

@@ -27,7 +27,11 @@ SOFTWARE.
 '''
 
 from singularity.cli import Singularity
-from .criteria import assess_content, include_file
+from .criteria import (
+    assess_content, 
+    include_file,
+    is_root_owned
+)
 from singularity.logger import bot
 import hashlib
 import tarfile

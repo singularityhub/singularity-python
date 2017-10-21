@@ -75,33 +75,31 @@ def zip_up(file_list,zip_name,output_folder=None):
                 content = [content]
             for copyfile in content:
                 zf.write(copyfile,os.path.basename(copyfile))
+                os.remove(copyfile)
 
-        # If it's a list, write to new file, and save
-        elif isinstance(content,list):
-            filey = write_file("%s/%s" %(tmpdir,filename),"\n".join(content))
-            zf.write(filey,filename)
-            os.remove(filey)
+        else:
 
-        # If it's a dict, save to json
-        elif isinstance(content,dict):
-            filey = write_json(content,"%s/%s" %(tmpdir,filename))
-            zf.write(filey,filename)
-            os.remove(filey)
+            output_file = "%s/%s" %(tmpdir, filename)
+        
+            # If it's a list, write to new file, and save
+            if isinstance(content,list):
+                write_file(output_file,"\n".join(content))
+        
+            # If it's a dict, save to json
+            elif isinstance(content,dict):
+                write_json(content,output_file)
 
-        # If it's a string, do the same
-        elif isinstance(content,str) or filename.endswith('json'):
-            filey = write_file("%s/%s" %(tmpdir,filename),content)
-            zf.write(filey,filename)
-            os.remove(filey)
+            # If bytes, need to decode
+            elif isinstance(content,bytes):
+                write_file(output_file,content.decode('utf-8'))
+   
+            # String or other
+            else: 
+                output_file = write_file(output_file,content)
 
-        # Otherwise, just write the content into a new archive
-        elif isinstance(content,bytes):
-            filey = write_file("%s/%s" %(tmpdir,filename),content.decode('utf-8'))
-            zf.write(filey,filename)
-            os.remove(filey)
-
-        else: 
-            zf.write(content,filename)
+            if os.path.exists(output_file):
+                zf.write(output_file,filename)
+                os.remove(output_file)
 
     # Close the zip file    
     zf.close()
