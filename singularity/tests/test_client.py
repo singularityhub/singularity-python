@@ -71,20 +71,6 @@ class TestClient(unittest.TestCase):
         print(image)
         os.remove(image)
 
-        print("...Case 2: Testing naming pull by image commit")
-        image = self.cli.pull("shub://vsoch/singularity-images",name_by_commit=True, pull_folder=self.tmpdir)
-        self.assertTrue(os.path.exists(image))
-        self.assertTrue("6d3715a982865863ff20e8783014522edf1240e4" in image)
-        print(image)
-        os.remove(image)
-        
-        print("...Case 3: Testing naming pull by image hash")
-        image = self.cli.pull("shub://vsoch/singularity-images",name_by_hash=True, pull_folder=self.tmpdir)
-        self.assertTrue(os.path.exists(image))
-        self.assertTrue("292bd27a43f924283e5913db342227fb" in image)
-        print(image)
-        os.remove(image)
-
         print("...Case 3: Testing docker pull")
         container = self.cli.pull("docker://ubuntu:14.04", pull_folder=self.tmpdir)
         self.assertTrue("ubuntu:14.04" in container)
