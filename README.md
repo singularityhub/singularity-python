@@ -4,7 +4,7 @@
 
 Singularity Python is a python module and command line tool for working with <a href="https://singularityware.github.io" target="_blank">Singularity</a> containers, specifically providing functions to visualize, package, and compare containers. Currently, most functions use Singularity on the command line, and some require sudo.
 
-We currently require Python > version 3 to use various timezone functions. If you are unable to install version 3.0, we provide a [Singularity.container](Singularity.container) for you to use instead. See the 
+We currently require Python > version 3 to use various timezone functions. If you are unable to install version 3.0, we provide a [Singularity.container](Singularity.container) for you to use instead. See the [installation docs](https://github.com/singularityware/singularity-python/wiki/Installation) for your different options.
 
 The Singularity-Python code is licensed under the MIT open source license, which is a highly permissive license that places few limits upon reuse. This ensures that the code will be usable by the greatest number of researchers, in both academia and industry. The following examples are provided:
 
