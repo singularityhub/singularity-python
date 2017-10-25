@@ -165,7 +165,7 @@ def get_image_path(repo_url, trailing_path):
 
 
 
-def run_build(logfile=None):
+def run_build(logfile='/tmp/.shub-log'):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
@@ -287,9 +287,10 @@ def run_build(logfile=None):
                     "metadata": json.dumps(metadata)}
 
         # Did the user specify a specific log file?
-        logfile = get_build_metadata('logfile')
-        if logfile is not None:
-            response['logfile'] = logfile
+        custom_logfile = get_build_metadata('logfile')
+        if custom_logfile is not None:
+            logfile = custom_logfile    
+        response['logfile'] = logfile
 
         # Send final build data to instance
         send_build_data(build_dir=build_dir,
