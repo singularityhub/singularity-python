@@ -121,6 +121,11 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
     if os.path.exists(params['spec_file']):
         bot.info("Found spec file %s in repository" %params['spec_file'])
 
+        # If the user has a symbolic link
+        if os.path.islink(params['spec_file']):
+            bot.info("%s is a symbolic link." %params['spec_file'])
+            params['spec_file'] = os.path.realpath(params['spec_file'])
+
         # START TIMING
         start_time = datetime.now()
         image = build_from_spec(spec_file=params['spec_file'], # default will package the image
