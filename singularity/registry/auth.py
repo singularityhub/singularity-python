@@ -61,8 +61,7 @@ def generate_signature(payload, secret):
 
 
 def generate_timestamp():
-    ts = datetime.now()
-    ts = ts.replace(tzinfo=timezone.utc)
+    ts = datetime.now(timezone.utc)
     return ts.strftime('%Y%m%dT%HZ')
 
 

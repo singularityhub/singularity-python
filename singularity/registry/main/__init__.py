@@ -97,8 +97,8 @@ def get_parser():
                        help='name of image, in format "library/image"', 
                        type=str, required=True)
 
-    push.add_argument('--no-compress', dest="nocompress", 
-                      help="show the test for each container.", 
+    push.add_argument('--compress', dest="compress", 
+                      help="compress the container on upload (for legacy containers prior to 2.4)", 
                       default=False, action='store_true')
 
 
@@ -114,8 +114,8 @@ def get_parser():
                        help='custom name for image', 
                        type=str, default=None)
 
-    pull.add_argument('--no-decompress', dest="nodecompress", 
-                      help="extract a gzip compressed image", 
+    pull.add_argument('--decompress', dest="decompress", 
+                      help="extract a gzip compressed image for legacy (prior to 2.4) containers", 
                       default=False, action='store_true')
 
     # List or search labels
