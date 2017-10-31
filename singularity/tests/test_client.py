@@ -82,13 +82,6 @@ class TestClient(unittest.TestCase):
         print(result)
         self.assertTrue('bin\nboot\ndev' in result)
 
-        print("Testing client.inspect command")
-        result = self.cli.inspect(container,quiet=True)
-        labels = json.loads(result)
-        self.assertTrue('data' in labels)     
-        os.remove(container)
-
-
 
 if __name__ == '__main__':
     unittest.main()
