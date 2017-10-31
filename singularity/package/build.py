@@ -164,7 +164,7 @@ def package(image_path,
     zipfile = zip_up(to_package,zip_name=zip_name,output_folder=output_folder)
     bot.debug("Package created at %s" %(zipfile))
 
-    if not delete_image_tar(file_obj):
+    if not delete_image_tar(file_obj, tar):
         bot.warning("Could not clean up temporary tarfile.")
     
     # return package to user

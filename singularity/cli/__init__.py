@@ -61,7 +61,10 @@ class Singularity:
                 try:
                     message=message.decode('utf-8')
                 except UnicodeDecodeError:
-                    message = unicode(message, errors='replace')
+                    try:
+                        message = unicode(message, errors='replace')
+                    except NameError:
+                        message = str(message, errors='replace')
             return message
         if quiet is False:
             bot.error("Return Code %s: %s" %(return_code,
