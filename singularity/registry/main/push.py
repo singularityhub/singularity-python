@@ -44,6 +44,4 @@ def main(args,parser,subparser):
     response = sreg.push(path=image,
                          name=args.name,
                          tag=args.tag,
-                         compress=not args.nocompress)
-
-
+                         compress=args.compress)

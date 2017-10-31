@@ -146,6 +146,7 @@ class TestReproduce(unittest.TestCase):
                             file_filter=levels['REPLICATE'])
         for key in ['root_owned','sizes','hashes']:
             self.assertTrue(key in guts)
+        tar.close()
 
     def test_get_image_file_hash(self):
         from singularity.analysis.reproduce import get_image_file_hash

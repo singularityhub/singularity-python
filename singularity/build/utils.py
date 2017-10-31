@@ -31,7 +31,6 @@ import os
 import re
 
 import shutil
-import simplejson
 from singularity.logger import bot
 
 from singularity.utils import (

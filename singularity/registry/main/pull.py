@@ -35,4 +35,4 @@ def main(args,parser,subparser):
     sreg = Client(secrets=args.secrets)
     response = sreg.pull(images=args.image,
                          file_name=args.name,
-                         decompress=not args.nodecompress)
+                         decompress=args.decompress)

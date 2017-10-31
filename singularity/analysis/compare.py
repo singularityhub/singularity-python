@@ -128,13 +128,13 @@ def compare_singularity_images(image_paths1,image_paths2=None):
                     members2 = [x.name for x in tar2]
                     c = compare_lists(members1,members2)
                     sim = information_coefficient(c['total1'],c['total2'],c['intersect'])
-                    delete_image_tar(fileobj2)
+                    delete_image_tar(fileobj2, tar2)
                         
                 dfs.loc[image1,image2] = sim
                 if repeat:
                     dfs.loc[image2,image1] = sim
                 comparisons_done.append(comparison_id)
-        delete_image_tar(fileobj1)
+        delete_image_tar(fileobj1, tar1)
     return dfs
 
 

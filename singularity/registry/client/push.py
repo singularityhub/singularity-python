@@ -50,7 +50,7 @@ from singularity.registry.auth import (
 )
 
 
-def push(self, path, name, tag=None, compress=True):
+def push(self, path, name, tag=None, compress=False):
     '''push an image to Singularity Registry'''
 
     path = os.path.abspath(path)

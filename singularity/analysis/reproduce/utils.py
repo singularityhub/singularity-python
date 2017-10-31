@@ -114,19 +114,17 @@ def get_image_tar(image_path,S=None):
     return file_obj, tar
 
 
-def delete_image_tar(file_obj):
+def delete_image_tar(file_obj, tar):
     '''delete image tar will close a file object (if extracted into
     memory) or delete from the file system (if saved to disk)'''
-    deleted = False
-    if isinstance(file_obj,io.BytesIO):
+    try:
         file_obj.close()
+    except:
+        tar.close()
+    if os.path.exists(file_obj):
+        os.remove(file_obj)
         deleted = True
-        bot.debug('Closed memory tar.')   
-    else:
-        if os.path.exists(file_obj):
-            os.remove(file_obj)
-            deleted = True
-            bot.debug('Deleted temporary tar.')   
+        bot.debug('Deleted temporary tar.')   
     return deleted
 
 

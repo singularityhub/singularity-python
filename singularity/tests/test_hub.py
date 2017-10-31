@@ -58,7 +58,8 @@ class TestClient(unittest.TestCase):
     def test_get_collection(self):
         print('Testing client.get_collection command')
         result = self.cli.get_collection(self.collection)
-        for key in ['add_date', 'name', 'enabled', 'modify_date']:
+        for key in ['add_date', 'name', 'metadata', 'modify_date']:
+            print(key)
             self.assertTrue(key in result)
 
     def test_get_container(self):

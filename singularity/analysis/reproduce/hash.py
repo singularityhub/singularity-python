@@ -99,7 +99,7 @@ def get_image_hash(image_path,
                                 include_files=include_files)
                 
     cli = Singularity()
-    file_obj,tar = get_image_tar(image_path)
+    file_obj, tar = get_image_tar(image_path)
     hasher = hashlib.md5()
 
     for member in tar:
@@ -117,11 +117,14 @@ def get_image_hash(image_path,
 
     digest = hasher.hexdigest()
 
-    if isinstance(file_obj,io.BytesIO):
+    # Close up / remove files
+    try:
         file_obj.close()
-    else:
-        if os.path.exists(file_obj):
-            os.remove(file_obj)
+    except:
+        tar.close()
+ 
+    if os.path.exists(file_obj):
+        os.remove(file_obj)
 
     return digest
 
@@ -163,7 +166,7 @@ def get_content_hashes(image_path,
                            tag_root=tag_root,
                            include_sizes=include_sizes)
 
-    deleted = delete_image_tar(file_obj)
+    delete_image_tar(file_obj, tar)
     return results
 
 
