@@ -56,11 +56,10 @@ class TestAnalysisClassify(unittest.TestCase):
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
         self.cli = Singularity()
-        self.container = self.cli.pull('docker://ubuntu:16.04', 
-                                       pull_folder=self.tmpdir)
+        self.container = self.cli.pull('shub://vsoch/singularity-images', 
+                                        pull_folder=self.tmpdir)
         print(self.container)
-
-        self.comparator = self.cli.pull('docker://ubuntu:12.04',
+        self.comparator = self.cli.pull('shub://vsoch/hello-world',
                                          pull_folder=self.tmpdir)
         print(self.comparator)        
 
