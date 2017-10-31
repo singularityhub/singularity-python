@@ -74,7 +74,7 @@ def get_diff(container=None,image_package=None):
     '''
     
     # Find the most similar os
-    most_similar = estimate_os(image_package=image_package,container=container) 
+    most_similar = estimate_os(image_package=image_package,container=container)
     similar_package = "%s/docker-os/%s.img.zip" %(get_package_base(),most_similar)
 
     comparison = compare_containers(image_package1=image_package,

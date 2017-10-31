@@ -68,14 +68,14 @@ class TestAnalysisClassify(unittest.TestCase):
 
     def test_classify(self):
         print("Testing singularity.analysis.classify.get_diff")
-        diff = get_diff(self.container)
+        diff = get_diff(container=self.container)
         self.assertTrue(len(diff)>0)
         print("Testing singularity.analysis.classify.estimate_os")
-        estimated_os = estimate_os(self.container)
+        estimated_os = estimate_os(container=self.container)
         self.assertTrue(estimated_os.startswith('ubuntu'))
-        counts = file_counts(self.container)
+        counts = file_counts(container=self.container)
         print("Testing singularity.analysis.classify.extension_counts")
-        counts = extension_counts(self.container)
+        counts = extension_counts(container=self.container)
         self.assertTrue(len(counts)>0)
 
 
