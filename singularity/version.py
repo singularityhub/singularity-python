@@ -33,14 +33,13 @@ LICENSE = "LICENSE"
 
 INSTALL_REQUIRES = (
 
-    ('demjson', {'min_version': None}),
-    ('python-dateutil', {'min_version': None}),
-    ('pandas', {'min_version': '0.19.2'}),
-    ('requests', {'min_version': '2.12.4'}),
-    ('requests-toolbelt', {'min_version': '0.8.0'}),
-    ('retrying', {'min_version': '1.3.3'}),
-    ('simplejson', {'min_version': '3.10.0'}),
+    ('demjson', {'exact_version': "2.2.4"}),
+    ('python-dateutil', {'exact_verison': "2.5.3"}),
+    ('pandas', {'exact_verison': '0.20.3'}),
+    ('requests', {'exact_version': '2.18.4'}),
+    ('requests-toolbelt', {'exact_version': '0.8.0'}),
+    ('retrying', {'exact_version': '1.3.3'}),
     ('pygments', {'min_version': '2.1.3'}),
-    ('google-api-python-client', {'min_version': None}),
+    ('google-api-python-client', {'min_version': "1.6.4"}),
     ('oauth2client', {'exact_version': '3.0'})
 )

@@ -32,7 +32,6 @@ import requests
 
 import shutil
 import json
-import simplejson
 from singularity.logger import bot
 from singularity.utils import (
     write_json,

@@ -35,7 +35,6 @@ import requests
 
 import shutil
 import json
-import simplejson
 from singularity.logger import bot
 from subprocess import (
     Popen,
@@ -136,14 +135,14 @@ def write_json(json_obj, filename, mode="w", print_pretty=True):
     with open(filename, mode) as filey:
         if print_pretty:
             filey.writelines(
-                simplejson.dumps(
+                json.dumps(
                     json_obj,
                     indent=4,
                     separators=(
                         ',',
                         ': ')))
         else:
-            filey.writelines(simplejson.dumps(json_obj))
+            filey.writelines(json.dumps(json_obj))
     return filename
 
 

@@ -32,7 +32,6 @@ import re
 import requests
 
 import shutil
-import simplejson
 from singularity.logger import bot
 from singularity.utils import get_installdir
 import sys
