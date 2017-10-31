@@ -34,7 +34,7 @@ from numpy.testing import (
     assert_equal
 )
 
-from singularity.cli import Singularity
+from singularity.utils import get_installdir
 import unittest
 import tempfile
 import shutil
@@ -55,27 +55,23 @@ class TestAnalysisClassify(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.cli = Singularity()
-        self.container = self.cli.pull('shub://vsoch/singularity-images', 
-                                        pull_folder=self.tmpdir)
-        print(self.container)
-        self.comparator = self.cli.pull('shub://vsoch/hello-world',
-                                         pull_folder=self.tmpdir)
-        print(self.comparator)        
+        self.pwd = get_installdir()
+        self.container = "%s/tests/data/busybox-2017-10-21.zip" %(self.pwd)
+        self.comparator = "%s/tests/data/cirros-2017-10-21.zip" %(self.pwd)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
     def test_classify(self):
         print("Testing singularity.analysis.classify.get_diff")
-        diff = get_diff(container=self.container)
+        diff = get_diff(image_package=self.container)
         self.assertTrue(len(diff)>0)
         print("Testing singularity.analysis.classify.estimate_os")
-        estimated_os = estimate_os(container=self.container)
-        self.assertTrue(estimated_os.startswith('ubuntu'))
-        counts = file_counts(container=self.container)
+        estimated_os = estimate_os(image_package=self.container)
+        self.assertTrue(estimated_os.startswith('busybox'))
+        counts = file_counts(image_package=self.container)
         print("Testing singularity.analysis.classify.extension_counts")
-        counts = extension_counts(container=self.container)
+        counts = extension_counts(image_package=self.container)
         self.assertTrue(len(counts)>0)
 
 
