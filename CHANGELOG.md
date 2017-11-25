@@ -20,6 +20,7 @@ and changes prior to that are (unfortunately) done retrospectively. Critical ite
 
 **changed behavior**
  - *apps extraction* files limited to those in bin and lib, as the response to the server was too large.
+ - **updated tests** to handle secure build
 
 ## [v2.4](https://github.com/singularityware/singularity-python/releases/tag/v2.4) (v2.4)
 
