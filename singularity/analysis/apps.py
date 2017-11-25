@@ -79,7 +79,9 @@ def extract_apps(image_path, app_names, S=None, verbose=True):
         except:
             pass
         base = '/scif/apps/%s' %app_name
-        metadata['files'] = [x.path for x in members if base in x.path]
+        libs = [x.path for x in members if "%s/lib" %base in x.path]
+        bins = [x.path for x in members if "%s/bin" %base in x.path]
+        metadata['files'] = libs + bins
         apps[app_name] = metadata
 
     return apps

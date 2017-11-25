@@ -238,6 +238,9 @@ def send_build_data(build_dir, data, secret,
 
     if response_url is not None:
         finish = requests.post(response_url,data=data, headers=headers)
+        bot.debug("POST BACK TO SINGULARITY HUB ---------------------")
+        bot.debug(finish.status_code)
+        bot.debug(finish.reason)
     else:
         bot.warning("response_url set to None, skipping sending of build.")
 
