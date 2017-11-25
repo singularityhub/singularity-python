@@ -238,7 +238,7 @@ def send_build_data(build_dir, data, secret,
 
     if response_url is not None:
         finish = requests.post(response_url,data=data, headers=headers)
-        bot.debug("POST BACK TO SINGULARITY HUB ---------------------")
+        bot.debug("RECEIVE POST TO SINGULARITY HUB ---------------------")
         bot.debug(finish.status_code)
         bot.debug(finish.reason)
     else:
@@ -278,5 +278,8 @@ def send_build_close(params,response_url):
 
     headers = {'Authorization': signature }
 
-    # Send it back!
-    return requests.post(response_url,data=response, headers=headers)
+    finish = requests.post(response_url,data=response, headers=headers)
+    bot.debug("FINISH POST TO SINGULARITY HUB ---------------------")
+    bot.debug(finish.status_code)
+    bot.debug(finish.reason)
+    return finish

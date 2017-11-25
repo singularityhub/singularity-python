@@ -338,7 +338,6 @@ def finish_build(verbose=True):
                                      file_name=params['logfile'])
                 
     # Close up shop
-    #TODO: need to add more delay here
     send_build_close(params=params,
                      response_url=params['logging_url'])
 
