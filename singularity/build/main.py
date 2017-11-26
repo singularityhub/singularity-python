@@ -162,6 +162,7 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
         diff = get_diff(image_package=image_package)
 
         # Inspect to get labels and other metadata
+
         cli = Singularity(debug=params['debug'])
         inspect = cli.inspect(image_path=image)
 
@@ -179,7 +180,8 @@ def run_build(build_dir,params,verbose=True, compress_image=False):
         extensions = extension_counts(diff=diff)
 
         os_sims = estimate_os(image_package=image_package,return_top=False)
-        most_similar = os_sims['SCORE'].idxmax()
+        most_similar = os_sims['SCORE'].values.argmax()
+        most_similar = os_sims['SCORE'].index.tolist()[most_similar]
 
         metrics = {'build_time_seconds':final_time,
                    'singularity_version':singularity_version,
@@ -238,6 +240,9 @@ def send_build_data(build_dir, data, secret,
 
     if response_url is not None:
         finish = requests.post(response_url,data=data, headers=headers)
+        bot.debug("RECEIVE POST TO SINGULARITY HUB ---------------------")
+        bot.debug(finish.status_code)
+        bot.debug(finish.reason)
     else:
         bot.warning("response_url set to None, skipping sending of build.")
 
@@ -275,5 +280,8 @@ def send_build_close(params,response_url):
 
     headers = {'Authorization': signature }
 
-    # Send it back!
-    return requests.post(response_url,data=response, headers=headers)
+    finish = requests.post(response_url,data=response, headers=headers)
+    bot.debug("FINISH POST TO SINGULARITY HUB ---------------------")
+    bot.debug(finish.status_code)
+    bot.debug(finish.reason)
+    return finish

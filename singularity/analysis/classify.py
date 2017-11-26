@@ -128,7 +128,12 @@ def estimate_os(container=None,image_package=None,return_top=True):
         comparison = compare_packages(packages_set1=[image_package])['files.txt'].transpose()
 
     comparison.columns = ['SCORE']
-    most_similar = comparison['SCORE'].idxmax()
+    try:
+        most_similar = comparison['SCORE'].idxmax()
+    except:
+        most_similar = comparison['SCORE'].values.argmax()
+        most_similar = comparison.index.tolist()[most_similar]
+
     print("Most similar OS found to be ", most_similar)    
     if return_top == True:
         return most_similar

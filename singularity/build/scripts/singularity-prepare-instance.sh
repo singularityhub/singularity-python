@@ -18,6 +18,8 @@ sudo apt-get -y install git \
                    autoconf \
                    debootstrap \
                    yum \
+                   uuid-dev \
+                   libssl-dev \
                    python3-pip
 
 
@@ -29,9 +31,9 @@ sudo pip3 install --upgrade google &&
 sudo pip3 install oauth2client==3.0.0
 
 # Install Singularity from Github
-cd /tmp && git clone -b feature-squashbuild-secbuild https://github.com/cclerget/singularity.git &&
+cd /tmp && git clone -b feature-squashbuild-secbuild-2.4.1 https://github.com/cclerget/singularity.git &&
 cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install && sudo make secbuildimg
 
 # Singularity python development
-cd /tmp && git clone -b development https://www.github.com/vsoch/singularity-python.git &&
+cd /tmp && git clone -b v2.4.1 https://www.github.com/vsoch/singularity-python.git &&
 cd /tmp/singularity-python && sudo python3 setup.py install
