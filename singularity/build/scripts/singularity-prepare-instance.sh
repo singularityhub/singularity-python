@@ -25,7 +25,7 @@ sudo apt-get -y install git \
 
 # Pip3 installs
 sudo pip3 install --upgrade pip &&
-sudo pip3 install pandas==0.20.3 &&
+sudo pip3 install pandas &&
 sudo pip3 install --upgrade google-api-python-client &&
 sudo pip3 install --upgrade google &&
 sudo pip3 install oauth2client==3.0.0
