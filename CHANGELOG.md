@@ -15,6 +15,8 @@ and changes prior to that are (unfortunately) done retrospectively. Critical ite
 
 ## [vxx](https://github.com/singularityware/singularity-python/tree/development) (development)
 
+**changed user experience**
+ - to address this [sregisty issue](https://github.com/singularityhub/sregistry/issues/56) the push client does not always state that the upload is finished. In the case that an image is frozen (and 403 status) this message is misleading.
 
 ## [v2.4.1](https://github.com/singularityware/singularity-python/releases/tag/v2.4.1) (v2.4.1)
 
