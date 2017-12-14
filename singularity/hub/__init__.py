@@ -27,6 +27,7 @@ SOFTWARE.
 from requests.exceptions import HTTPError
 
 from singularity.logger import bot
+import shutil
 import requests
 import tempfile
 import json
@@ -154,7 +155,7 @@ class ApiConnection(object):
         if isinstance(response, HTTPError):
             bot.error("Error downloading %s, exiting." %url)
             sys.exit(1)
-        os.rename(tmp_file, file_name)
+        shutil.move(tmp_file, file_name)
         return file_name
 
 

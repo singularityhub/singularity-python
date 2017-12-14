@@ -129,7 +129,7 @@ def push(self, path, name, tag=None, compress=False):
         r = requests.post(url, data=monitor, headers=headers)
         message = self.read_response(r)
 
-        print('\nUpload finished! [Return status {0} {1}]'.format(r.status_code, message))
+        print('\n[Return status {0} {1}]'.format(r.status_code, message))
 
     except KeyboardInterrupt:
         print('\nUpload cancelled.')
