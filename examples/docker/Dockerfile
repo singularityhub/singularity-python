@@ -15,4 +15,5 @@ RUN /opt/conda/bin/pip install setuptools && \
     /opt/conda/bin/pip install -r requirements.txt && \
     /opt/conda/bin/pip install pyasn1==0.4.1 && \
     /opt/conda/bin/python setup.py sdist && \
-    /opt/conda/bin/python setup.py install
+    /opt/conda/bin/python setup.py install && \
+    apt-get clean
