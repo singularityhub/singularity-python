@@ -6,8 +6,9 @@ Singularity Python is a python module and command line tool for working with <a 
 
 We currently require Python > version 3 to use various timezone functions. If you are unable to install version 3.0, we provide a [Singularity.container](Singularity.container) for you to use instead. This is the recommended approach as some older versions of Python do not support generation of the timestamp. See the [installation docs](https://github.com/singularityware/singularity-python/wiki/Installation) for your different options.
 
-The Singularity-Python code is licensed under the MIT open source license, which is a highly permissive license that places few limits upon reuse. This ensures that the code will be usable by the greatest number of researchers, in both academia and industry. The following examples are provided:
+## License
 
+This code is licensed under the Affero GPL, version 3.0 or later [LICENSE](LICENSE).
 Please see our [complete docs](https://github.com/singularityware/singularity-python/wiki)
 
 ## Help and Contribution
