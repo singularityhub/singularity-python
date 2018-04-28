@@ -49,7 +49,7 @@ import pickle
 import re
 import requests
 
-from singularity.registry.auth import generate_header_signature
+from singularity.build.auth import generate_header_signature
 from retrying import retry
 # https://cloud.google.com/storage/docs/exponential-backoff
 
