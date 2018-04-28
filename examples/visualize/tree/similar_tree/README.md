@@ -1,10 +1,6 @@
 # Container Similar Tree
 
-What do two containers have in common, in terms of files and folders? shub provides a command line function for rendering a view to (immediately) show the similarity between to container images:
-
-      shub --simtree --images cirros-2016-01-04.img.zip,busybox-2016-02-16.img.zip
-
-Note that we are specifying `images` for the argument instead of `image`, and it's a single string of image names separated by a comma. For this argument you can specify an image or package.
+The functions in analysis allow us to generate a similarity tree:
 
 ![simtree.png](simtree.png)
 

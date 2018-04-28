@@ -19,15 +19,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
+from spython.main import Client
 import tempfile
 from singularity.logger import bot
-from singularity.cli import Singularity
 from singularity.utils import run_command
 import platform
 import os
 import sys
 
-def package_node(root=None,name=None):
+def package_node(root=None, name=None):
     '''package node aims to package a (present working node) for a user into
     a container. This assumes that the node is a single partition.
   
@@ -75,10 +75,9 @@ def unpack_node(image_path,name=None,output_folder=None,size=None):
 
     bot.debug("Preparing to unpack %s to %s." %(image_name,name))
     unpacked_image = "%s/%s" %(output_folder,name)
-
-    S = Singularity(sudo=True) 
-    S.create(image_path=unpacked_image,
-             size=size)
+ 
+    if not os.path.exists(unpacked_image):
+        os.mkdir(unpacked_image)
 
     cmd = ["gunzip","-dc",image_path,"|","sudo","singularity","import", unpacked_image]
     output = run_command(cmd)
