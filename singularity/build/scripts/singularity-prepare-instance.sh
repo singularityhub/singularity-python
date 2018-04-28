@@ -14,6 +14,7 @@ sudo apt-get -y install git \
                    libtool \
                    squashfs-tools \
                    autotools-dev \
+                   libarchive-dev \
                    automake \
                    autoconf \
                    debootstrap \
@@ -26,6 +27,7 @@ sudo apt-get -y install git \
 
 # Pip3 installs
 sudo pip3 install --upgrade pip &&
+sudo pip3 install pyasn1-modules -U &&
 sudo pip3 install --upgrade google-api-python-client &&
 sudo pip3 install --upgrade google &&
 sudo pip3 install oauth2client==3.0.0

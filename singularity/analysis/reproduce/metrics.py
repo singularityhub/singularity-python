@@ -26,7 +26,7 @@ SOFTWARE.
 
 '''
 
-from singularity.cli import Singularity
+from spython.main import Client
 from singularity.logger import bot
 from .levels import get_levels
 from .utils import extract_content
@@ -105,10 +105,9 @@ def assess_differences(image_file1,
         # Otherwise we need to check based on byte content
         else:        
             if len(contenders) > 0:
-                cli = Singularity()
                 for rogue in contenders:
-                    hashy1 = extract_content(image_file1,rogue,cli,return_hash=True)
-                    hashy2 = extract_content(image_file2,rogue,cli,return_hash=True)
+                    hashy1 = extract_content(image_file1, rogue, return_hash=True)
+                    hashy2 = extract_content(image_file2, rogue, return_hash=True)
         
                     # If we can't compare, we use size as a heuristic
                     if hashy1 is None or hashy2 is None: # if one is symlink, could be None
@@ -140,4 +139,3 @@ def assess_differences(image_file1,
 
     reports['scores'] = scores
     return reports
-
