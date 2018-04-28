@@ -1,4 +1,5 @@
 '''
+
 build/google.py: build functions for singularity hub google compute engine
 
 The MIT License (MIT)
@@ -58,8 +59,6 @@ import sys
 import tempfile
 import time
 import zipfile
-
-shub_api = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
 from singularity.logger import bot
