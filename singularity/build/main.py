@@ -31,12 +31,12 @@ from singularity.version import (
 
 from spython.main import Client
 
+from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
     stop_if_result_none,
     get_singularity_version,
     test_container
 )
-
 
 from singularity.analysis.reproduce import get_image_file_hash
 from singularity.utils import download_repo
@@ -129,6 +129,10 @@ def run_build(build_dir, params, verbose=True):
         params['version'] = version
         pickle.dump(params, open(passing_params,'wb'))
 
+        # Rename image to be hash
+        finished_image = "%s/%s.simg" %(os.path.dirname(image), version)
+        image = shutil.move(image, finished_image)
+
         final_time = (datetime.now() - start_time).seconds
         bot.info("Final time of build %s seconds." %final_time)  
 
@@ -140,10 +144,14 @@ def run_build(build_dir, params, verbose=True):
 
         # Get singularity version
         singularity_version = Client.version()
+        Client.debug = False
         inspect = Client.inspect(image) # this is a string
+        Client.debug = params['debug']
 
         # Get information on apps
+        Client.debug = False
         app_names = Client.apps(image)
+        Client.debug = params['debug']
         apps = extract_apps(image, app_names)
         
         metrics = {'build_time_seconds': final_time,
