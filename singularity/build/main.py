@@ -32,6 +32,7 @@ from singularity.version import (
 from spython.main import Client
 
 from singularity.build.utils import (
+    stop_if_result_none,
     get_singularity_version,
     test_container
 )
