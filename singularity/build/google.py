@@ -55,6 +55,7 @@ import pickle
 import re
 import requests
 from retrying import retry
+import shutil
 import sys
 import tempfile
 import time
