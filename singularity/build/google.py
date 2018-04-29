@@ -109,7 +109,7 @@ def delete_object(storage_service,bucket_name,object_name):
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
+def upload_file(storage_service, bucket,bucket_path, file_name, verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
     will create it if not found. If folder is found or created, the metadata is
     returned, otherwise None is returned
@@ -119,7 +119,7 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     :param bucket_path: the path to upload to
     '''
     # Set up path on bucket
-    upload_path = "%s/%s" %(bucket['id'],bucket_path)
+    upload_path = "%s/%s" %(bucket['id'], bucket_path)
     if upload_path[-1] != '/':
         upload_path = "%s/" %(upload_path)
     upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
@@ -237,6 +237,7 @@ def run_build(logfile='/tmp/.shub-log'):
 
     # Output includes:
     finished_image = output['image']
+    finished_recipe = '/%s/Singularity' %build_dir
     metadata = output['metadata']  
     params = output['params']  
 
@@ -251,13 +252,17 @@ def run_build(logfile='/tmp/.shub-log'):
                                                          # commits are no longer unique
                                                          # storage is by commit
 
-        build_files = [finished_image]
+        # We want to name the recipe file Singularity, always
+        shutil.move(params['spec_file'], finished_recipe)
+
+        build_files = [finished_image, finished_recipe]
+
         bot.info("Sending image to storage:") 
         bot.info('\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket
         storage_service = get_google_service() # default is "storage" "v1"
-        bucket = get_bucket(storage_service,params["bucket_name"])
+        bucket = get_bucket(storage_service, params["bucket_name"])
 
         # For each file, upload to storage
         files = []
