@@ -124,6 +124,12 @@ def run_build(build_dir, params, verbose=True):
                              build_folder=build_dir,
                              isolated=True)
 
+        # If the image is None, the build has failed
+        if image == None:
+            final_time = (datetime.now() - start_time).seconds
+            bot.info("Image failed build: build end %s seconds." %final_time)  
+            sys.exit(1)
+
         # Save has for metadata (also is image name)
         version = get_image_file_hash(image)
         params['version'] = version
