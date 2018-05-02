@@ -39,6 +39,38 @@ from .metrics import information_coefficient
 import pandas
 
 
+def compare_lists(list1, list2):
+    '''compare lists is the lowest level that drives compare_containers and
+    compare_packages. It returns a comparison object (dict) with the unique,
+    total, and intersecting things between two lists
+    :param list1: the list for container1
+    :param list2: the list for container2
+    '''
+    intersect = list(set(list1).intersection(list2))
+    unique1 = list(set(list1).difference(list2))
+    unique2 = list(set(list2).difference(list1))
+
+    # Return data structure
+    comparison = {"shared": intersect,
+                  "removed": unique1,
+                  "added": unique2,
+                  "total1": len(list1),
+                  "total2": len(list2)}
+
+    return comparison
+
+
+
+def compare_files(files1, files2):
+    '''compare_files is a wrapper around compare_lists that will also calculate
+       an information coefficient.
+    '''
+    comparison = compare_lists(files1, files2)
+
+    return information_coefficient(comparison['total1'],
+                                   comparison['total2'],
+                                   comparison['shared'])
+    
 
 def compare_singularity_images(image_paths1,image_paths2=None):
     '''compare_singularity_images is a wrapper for compare_containers to compare
@@ -73,8 +105,8 @@ def compare_singularity_images(image_paths1,image_paths2=None):
                 else:
                     fileobj2,tar2 = get_image_tar(image2)
                     members2 = [x.name for x in tar2]
-                    c = compare_lists(members1,members2)
-                    sim = information_coefficient(c['total1'],c['total2'],c['intersect'])
+                    c = compare_lists(members1, members2)
+                    sim = information_coefficient(c['total1'],c['total2'],c['shared'])
                     delete_image_tar(fileobj2, tar2)
                         
                 dfs.loc[image1,image2] = sim

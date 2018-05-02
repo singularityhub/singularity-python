@@ -43,29 +43,55 @@ import zipfile
 
 
 
-def make_container_tree(folders,files,path_delim="/",parse_files=True):
-    '''make_container_tree will convert a list of folders and files into a json structure that represents a graph.
-    :param folders: a list of folders in the image
-    :param files: a list of files in the folder
-    :param parse_files: return 'files' lookup in result, to associate ID of node with files (default True)
-    :param path_delim: the path delimiter, default is '/'
+def make_container_tree(files, 
+                        folders=None, 
+                        path_delim="/", 
+                        parse_files=True, 
+                        labels=None):
+
+    '''make_container_tree will convert a list of folders and files into a 
+       json structure that represents a graph.
+  
+       Parameters
+       ==========
+       folders: a list of folders in the image
+       files: a list of files in the folder
+       parse_files: return 'files' lookup in result, to associate ID of node with files (default True)
+       path_delim: the path delimiter, default is '/'
+       labels = dict() a lookup dictionary of labels to add to file nodes, if 
+                defined.
+
     '''
+    if folders == None:
+        folders = files.copy()
+
     nodes = {}  # first we will make a list of nodes
     lookup = {}
     count = 1   # count will hold an id for nodes
     max_depth = 0
-    for folder in folders:
-        if folder != ".":
-            folder = re.sub("^[.]/","",folder)
+
+    for folder_path in folders:
+        if folder_path != ".":
+            folder = re.sub("^[.]/","", folder_path)
             path_components = folder.split(path_delim)
+
             for p in range(len(path_components)):
                 path_component = path_components[p]
                 fullpath = path_delim.join(path_components[0:p+1])
+
                 # Have we created the node yet?
                 if fullpath not in lookup:
                     lookup[fullpath] = count
-                    node = {"id":count,"name":path_component,"path":fullpath,"level":p,"children":[]}
+                    node = {"id": count,
+                            "name":path_component,
+                            "path":fullpath,
+                            "level":p,
+                            "children":[]}
                     count +=1
+                    if labels is not None:
+                        if folder_path in labels:
+                            node['labels'] = labels[folder_path]
+
                     # Did we find a deeper level?
                     if p > max_depth:
                         max_depth = p
@@ -77,7 +103,7 @@ def make_container_tree(folders,files,path_delim="/",parse_files=True):
                         parent_id = lookup[parent_path]                   
                     node["parent"] = parent_id
                     nodes[node['id']] = node   
-           
+
     # Now make the graph, we simply append children to their parents
     seen = []
     graph = []
@@ -104,8 +130,8 @@ def make_container_tree(folders,files,path_delim="/",parse_files=True):
     # Parse files to include in tree
     if parse_files == True:
         file_lookup = {}
-        for filey in files:
-            filey = re.sub("^[.]/","",filey)
+        for file_name in files:
+            filey = re.sub("^[.]/","",file_name)
             filepath,filename = os.path.split(filey)
             if filepath in lookup:
                 folder_id = lookup[filepath]
