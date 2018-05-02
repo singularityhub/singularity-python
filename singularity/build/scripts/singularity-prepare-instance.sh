@@ -21,6 +21,8 @@ sudo apt-get -y install git \
                    yum \
                    uuid-dev \
                    zypper \
+                   libzypp \
+                   libzypp-dev \
                    libssl-dev \
                    python3-pip
 
@@ -34,7 +36,7 @@ sudo pip3 install oauth2client==3.0.0
 
 # Install Singularity from Github
 
-cd /tmp && git clone -b feature-squashbuild-secbuild-2.5.0 https://github.com/cclerget/singularity.git &&
+cd /tmp && git clone -b feature-squashbuild-secbuild-2.5.0 https://github.com/vsoch/singularity.git &&
 cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install && sudo make secbuildimg
 
 # Singularity python development

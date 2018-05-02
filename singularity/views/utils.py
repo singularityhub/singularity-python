@@ -45,8 +45,8 @@ def get_template(template_name,fields=None):
     template = None
     if not template_name.endswith('.html'):
         template_name = "%s.html" %(template_name)
-    here = "%s/cli/app/templates" %(get_installdir())
-    template_path = "%s/%s" %(here,template_name)
+    here = "%s/views/templates" %(get_installdir())
+    template_path = "%s/%s" %(here, template_name)
     if os.path.exists(template_path):
         template = ''.join(read_file(template_path))
     if fields is not None:

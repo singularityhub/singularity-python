@@ -1,10 +1,18 @@
 # Container Tree
 
-The functions under analysis will help you show the contents of an image (folders and files) in your web browser:
+The functions under analysis will help you show the contents of an image (folders and files) in your web browser.
 
-      shub --tree --image /home/vanessa/Desktop/ubuntu:latest-2016-04-06.img.zip
+```python
 
-This will open up something that looks like this:
+from singularity.views import ( container_tree, get_template )
+
+files = ["/path/1", .. , "/path/N"]
+
+tree = container_tree(files=files, folders=files)
+html = get_template('container_tree', {'files': tree['files'],
+                                       'graph': tree['graph'],
+                                        'container_name': "My Container Tree"})
+```
 
 ![../../img/files.png](../../img/files.png)
 
