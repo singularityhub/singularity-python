@@ -236,6 +236,9 @@
             link.enter().insert("path", "g")
                 .attr("style", function(d) {
                     console.log(d);
+                    if (d.target.id==1) {
+                        return "stroke:#ccc";
+                    } 
                     if (d.target.labels=='added') {
                         return "stroke:#469e30";
                     } 
