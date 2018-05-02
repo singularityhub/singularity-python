@@ -149,17 +149,19 @@ function update(source) {
       .on("mouseover", showFiles);
 
   nodeEnter.append("image")
-      .attr("xlink:href",function(d) {
-          if (d._children.length > 0) {
-              return  "https://github.com/vsoch/singularity-python/raw/v2.5/singularity/views/static/img/folder-blue.png";
-          } else {
-              return "https://github.com/vsoch/singularity-python/raw/v2.5/singularity/views/static/img/folder.png";
-          }
-      })
       .attr("x", "-8px")
       .attr("y", "-8px")
       .attr("width", "24px")
-      .attr("height", "24px");
+      .attr("height", "24px")
+      .attr("xlink:href",function(d) {
+          if (d._children != null ) {
+              if (d._children.length > 0) {
+                  return  "https://github.com/vsoch/singularity-python/raw/v2.5/singularity/views/static/img/folder-blue.png";
+              } else {
+                  return "https://github.com/vsoch/singularity-python/raw/v2.5/singularity/views/static/img/folder.png";
+              }
+          }
+      });
 
   nodeEnter.append("circle")
       .attr("r", 1e-6)
