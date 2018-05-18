@@ -230,7 +230,7 @@ def run_build(logfile='/tmp/.shub-log'):
 
     # Output includes:
     finished_image = output['image']
-    metadata = output['metadata']  
+    metadata = output['metadata']
     params = output['params']  
 
     # Upload image package files to Google Storage
