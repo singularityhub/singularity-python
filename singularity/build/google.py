@@ -238,7 +238,8 @@ def run_build(logfile='/tmp/.shub-log'):
 
     # Output includes:
     finished_image = output['image']
-    finished_recipe = '/%s/Singularity' %build_dir
+    finished_recipe = '/%s/%s' %(build_dir, os.path.basename(params['spec_file']))
+    bot.info('Recipe to upload to storage %s' %finished_recipe)
     metadata = output['metadata']  
     params = output['params']  
 
