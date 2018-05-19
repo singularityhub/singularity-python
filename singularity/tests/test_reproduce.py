@@ -33,7 +33,7 @@ from singularity.utils import (
     write_file
 )
 
-from singularity.cli import Singularity
+from spython.main import Client
 import unittest
 import tempfile
 import shutil
@@ -42,17 +42,21 @@ import os
 
 print("######################################################## test_reproduce")
 
+# Pull images for all tests
+tmpdir = tempfile.mkdtemp()
+image1 = Client.pull('docker://ubuntu:14.04', pull_folder=tmpdir)
+image2 = Client.pull('docker://busybox:1', pull_folder=tmpdir)
+
 class TestReproduce(unittest.TestCase):
 
     def setUp(self):
         self.pwd = get_installdir()
-        self.cli = Singularity()
-        self.tmpdir = tempfile.mkdtemp()
-        self.image1 = "%s/tests/data/busybox-2017-10-21.simg" %(self.pwd)
-        self.image2 = "%s/tests/data/cirros-2017-10-21.simg" %(self.pwd)
+        self.tmpdir = tmpdir
+        self.image1 = image1
+        self.image2 = image2
         
     def tearDown(self):
-        shutil.rmtree(self.tmpdir)
+        pass
 
     def test_get_image_hashes(self):
         from singularity.analysis.reproduce import get_image_hashes, get_image_hash
@@ -64,7 +68,7 @@ class TestReproduce(unittest.TestCase):
             self.assertTrue(key in hashes)
 
         print("Case 2: Specification of 2.2 does not return LABELS")
-        hashes = get_image_hashes(self.image1,version=2.2)
+        hashes = get_image_hashes(self.image1, version=2.2)
         self.assertTrue('LABELS' not in hashes)
 
         print("Case 3: Testing to retrieve one particular hash")
@@ -78,7 +82,7 @@ class TestReproduce(unittest.TestCase):
 
         print("Testing function to calculate hash differences between two images")
         diffs = assess_differences(image_file1=self.image1,image_file2=self.image2)
-        self.assertTrue(isinstance(diffs,dict))
+        self.assertTrue(isinstance(diffs, dict))
         self.assertTrue('scores' in diffs)
 
     def test_get_custom_level(self):
@@ -122,7 +126,7 @@ class TestReproduce(unittest.TestCase):
         hashes = get_content_hashes(self.image1)
         for key in ['hashes','sizes','root_owned']:
             self.assertTrue(key in hashes)
-        self.assertEqual(len(hashes['hashes']),395)
+        self.assertEqual(len(hashes['hashes']), 8819)
 
 
     def test_extract_guts(self):
@@ -141,12 +145,7 @@ class TestReproduce(unittest.TestCase):
             self.assertTrue(key in guts)
         tar.close()
 
-    def test_get_image_file_hash(self):
-        from singularity.analysis.reproduce import get_image_file_hash
-        print("Testing singularity.analysis.reproduce.get_image_file_hash")
-        hashy = get_image_file_hash(self.image1)
-        self.assertEqual('843929a1c92d53656fa744c6b831f59b',hashy)
-
 
 if __name__ == '__main__':
     unittest.main()
+    shutil.rmtree(tmpdir)

@@ -37,7 +37,7 @@ import io
 import re
 
 
-
+Client.quiet = True
 
 def get_image_hashes(image_path, version=None, levels=None):
     '''get_image_hashes returns the hash for an image across all levels. This is the quickest,

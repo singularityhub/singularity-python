@@ -33,6 +33,7 @@ import os
 import re
 import io
 
+Client.quiet = True
 
 def extract_guts(image_path,tar,file_filter,tag_root=True,include_sizes=True):
     '''extract the file guts from an in memory tarfile. The file is not closed.
@@ -83,7 +84,7 @@ def get_memory_tar(image_path):
     '''get an in memory tar of an image. Use carefully, not as reliable
        as get_image_tar
     '''
-    byte_array = Client.export(image_path)
+    byte_array = Client.image.export(image_path)
     file_object = io.BytesIO(byte_array)
     tar = tarfile.open(mode="r|*", fileobj=file_object)
     return (file_object,tar)
@@ -95,7 +96,7 @@ def get_image_tar(image_path):
     or the file itself.
     '''
     bot.debug('Generate file system tar...')   
-    file_obj = S.export(image_path=image_path)
+    file_obj = Client.image.export(image_path=image_path)
     if file_obj is None:
         bot.error("Error generating tar, exiting.")
         sys.exit(1)
@@ -125,10 +126,13 @@ def extract_content(image_path, member_name, return_hash=False):
         member_name = member_name.replace('.','',1)
     if return_hash:
         hashy = hashlib.md5()
+
     content = Client.execute(image_path,'cat %s' %(member_name))
+
     if not isinstance(content,bytes):
         content = content.encode('utf-8')
         content = bytes(content)
+
     # If permissions don't allow read, return None
     if len(content) == 0:
         return None
