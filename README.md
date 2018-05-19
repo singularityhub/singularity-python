@@ -18,9 +18,8 @@ pip install singularity
 pip install singularity[metrics]
 
 # Building on Google Cloud
-pip install singularity[google[
+pip install singularity[google]
 ```
-
 
 We currently require Python > version 3 to use various timezone functions. If you are unable to install version 3.0, we provide a [Singularity.container](Singularity.container) for you to use instead. This is the recommended approach as some older versions of Python do not support generation of the timestamp. See the [installation docs](https://github.com/singularityware/singularity-python/wiki/Installation) for your different options.
 
