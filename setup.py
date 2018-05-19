@@ -121,7 +121,7 @@ if __name__ == "__main__":
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
-              'License :: OSI Approved :: GPLv3 License',
+              'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
               'Programming Language :: C',
               'Programming Language :: Python',
               'Topic :: Software Development',
