@@ -127,7 +127,10 @@ def extract_content(image_path, member_name, return_hash=False):
     if return_hash:
         hashy = hashlib.md5()
 
-    content = Client.execute(image_path,'cat %s' %(member_name))
+    try:
+        content = Client.execute(image_path,'cat %s' %(member_name))
+    except:
+        return None
 
     if not isinstance(content,bytes):
         content = content.encode('utf-8')
