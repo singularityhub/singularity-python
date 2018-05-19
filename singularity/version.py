@@ -29,7 +29,7 @@ DESCRIPTION = "command line tools for visualization and analysis of singularity 
 LICENSE = "LICENSE"
 
 INSTALL_REQUIRES = (
-    ('spython', {'min_version': '0.0.34'}),
+    ('spython', {'min_version': '0.0.35'}),
     ('requests', {'min_version': '2.18.4'}),
     ('retrying', {'min_version': '1.3.3'}),
     ('pygments', {'min_version': '2.1.3'}),

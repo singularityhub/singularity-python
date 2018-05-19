@@ -1,34 +1,8 @@
 from glob import glob
 
-from singularity.analysis.reproduce import (
-    assess_replication, 
-    assess_differences
-)
+from singularity.analysis.reproduce import assess_differences
 
 image_files=glob('*.img')
-
-# ASSESS REPLICATION #######################################
-# returns booleans for if the hashes for levels are the same
-
-assess_replication(image_files[0],image_files[1])
-
-{'BASE': False,
- 'ENVIRONMENT': False,
- 'IDENTICAL': False,
- 'LABELS': True,
- 'RECIPE': False,
- 'REPLICATE': False,
- 'RUNSCRIPT': False}
-
-assess_replication(image_files[0],image_files[0])
-
-{'BASE': True,
- 'ENVIRONMENT': True,
- 'IDENTICAL': True,
- 'LABELS': True,
- 'RECIPE': True,
- 'REPLICATE': True,
- 'RUNSCRIPT': True}
 
 # ASSESS DIFFERENCES #######################################
 # returns dictionary with 
