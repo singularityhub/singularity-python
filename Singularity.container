@@ -2,13 +2,7 @@ Bootstrap: docker
 From: continuumio/miniconda3
 
 %runscript
-exec /opt/conda/bin/sregistry "$@"
-
-%apprun shub
-exec /opt/conda/bin/shub "$@"
-
-%apprun sregistry
-exec /opt/conda/bin/sregistry "$@"
+exec /opt/conda/bin/python "$@"
 
 %labels
 maintainer vsochat@stanford.edu
@@ -21,10 +15,8 @@ apt-get update && apt-get install -y git
 
 # Install Singularity Python
 cd /opt
-git clone -b development https://www.github.com/vsoch/singularity-python
+git clone https://www.github.com/singularityware/singularity-python
 cd singularity-python
 /opt/conda/bin/pip install setuptools
 /opt/conda/bin/pip install -r requirements.txt
-/opt/conda/bin/pip install pyasn1==0.4.1
-/opt/conda/bin/python setup.py sdist
 /opt/conda/bin/python setup.py install
