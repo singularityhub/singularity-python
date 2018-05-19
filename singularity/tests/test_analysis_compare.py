@@ -28,7 +28,7 @@ from numpy.testing import (
 )
 
 from singularity.utils import get_installdir
-from singularity.cli import Singularity
+from spython.main import Client
 import unittest
 import pandas
 import tempfile
@@ -42,7 +42,7 @@ class TestAnalysisCompare(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.cli = Singularity()
+        self.cli = Client
         self.container = self.cli.pull('docker://ubuntu:16.04', 
                                        pull_folder=self.tmpdir)
 
