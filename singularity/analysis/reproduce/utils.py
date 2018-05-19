@@ -25,6 +25,7 @@ from .criteria import (
     include_file,
     is_root_owned
 )
+from .levels import get_level
 from singularity.logger import bot
 import hashlib
 import tarfile
@@ -35,15 +36,21 @@ import io
 
 Client.quiet = True
 
-def extract_guts(image_path,tar,file_filter,tag_root=True,include_sizes=True):
+def extract_guts(image_path,
+                 tar,
+                 file_filter=None,
+                 tag_root=True,
+                 include_sizes=True):
+
     '''extract the file guts from an in memory tarfile. The file is not closed.
        This should not be done for large images.
-    :TODO: this should have a switch for a function to decide if we should
-    read the memory in tar, or from fileystem
     '''
+    if file_filter is None:
+        file_filter = get_level('IDENTICAL')
 
     results = dict()
     digest = dict()
+    allfiles = []
 
     if tag_root:
         roots = dict()
@@ -53,6 +60,7 @@ def extract_guts(image_path,tar,file_filter,tag_root=True,include_sizes=True):
 
     for member in tar:
         member_name = member.name.replace('.','',1)
+        allfiles.append(member_name)
         included = False
         if member.isdir() or member.issym():
             continue
@@ -71,6 +79,7 @@ def extract_guts(image_path,tar,file_filter,tag_root=True,include_sizes=True):
             if tag_root:
                 roots[member_name] = is_root_owned(member)
 
+    results['all'] = allfiles
     results['hashes'] = digest
     if include_sizes:
         results['sizes'] = sizes
