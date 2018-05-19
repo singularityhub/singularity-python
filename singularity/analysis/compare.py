@@ -23,12 +23,7 @@ import os
 import re
 from singularity.logger import bot
 from singularity.utils import get_installdir
-from singularity.package import (
-    get_packages,
-    get_container_contents,
-    load_package,
-    package as make_package
-)
+from singularity.package import get_container_contents
 from singularity.analysis.reproduce import (
     get_image_tar,
     delete_image_tar
@@ -43,7 +38,7 @@ import pandas
 # CONTAINER COMPARISONS ###########################################################
 ###################################################################################
 
-def container_similarity_vector(container1=None,packages_set=None,by=None,custom_set=None):
+def container_similarity_vector(container1=None,packages_set=None,by=None):
     '''container similarity_vector is similar to compare_packages, but intended
     to compare a container object (singularity image or singularity hub container)
     to a list of packages. If packages_set is not provided, the default used is 
@@ -51,14 +46,8 @@ def container_similarity_vector(container1=None,packages_set=None,by=None,custom
     list, should define custom_set.
     :param container1: singularity image or singularity hub container.
     :param packages_set: a name of a package set, provided are docker-os and docker-library
-    :param custom_set: a list of package files, used first if provided.
     :by: metrics to compare by (files.txt and or folders.txt)
-    ''' 
-    if custom_set == None:
-        if packages_set == None:
-            packages_set = get_packages('docker-os')
-    else:
-        packages_set = custom_set
+    '''
 
     if by == None:
         by = ['files.txt']
