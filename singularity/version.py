@@ -19,24 +19,39 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
-__version__ = "2.4.1"
+__version__ = "2.5"
 AUTHOR = 'Vanessa Sochat'
 AUTHOR_EMAIL = 'vsochat@stanford.edu'
 NAME = 'singularity'
 PACKAGE_URL = "http://www.github.com/singularityware/singularity-python"
 KEYWORDS = 'singularity containers hub reproducibility package science visualization'
-DESCRIPTION = "Command line tool for working with singularity-hub and packaging singularity containers."
+DESCRIPTION = "command line tools for visualization and analysis of singularity containers."
 LICENSE = "LICENSE"
 
 INSTALL_REQUIRES = (
-
-    ('demjson', {'exact_version': "2.2.4"}),
-    ('python-dateutil', {'exact_verison': "2.5.3"}),
-    ('pandas', {'exact_verison': '0.20.3'}),
-    ('requests', {'exact_version': '2.18.4'}),
-    ('requests-toolbelt', {'exact_version': '0.8.0'}),
-    ('retrying', {'exact_version': '1.3.3'}),
+    ('spython', {'min_version': '0.0.35'}),
+    ('requests', {'min_version': '2.18.4'}),
+    ('retrying', {'min_version': '1.3.3'}),
     ('pygments', {'min_version': '2.1.3'}),
+)
+
+################################################################################
+# Submodule Requirements (no database, just client)
+
+
+# Container comparison and analysis metrics
+
+# can we remove this?
+
+INSTALL_METRICS = (
+    ('pandas', {'min_version': '0.20.3'}),
+)
+
+INSTALL_BUILD_GOOGLE = (
     ('google-api-python-client', {'min_version': "1.6.4"}),
     ('oauth2client', {'exact_version': '3.0'})
 )
+
+INSTALL_ALL = (INSTALL_REQUIRES +
+               INSTALL_METRICS +
+               INSTALL_BUILD_GOOGLE)

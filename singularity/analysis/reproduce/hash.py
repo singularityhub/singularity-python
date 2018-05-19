@@ -19,7 +19,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
-from singularity.cli import Singularity
+from spython.main import Client
 from singularity.logger import bot
 from singularity.analysis.reproduce.criteria import *
 from singularity.analysis.reproduce.levels import *
@@ -37,9 +37,9 @@ import io
 import re
 
 
+Client.quiet = True
 
-
-def get_image_hashes(image_path,version=None,levels=None):
+def get_image_hashes(image_path, version=None, levels=None):
     '''get_image_hashes returns the hash for an image across all levels. This is the quickest,
     easiest way to define a container's reproducibility on each level.
     '''
@@ -91,7 +91,6 @@ def get_image_hash(image_path,
                                 skip_files=skip_files,
                                 include_files=include_files)
                 
-    cli = Singularity()
     file_obj, tar = get_image_tar(image_path)
     hasher = hashlib.md5()
 
@@ -102,7 +101,7 @@ def get_image_hash(image_path,
         if member.isdir() or member.issym():
             continue
         elif assess_content(member,file_filter):
-            content = extract_content(image_path,member.name,cli)
+            content = extract_content(image_path,member.name)
             hasher.update(content)
         elif include_file(member,file_filter):
             buf = member.tobuf()

@@ -1,10 +1,8 @@
 '''
-auth.py: authentication functions for singularity hub api
-         currently no token / auth for private collections
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
+Copyright (C) 2018 The Board of Trustees of the Leland Stanford Junior
 University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2018 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -60,42 +58,6 @@ def generate_timestamp():
     return ts.strftime('%Y%m%dT%HZ')
 
 
-def generate_credential(s):
-    '''basic_auth_header will return a base64 encoded header object to
-    :param username: the username
-    '''
-    if sys.version_info[0] >= 3:
-        s = bytes(s, 'utf-8')
-        credentials = base64.b64encode(s).decode('utf-8')
-    else:
-        credentials = base64.b64encode(s)
-    return credentials
-
-
-def read_client_secrets(secrets=None,required=True):
-
-    # If token file not provided, check environment
-    if secrets is None:
-        secrets = os.environ.get("SREGISTRY_CLIENT_SECRETS")
-
-    # Fall back to default
-    if secrets is None:
-        userhome = pwd.getpwuid(os.getuid())[5]
-        secrets = "%s/.sregistry" % (userhome)
-
-    if secrets is not None:
-        if os.path.exists(secrets):
-            return read_json(secrets)
-
-    message = 'Client secrets file not found at %s or $SREGISTRY_CLIENT_SECRETS.' %secrets
-    if required:
-        bot.error(message)
-        sys.exit(1)
-
-    bot.warning(message)
-    return None
-
-
 def generate_header_signature(secret, payload, request_type):
     '''Authorize a client based on encrypting the payload with the client
        secret, timestamp, and other metadata
@@ -106,4 +68,4 @@ def generate_header_signature(secret, payload, request_type):
     credential = "%s/%s" %(request_type,timestamp)
 
     signature = generate_signature(payload,secret)
-    return "SREGISTRY-HMAC-SHA256 Credential=%s,Signature=%s" %(credential,signature)
+    return "SREGISTRY-HMAC-SHA256 Credential=%s,Signature=%s" %(credential, signature)

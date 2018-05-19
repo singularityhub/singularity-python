@@ -44,7 +44,7 @@ get_image_hash(image_path,level="IDENTICAL")
 # We might want to get a dictionary of content hashes for all files
 # of one container at one level!
 digest = get_content_hashes(image_path)
-digest['./usr/bin/pinky']
+digest['hashes']['/usr/bin/chfn']
 # 'ee2b438c278011bdac1a3a927e2d37519a8ed9c7'
 
 # We can also get a hash of the entire image file, this is done on the

@@ -32,8 +32,13 @@ from singularity.utils import (
     write_file
 )
 import sys
-
 import subprocess
+
+from singularity.analysis.reproduce.utils import (
+    extract_guts, 
+    delete_image_tar 
+)
+from singularity.analysis.reproduce import get_image_tar
 
 import tempfile
 import zipfile
@@ -111,26 +116,14 @@ def zip_up(file_list,zip_name,output_folder=None):
 ############################################################################
 
 
-def get_container_contents(container=None,gets=None,split_delim=None,image_package=None):
+def get_container_contents(container, split_delim=None):
     '''get_container_contents will return a list of folders and or files
     for a container. The environmental variable SINGULARITY_HUB being set
     means that container objects are referenced instead of packages
     :param container: the container to get content for
     :param gets: a list of file names to return, without parent folders
     :param split_delim: if defined, will split text by split delimiter
-    :param image_package: if defined, user has provided an image_package
     '''
-    from singularity.package import package, load_package
-
-    if container == None and image_package == None:
-        bot.error("You must define an image package or container.")
-        sys.exit(1)
-
-    # Default returns are the list of files and folders
-    if gets == None:
-        gets = ['files.txt','folders.txt']
-    if not isinstance(gets,list):
-        gets = [gets]
 
     # We will look for everything in guts, then return it
     guts = dict()
@@ -139,14 +132,9 @@ def get_container_contents(container=None,gets=None,split_delim=None,image_packa
 
     # Visualization deployed local or elsewhere
     if SINGULARITY_HUB == "False":
-        tmpdir = tempfile.mkdtemp()
-        if image_package == None:
-            image_package = package(image_path=container,
-                                    output_folder=tmpdir,
-                                    remove_image=True)
-     
-        guts = load_package(image_package,get=gets)
-        shutil.rmtree(tmpdir)
+        file_obj,tar = get_image_tar(container)     
+        guts = extract_guts(image_path=container, tar=tar)
+        delete_image_tar(file_obj, tar)
 
     # Visualization deployed by singularity hub
     else:   

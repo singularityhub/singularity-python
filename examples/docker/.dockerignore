@@ -1,7 +1,0 @@
-examples/*
-examples
-build
-*.simg
-*.img
-dist
-*.egg.info

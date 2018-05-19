@@ -1,8 +1,8 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
+Copyright (C) 2018 The Board of Trustees of the Leland Stanford Junior
 University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2018 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -52,8 +52,6 @@ import sys
 import tempfile
 import time
 import zipfile
-
-shub_api = "http://www.singularity-hub.org/api"
 
 # Log everything to stdout
 from singularity.logger import bot
@@ -231,17 +229,14 @@ def run_build(logfile='/tmp/.shub-log'):
                             params=params)
 
     # Output includes:
-    image_package = output['image_package']
     finished_image = output['image']
-    metadata = output['metadata']  
+    metadata = output['metadata']
     params = output['params']  
 
     # Upload image package files to Google Storage
-    if os.path.exists(image_package):
-        bot.info("Package %s successfully built" %image_package)
+    if os.path.exists(finished_image):
+        bot.info("%s successfully built" %finished_image)
         dest_dir = tempfile.mkdtemp(prefix='build')
-        with zipfile.ZipFile(image_package) as zf:
-            zf.extractall(dest_dir)
 
         # The path to the images on google drive will be the github url/commit folder
         trailing_path = "%s/%s" %(params['commit'], params['version'])
@@ -249,9 +244,8 @@ def run_build(logfile='/tmp/.shub-log'):
                                                          # commits are no longer unique
                                                          # storage is by commit
 
-        build_files = glob("%s/*" %(dest_dir))
-        build_files.append(finished_image)
-        bot.info("Sending build files to storage:") 
+        build_files = [finished_image]
+        bot.info("Sending image to storage:") 
         bot.info('\n'.join(build_files))
 
         # Start the storage service, retrieve the bucket

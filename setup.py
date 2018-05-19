@@ -39,16 +39,17 @@ def get_lookup():
         exec(filey.read(), lookup)
     return lookup
 
+
 # Read in requirements
-def get_requirements(lookup=None):
-    '''get_requirements reads in requirements and versions from
+def get_reqs(lookup=None, key='INSTALL_REQUIRES'):
+    '''get requirements, mean reading in requirements and versions from
     the lookup obtained with get_lookup'''
 
     if lookup == None:
         lookup = get_lookup()
 
     install_requires = []
-    for module in lookup['INSTALL_REQUIRES']:
+    for module in lookup[key]:
         module_name = module[0]
         module_meta = module[1]
         if "exact_version" in module_meta:
@@ -87,7 +88,13 @@ with open('README.md') as filey:
 
 if __name__ == "__main__":
 
-    INSTALL_REQUIRES = get_requirements(lookup)
+    INSTALL_REQUIRES = get_reqs(lookup)
+
+    # These requirement DON'T include sqlalchemy, only client
+
+    INSTALL_ALL = get_reqs(lookup,'INSTALL_ALL')
+    INSTALL_BUILD_GOOGLE = get_reqs(lookup,'INSTALL_BUILD_GOOGLE')
+    INSTALL_METRICS = get_reqs(lookup,'INSTALL_METRICS')
 
     setup(name=NAME,
           version=VERSION,
@@ -104,6 +111,13 @@ if __name__ == "__main__":
           long_description=LONG_DESCRIPTION,
           keywords=KEYWORDS,
           install_requires = INSTALL_REQUIRES,
+          extras_require={
+
+              'metrics': [INSTALL_METRICS],
+              'google': [INSTALL_BUILD_GOOGLE],
+              'all': [INSTALL_ALL]
+
+          },
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
@@ -115,6 +129,4 @@ if __name__ == "__main__":
               'Operating System :: Unix',
               'Programming Language :: Python :: 2.7',
               'Programming Language :: Python :: 3',
-          ],
-          entry_points = {'console_scripts': [ 'shub=singularity.cli.main:main',
-                                               'sregistry=singularity.registry.main:main' ] })
+          ])

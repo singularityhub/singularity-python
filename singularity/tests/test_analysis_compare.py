@@ -28,7 +28,7 @@ from numpy.testing import (
 )
 
 from singularity.utils import get_installdir
-from singularity.cli import Singularity
+from spython.main import Client
 import unittest
 import pandas
 import tempfile
@@ -42,7 +42,7 @@ class TestAnalysisCompare(unittest.TestCase):
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
-        self.cli = Singularity()
+        self.cli = Client
         self.container = self.cli.pull('docker://ubuntu:16.04', 
                                        pull_folder=self.tmpdir)
 
@@ -56,15 +56,6 @@ class TestAnalysisCompare(unittest.TestCase):
 
 
     def test_container_similarity(self):
-        print("Testing singularity.analysis.compare.container_similarity_vector")
-        import pandas
-        from singularity.analysis.compare import container_similarity_vector
-        from singularity.package import get_packages
-        packages_set = get_packages('docker-os')[0:2]
-        vector = container_similarity_vector(container1=self.container,
-                                             custom_set=packages_set)
-        self.assertTrue('files.txt' in vector)
-        self.assertTrue(isinstance(vector['files.txt'],pandas.DataFrame))
 
         print("Testing singularity.analysis.compare.compare_singularity_images")
         from singularity.analysis.compare import compare_singularity_images
@@ -74,15 +65,14 @@ class TestAnalysisCompare(unittest.TestCase):
 
         print("Testitng singularity.analysis.compare.compare_containers")
         from singularity.analysis.compare import compare_containers
-        comparison = compare_containers(self.container,self.comparator)
-        self.assertTrue('files.txt' in comparison)
+        comparison = compare_containers(self.container, self.comparator)
         for key in ['total1', 'total2', 'intersect', 'unique2', 'unique1']:
-            self.assertTrue(key in comparison['files.txt'])
+            self.assertTrue(key in comparison)
      
         print("Testing singularity.analysis.compare.calculate_similarity")
         from singularity.analysis.compare import calculate_similarity
         sim = calculate_similarity(self.container,self.comparator)
-        self.assertTrue(sim['files.txt'] -0.4921837537163134 < 0.01)
+        self.assertTrue(sim - 0.474603405617814 < 0.01)
 
     def test_information_coefficient(self):
         print("Testing singularity.analysis.metrics.information_coefficient")
