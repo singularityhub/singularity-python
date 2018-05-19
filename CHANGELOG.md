@@ -15,7 +15,7 @@ and changes prior to that are (unfortunately) done retrospectively. Critical ite
 
 
 ## [master](https://github.com/singularityware/singularity-python/tree/master)
- - removed all client functionality in favor of using spython (2.4.5)
+ - removed all client functionality in favor of using spython (2.5)
  - build on Google will not extract file counts, etc.
 
 ## [v2.4.1](https://github.com/singularityware/singularity-python/releases/tag/v2.4.1) (v2.4.1)
