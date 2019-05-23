@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -19,11 +17,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
-__version__ = "2.5"
+__version__ = "2.5.2"
 AUTHOR = 'Vanessa Sochat'
 AUTHOR_EMAIL = 'vsochat@stanford.edu'
 NAME = 'singularity'
-PACKAGE_URL = "http://www.github.com/singularityware/singularity-python"
+PACKAGE_URL = "http://www.github.com/singularityhub/singularity-python"
 KEYWORDS = 'singularity containers hub reproducibility package science visualization'
 DESCRIPTION = "command line tools for visualization and analysis of singularity containers."
 LICENSE = "LICENSE"

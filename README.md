@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/singularityware/singularity-python.svg?branch=master)](https://travis-ci.org/singularityware/singularity-python)
 
-Singularity Python is a python module and command line tool to provide helpers for working with <a href="https://singularityware.github.io" target="_blank">Singularity</a> containers, specifically providing functions to visualize, package, and compare containers. 
+Singularity Python is a python module and command line tool to provide helpers for working with <a href="https://www.sylabs.io/guides/3.0/user-guide/" target="_blank">Singularity</a> containers, specifically providing functions to visualize, package, and compare containers. 
 
  - If you are looking for the Singularity Python client to pull, build, and otherwise wrap Singularity functions, then please see the repository [singularity-cli](https://singularityhub.github.io/singularity-cli) for the [spython](https://pypi.org/project/spython/) module.
  - If you are looking for local management and interaction with various storage locations (e.g., to pull and inspect containers in Singularity Hub, Registry, or other cloud resource) then please see the [Global Client](https://singularityhub.github.io/sregistry-cli) for the `sregistry` module.
