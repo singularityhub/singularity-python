@@ -30,11 +30,11 @@ fi
 # Install python dependencies
 which python
 
-conda install -y pandas scikit-learn pygments
+conda install -y pandas scikit-learn pygments pylint
 cd $TRAVIS_BUILD_DIR && sudo python -m pip install -r requirements.txt
 python setup.py sdist && python setup.py install
 pylint --version
 
 # Install Singularity
-cd /tmp && git clone https://github.com/singularityware/singularity.git && cd singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
+cd /tmp && git clone -b vault/release-2.6 https://github.com/sylabs/singularity.git && cd singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install
 
