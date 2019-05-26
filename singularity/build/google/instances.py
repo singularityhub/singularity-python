@@ -17,143 +17,27 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
-from singularity.build.utils import sniff_extension
-
 from singularity.build.main import (
     run_build as run_build_main,
     send_build_data,
     send_build_close
 )
 
-from googleapiclient.discovery import build
-from oauth2client.client import GoogleCredentials
-from googleapiclient.errors import HttpError
-from googleapiclient import http
-
-from glob import glob
-import httplib2
-import inspect
-import imp
 import json
 import uuid
-
-from oauth2client import client
-from oauth2client.service_account import ServiceAccountCredentials
-
-import io
 import os
 import pickle
-import re
 import requests
-from retrying import retry
-import sys
 import tempfile
-import time
-import zipfile
 
 # Log everything to stdout
 from singularity.logger import bot
 
-##########################################################################################
-# GOOGLE GENERAL API #####################################################################
-##########################################################################################
-
-def get_google_service(service_type=None,version=None):
-    '''
-    get_url will use the requests library to get a url
-    :param service_type: the service to get (default is storage)
-    :param version: version to use (default is v1)
-    '''
-    if service_type == None:
-        service_type = "storage"
-    if version == None:
-        version = "v1"
-
-    credentials = GoogleCredentials.get_application_default()
-    return build(service_type, version, credentials=credentials) 
-
-
-##########################################################################################
-# GOOGLE STORAGE API #####################################################################
-##########################################################################################
-    
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def get_bucket(storage_service,bucket_name):
-    req = storage_service.buckets().get(bucket=bucket_name)
-    return req.execute()
-
-
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=10)
-def delete_object(storage_service,bucket_name,object_name):
-    '''delete_file will delete a file from a bucket
-    :param storage_service: the service obtained with get_storage_service
-    :param bucket_name: the name of the bucket (eg singularity-hub)
-    :param object_name: the "name" parameter of the object.
-    '''
-    try:
-        operation = storage_service.objects().delete(bucket=bucket_name,
-                                                     object=object_name).execute()
-    except HttpError as e:
-        pass
-        operation = e
-    return operation
-
-
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
-    '''get_folder will return the folder with folder_name, and if create=True,
-    will create it if not found. If folder is found or created, the metadata is
-    returned, otherwise None is returned
-    :param storage_service: the drive_service created from get_storage_service
-    :param bucket: the bucket object from get_bucket
-    :param file_name: the name of the file to upload
-    :param bucket_path: the path to upload to
-    '''
-    # Set up path on bucket
-    upload_path = "%s/%s" %(bucket['id'],bucket_path)
-    if upload_path[-1] != '/':
-        upload_path = "%s/" %(upload_path)
-    upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
-    body = {'name': upload_path }
-    # Create media object with correct mimetype
-    if os.path.exists(file_name):
-        mimetype = sniff_extension(file_name,verbose=verbose)
-        media = http.MediaFileUpload(file_name,
-                                     mimetype=mimetype,
-                                     resumable=True)
-        request = storage_service.objects().insert(bucket=bucket['id'], 
-                                                   body=body,
-                                                   predefinedAcl="publicRead",
-                                                   media_body=media)
-        result = request.execute()
-        return result
-    bot.warning('%s requested for upload does not exist, skipping' %file_name)
-
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def list_bucket(bucket,storage_service):
-    # Create a request to objects.list to retrieve a list of objects.        
-    request = storage_service.objects().list(bucket=bucket['id'], 
-                                             fields='nextPageToken,items(name,size,contentType)')
-    # Go through the request and look for the folder
-    objects = []
-    while request:
-        response = request.execute()
-        objects = objects + response['items']
-    return objects
-
-
-def get_image_path(repo_url, trailing_path):
-    '''get_image_path will determine an image path based on a repo url, removing
-    any token, and taking into account urls that end with .git.
-    :param repo_url: the repo url to parse:
-    :param trailing_path: the trailing path (commit then hash is common)
-    '''
-    repo_url = repo_url.split('@')[-1].strip()
-    if repo_url.endswith('.git'):
-        repo_url =  repo_url[:-4]
-    return "%s/%s" %(re.sub('^http.+//www[.]','',repo_url), trailing_path)
-
-
+from .utils import get_google_service
+from .storage import (
+    get_image_path,
+    upload_file
+)
 
 def run_build(logfile='/tmp/.shub-log'):
 
@@ -289,7 +173,6 @@ def run_build(logfile='/tmp/.shub-log'):
         pickle.dump(params,open(passing_params,'wb'))
 
 
-
 def finish_build(verbose=True):
     '''finish_build will finish the build by way of sending the log to the same bucket.
     the params are loaded from the previous function that built the image, expected in
@@ -328,9 +211,9 @@ def finish_build(verbose=True):
                      response_url=params['logging_url'])
 
 
-#####################################################################################
+################################################################################
 # METADATA
-#####################################################################################
+################################################################################
 
 
 def get_build_metadata(key):
@@ -338,7 +221,7 @@ def get_build_metadata(key):
     :param key: the key to look up
     '''
     headers = {"Metadata-Flavor":"Google"}
-    url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" %(key)        
+    url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" % key  
     response = requests.get(url=url,headers=headers)
     if response.status_code == 200:
         return response.text

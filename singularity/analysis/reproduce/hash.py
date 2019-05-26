@@ -46,18 +46,36 @@ def get_image_hashes(image_path, version=None, levels=None):
     if levels is None:
         levels = get_levels(version=version)
     hashes = dict()
-    for level_name,level_filter in levels.items():
+
+    # use a cached object for all
+    file_obj, tar = get_image_tar(image_path)
+
+    for level_name, level_filter in levels.items():
         hashes[level_name] = get_image_hash(image_path,
-                                            level_filter=level_filter)
+                                            level_filter=level_filter,
+                                            file_obj=file_obj,
+                                            tar=tar)
+
+    try:
+        file_obj.close()
+    except:
+        tar.close()
+ 
+    if os.path.exists(file_obj):
+        os.remove(file_obj)
+
     return hashes
 
 
 
 def get_image_hash(image_path,
-                   level=None,level_filter=None,
+                   level=None,
+                   level_filter=None,
                    include_files=None,
                    skip_files=None,
-                   version=None):
+                   version=None,
+                   file_obj=None,
+                   tar=None):
 
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
@@ -90,8 +108,12 @@ def get_image_hash(image_path,
         file_filter = get_level(level,version=version,
                                 skip_files=skip_files,
                                 include_files=include_files)
-                
-    file_obj, tar = get_image_tar(image_path)
+
+    close = False
+    if file_obj is None and tar is None:               
+        file_obj, tar = get_image_tar(image_path)
+        close = True
+
     hasher = hashlib.md5()
 
     for member in tar:
@@ -110,13 +132,14 @@ def get_image_hash(image_path,
     digest = hasher.hexdigest()
 
     # Close up / remove files
-    try:
-        file_obj.close()
-    except:
-        tar.close()
+    if close is True:
+        try:
+            file_obj.close()
+        except:
+            tar.close()
  
-    if os.path.exists(file_obj):
-        os.remove(file_obj)
+        if os.path.exists(file_obj):
+            os.remove(file_obj)
 
     return digest
 
@@ -150,15 +173,11 @@ def get_content_hashes(image_path,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
-    file_obj,tar = get_image_tar(image_path)
-
     results = extract_guts(image_path=image_path,
-                           tar=tar,
                            file_filter=file_filter,
                            tag_root=tag_root,
                            include_sizes=include_sizes)
 
-    delete_image_tar(file_obj, tar)
     return results
 
 
