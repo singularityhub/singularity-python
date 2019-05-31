@@ -74,7 +74,6 @@ class TestReproduce(unittest.TestCase):
 
         print("Testing function to calculate hash differences between two images")
         diffs = assess_differences(image_file1=self.image1, image_file2=self.image2)
-        print(diffs)
         self.assertTrue(isinstance(diffs, dict))
         self.assertTrue('scores' in diffs)
 
