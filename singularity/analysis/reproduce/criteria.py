@@ -28,9 +28,6 @@ def include_file(member_path, file_filter):
     '''include_file will look at a path and determine
     if it matches a regular expression from a level
     '''
-    print(member_path)
-    print(file_filter)
-
     # Does the filter skip it explicitly?
     if "skip_files" in file_filter:
         if member_path in file_filter['skip_files']:
@@ -43,9 +40,13 @@ def include_file(member_path, file_filter):
 
     # Regular expression?
     if "regexp" in file_filter:
-        if file_filter['regexp'] != None and member_path != None:
-            if re.search(file_filter["regexp"], member_path):
-                return True
+        if file_filter['regexp'] is not None and member_path is not None:
+            try: 
+                if re.search(file_filter["regexp"], member_path):
+                    return True
+            except:
+                   print(member_path)
+                   print(file_filter)
     return False
 
 
