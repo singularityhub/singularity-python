@@ -40,13 +40,8 @@ def include_file(member_path, file_filter):
 
     # Regular expression?
     if "regexp" in file_filter:
-        if file_filter['regexp'] is not None and member_path is not None:
-            try: 
-                if re.search(file_filter["regexp"], member_path):
-                    return True
-            except:
-                   print(member_path)
-                   print(file_filter)
+        if re.search(file_filter["regexp"], member_path):
+            return True
     return False
 
 

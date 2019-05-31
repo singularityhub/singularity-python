@@ -122,10 +122,10 @@ def get_image_hash(image_path,
         # For files, we either assess content, or include the file
         if member.isdir() or member.issym():
             continue
-        elif assess_content(member,file_filter):
-            content = extract_content(image_path,member.name)
+        elif assess_content(member, file_filter):
+            content = extract_content(image_path, member.name)
             hasher.update(content)
-        elif include_file(member,file_filter):
+        elif include_file(member.name, file_filter):
             buf = member.tobuf()
             hasher.update(buf)
 
