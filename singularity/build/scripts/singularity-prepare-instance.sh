@@ -6,10 +6,7 @@
 #                   Google Storage should have Full
 #                   All other APIs None,
 #
-#
-# Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-# University.
-# Copyright (C) 2016-2017 Vanessa Sochat.
+# Copyright (C) 2016-2019 Vanessa Sochat.
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU Affero General Public License as published by
