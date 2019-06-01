@@ -16,7 +16,6 @@ from .hash import (
 from .utils import (
     extract_content,
     delete_image_tar,
-    get_memory_tar,
     get_image_tar
 )
 

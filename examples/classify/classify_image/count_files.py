@@ -7,13 +7,11 @@ from singularity.analysis.classify import (
     extension_counts
 )
 
-container = "ubuntu.simg"
+# singularity pull docker://busybox
+container = "busybox_latest.sif"
 
 # Now we might be interested in counting different things
-readme_count = file_counts(container)
-copyright_count = file_counts(container, patterns=['copyright'])
-authors_count = file_counts(container, patterns=['authors','thanks','credit'])
-todo_count = file_counts(container, patterns=['todo'])
+bin_count = file_counts(container, patterns=['bin'])
 
 # Or getting a complete dict of extensions
 extensions = extension_counts(container)

@@ -61,7 +61,7 @@ def get_custom_level(regexp=None,description=None,skip_files=None,include_files=
     return custom
 
 
-def get_level(level,version=None,include_files=None,skip_files=None):
+def get_level(level, version=None, include_files=None, skip_files=None):
     '''get_level returns a single level, with option to customize files
     added and skipped.
     '''

@@ -7,7 +7,7 @@ from singularity.analysis.reproduce import (
     get_image_file_hash    
 )
 
-image_files = glob("*.simg")
+image_files = glob("*.sif")
 image_path = image_files[0]
 
 ########################################################
@@ -30,7 +30,7 @@ levels = get_levels(version=2.3)
 # We can, then generate an image hash, and by default the level "REPLICATION" will be used:
 
 get_image_hash(image_path)
-#'bf8e242931e25ae9496015868ab2e8cc8d156ffd'
+# '4c252c8fb818e4b854a478a1a0df5991'
 
 # But we can also specify a level that we want:
 get_image_hash(image_path,level="IDENTICAL")
@@ -45,10 +45,10 @@ get_image_hash(image_path,level="IDENTICAL")
 # of one container at one level!
 digest = get_content_hashes(image_path)
 digest['hashes']['/usr/bin/chfn']
-# 'ee2b438c278011bdac1a3a927e2d37519a8ed9c7'
+# '4b5ee4db88c3b8bfb0cb7cb3a90a7793'
 
 # We can also get a hash of the entire image file, this is done on the
 # binary file and not contents inside.
 
 file_hash = get_image_file_hash(image_path)
-# e'13775a83962ae60744d691eb7f7fd1e96599e656'
+# 'd5349c37fdc2e6f2dca8793732e1c420'

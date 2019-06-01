@@ -43,15 +43,17 @@ def package_node(root=None, name=None):
         root = "/"
 
     tmpdir = tempfile.mkdtemp()
-    image = "%s/%s.tgz" %(tmpdir,name)
+    image = "%s/%s.tgz" %(tmpdir, name)
 
-    print("Preparing to package root %s into %s" %(root,name))
-    cmd = ["tar","--one-file-system","-czvSf", image, root,"--exclude",image]
+    excludes = ['--exclude', "'/tmp'", '--exclude', image]
+
+    print("Preparing to package root %s into %s" %(root, name))
+    cmd = ["tar","--one-file-system","-czvSf", image, root] + excludes
     output = run_command(cmd)
     return image
 
 
-def unpack_node(image_path,name=None,output_folder=None,size=None):
+def unpack_node(image_path, name=None, output_folder=None, size=None):
     '''unpackage node is intended to unpackage a node that was packaged with
     package_node. The image should be a .tgz file. The general steps are to:
     1. Package the node using the package_node function
