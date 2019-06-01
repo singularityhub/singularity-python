@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -61,7 +59,7 @@ def get_custom_level(regexp=None,description=None,skip_files=None,include_files=
     return custom
 
 
-def get_level(level,version=None,include_files=None,skip_files=None):
+def get_level(level, version=None, include_files=None, skip_files=None):
     '''get_level returns a single level, with option to customize files
     added and skipped.
     '''

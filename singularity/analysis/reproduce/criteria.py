@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -24,15 +22,10 @@ import os
 import re
 
 
-def include_file(member,file_filter):
+def include_file(member_path, file_filter):
     '''include_file will look at a path and determine
     if it matches a regular expression from a level
     '''
-    member_path = member.name.replace('.','',1)
-
-    if len(member_path) == 0:
-        return False
-
     # Does the filter skip it explicitly?
     if "skip_files" in file_filter:
         if member_path in file_filter['skip_files']:
@@ -45,31 +38,25 @@ def include_file(member,file_filter):
 
     # Regular expression?
     if "regexp" in file_filter:
-        if re.search(file_filter["regexp"],member_path):
+        if re.search(file_filter["regexp"], member_path):
             return True
     return False
 
 
-def is_root_owned(member):
+def is_root_owned(member_path):
     '''assess if a file is root owned, meaning "root" or user/group 
     id of 0'''
-    if member.uid == 0 or member.gid == 0:
-        return True
-    elif member.uname == 'root' or member.gname == 'root':
+    member = os.stat(member_path)
+    if member.st_uid == 0 or member.st_gid == 0:
         return True
     return False
     
 
-def assess_content(member,file_filter):
+def assess_content(member_path, file_filter):
     '''Determine if the filter wants the file to be read for content.
     In the case of yes, we would then want to add the content to the
     hash and not the file object.
     '''
-    member_path = member.name.replace('.','',1)
-
-    if len(member_path) == 0:
-        return False
-
     # Does the filter skip it explicitly?
     if "skip_files" in file_filter:
         if member_path in file_filter['skip_files']:

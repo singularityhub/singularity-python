@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -19,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
+from spython.utils import get_singularity_version
 from spython.main import Client
 from singularity.logger import bot
 from .levels import get_levels
@@ -47,6 +46,11 @@ def assess_differences(image_file1,
     reports = dict()
     scores = dict()
 
+    # For version 3, export sandboxes
+    if 'version 3' in get_singularity_version():
+        image_file1 = Client.export(image_file1)
+        image_file2 = Client.export(image_file2)
+
     for level_name, level_filter in levels.items():
         contenders = []
         different = []
@@ -64,22 +68,25 @@ def assess_differences(image_file1,
             guts2 = get_content_hashes(image_path=image_file2,
                                        level_filter=level_filter)
       
-        print(level_name)
         files = list(set(list(guts1['hashes'].keys()) + list(guts2['hashes'].keys())))
 
         for file_name in files:
 
-            # If it's not in one or the other
+            # If it's not in one or the other, we can't directly compare
             if file_name not in guts1['hashes'] or file_name not in guts2['hashes']:
                 setdiff.append(file_name)
 
             else:
+
+                # We can directly compare - and they are the same
                 if guts1['hashes'][file_name] == guts2['hashes'][file_name]:
                     same+=1
+
                 else:
 
                     # If the file is root owned, we compare based on size
                     if size_heuristic == True:
+
                         if guts1['root_owned'][file_name] or guts2['root_owned'][file_name]:
                             if guts1['sizes'][file_name] == guts2['sizes'][file_name]:    
                                 same+=1
@@ -88,28 +95,39 @@ def assess_differences(image_file1,
                         else:
                             # Otherwise, we can assess the bytes content by reading it
                             contenders.append(file_name)
+
+                    # We don't use a size hueristic, we just will compare based on bytes
                     else:
                         contenders.append(file_name)
 
         # If the user wants identical (meaning extraction order and timestamps)
         if level_name == "IDENTICAL":
-                different = different + contenders
+            different = different + contenders
 
         # Otherwise we need to check based on byte content
         else:        
             if len(contenders) > 0:
+
                 for rogue in contenders:
-                    hashy1 = extract_content(image_file1, rogue, return_hash=True)
-                    hashy2 = extract_content(image_file2, rogue, return_hash=True)
-        
+
+                    if 'version 3' in get_singularity_version():
+                        hashy1 = extract_content(image_file1 + rogue, return_hash=True)
+                        hashy2 = extract_content(image_file2 + rogue, return_hash=True)
+                    else:
+                        hashy1 = extract_content(rogue, return_hash=True)
+                        hashy2 = extract_content(rogue, return_hash=True)        
+
                     # If we can't compare, we use size as a heuristic
                     if hashy1 is None or hashy2 is None: # if one is symlink, could be None
-                        different.append(file_name)                    
+                        different.append(file_name)
+                    
+                    # We still fall back to size heuristic if not possible
                     elif len(hashy1) == 0 or len(hashy2) == 0:
                         if guts1['sizes'][file_name] == guts2['sizes'][file_name]:    
                             same+=1
                         else:
                             different.append(file_name)                    
+
                     elif hashy1 != hashy2:
                         different.append(rogue)
                     else:

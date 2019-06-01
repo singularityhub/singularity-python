@@ -2,9 +2,7 @@
 
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2017-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -20,12 +18,6 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
-
-from numpy.testing import (
-    assert_array_equal, 
-    assert_almost_equal, 
-    assert_equal
-)
 
 from singularity.utils import (
     get_installdir, 
@@ -72,7 +64,7 @@ class TestReproduce(unittest.TestCase):
         self.assertTrue('LABELS' not in hashes)
 
         print("Case 3: Testing to retrieve one particular hash")
-        hashy = get_image_hash(self.image1,level="REPLICATE")
+        hashy = get_image_hash(self.image1, level="REPLICATE")
         self.assertTrue('LABELS' not in hashes)
         self.assertTrue(len(hashy)==32)
 
@@ -81,7 +73,7 @@ class TestReproduce(unittest.TestCase):
         from singularity.analysis.reproduce import assess_differences
 
         print("Testing function to calculate hash differences between two images")
-        diffs = assess_differences(image_file1=self.image1,image_file2=self.image2)
+        diffs = assess_differences(image_file1=self.image1, image_file2=self.image2)
         self.assertTrue(isinstance(diffs, dict))
         self.assertTrue('scores' in diffs)
 
@@ -126,7 +118,6 @@ class TestReproduce(unittest.TestCase):
         hashes = get_content_hashes(self.image1)
         for key in ['hashes','sizes','root_owned']:
             self.assertTrue(key in hashes)
-        self.assertEqual(len(hashes['hashes']), 8819)
 
 
     def test_extract_guts(self):
@@ -139,7 +130,6 @@ class TestReproduce(unittest.TestCase):
         levels = get_levels()
         file_obj,tar = get_image_tar(self.image1)
         guts = extract_guts(image_path=self.image1,
-                            tar=tar,
                             file_filter=levels['REPLICATE'])
         for key in ['root_owned','sizes','hashes']:
             self.assertTrue(key in guts)

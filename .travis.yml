@@ -1,10 +1,29 @@
-language: python
-
 sudo: true
+go:
+    - "1.11"
 
 os: linux
 
-language: python
+language: go
+
+addons:
+  apt:
+    packages:
+      - flawfinder
+      - squashfs-tools
+      - uuid-dev
+      - libuuid1
+      - libffi-dev
+      - libssl-dev
+      - libssl1.0.0
+      - libarchive-dev
+      - libgpgme11-dev
+      - libseccomp-dev
+  homebrew:
+    packages:
+      - squashfs
+    update: true
+
 
 matrix:
   include:
@@ -12,6 +31,9 @@ matrix:
       env: PYTHON_VERSION=2
     - os: linux
       env: PYTHON_VERSION=3
+
+install:
+  - # override
 
 before_install:
   - sudo chmod u+x .travis/*

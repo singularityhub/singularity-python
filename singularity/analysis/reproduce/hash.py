@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -46,18 +44,36 @@ def get_image_hashes(image_path, version=None, levels=None):
     if levels is None:
         levels = get_levels(version=version)
     hashes = dict()
-    for level_name,level_filter in levels.items():
+
+    # use a cached object for all
+    file_obj, tar = get_image_tar(image_path)
+
+    for level_name, level_filter in levels.items():
         hashes[level_name] = get_image_hash(image_path,
-                                            level_filter=level_filter)
+                                            level_filter=level_filter,
+                                            file_obj=file_obj,
+                                            tar=tar)
+
+    try:
+        file_obj.close()
+    except:
+        tar.close()
+ 
+    if os.path.exists(file_obj):
+        os.remove(file_obj)
+
     return hashes
 
 
 
 def get_image_hash(image_path,
-                   level=None,level_filter=None,
+                   level=None,
+                   level_filter=None,
                    include_files=None,
                    skip_files=None,
-                   version=None):
+                   version=None,
+                   file_obj=None,
+                   tar=None):
 
     '''get_image_hash will generate a sha1 hash of an image, depending on a level
     of reproducibility specified by the user. (see function get_levels for descriptions)
@@ -90,8 +106,12 @@ def get_image_hash(image_path,
         file_filter = get_level(level,version=version,
                                 skip_files=skip_files,
                                 include_files=include_files)
-                
-    file_obj, tar = get_image_tar(image_path)
+
+    close = False
+    if file_obj is None and tar is None:               
+        file_obj, tar = get_image_tar(image_path)
+        close = True
+
     hasher = hashlib.md5()
 
     for member in tar:
@@ -100,23 +120,24 @@ def get_image_hash(image_path,
         # For files, we either assess content, or include the file
         if member.isdir() or member.issym():
             continue
-        elif assess_content(member,file_filter):
-            content = extract_content(image_path,member.name)
+        elif assess_content(member, file_filter):
+            content = extract_content(image_path, member.name)
             hasher.update(content)
-        elif include_file(member,file_filter):
+        elif include_file(member.name, file_filter):
             buf = member.tobuf()
             hasher.update(buf)
 
     digest = hasher.hexdigest()
 
     # Close up / remove files
-    try:
-        file_obj.close()
-    except:
-        tar.close()
+    if close is True:
+        try:
+            file_obj.close()
+        except:
+            tar.close()
  
-    if os.path.exists(file_obj):
-        os.remove(file_obj)
+        if os.path.exists(file_obj):
+            os.remove(file_obj)
 
     return digest
 
@@ -141,7 +162,7 @@ def get_content_hashes(image_path,
         file_filter = level_filter
 
     elif level is None:
-        file_filter = get_level("REPLICATE",version=version,
+        file_filter = get_level("REPLICATE", version=version,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
@@ -150,15 +171,11 @@ def get_content_hashes(image_path,
                                 skip_files=skip_files,
                                 include_files=include_files)
 
-    file_obj,tar = get_image_tar(image_path)
-
     results = extract_guts(image_path=image_path,
-                           tar=tar,
                            file_filter=file_filter,
                            tag_root=tag_root,
                            include_sizes=include_sizes)
 
-    delete_image_tar(file_obj, tar)
     return results
 
 

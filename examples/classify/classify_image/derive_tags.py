@@ -15,9 +15,9 @@ from singularity.package import get_container_contents
 # Default tags will be returned as software in "bin"
 tags = get_tags(container)
 
-# We can also get the raw list of flies
-file_list = get_container_contents(container)['all']
-
 # We can specify other folders of interest
 folders = ['init','init.d','bin','systemd']
 tags = get_tags(container, search_folders=folders)
+
+# We can also get the raw list of flies
+file_list = get_container_contents(container)['all']

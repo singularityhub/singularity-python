@@ -17,4 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 '''
 
-from singularity.version import __version__
+from .instances import (
+    run_build,
+    finish_build
+)
+
+from .storage import (
+    get_bucket,
+    delete_object,
+    upload_file,
+    list_bucket,
+    get_image_path
+)

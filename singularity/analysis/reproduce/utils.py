@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2016-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -20,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 '''
 
 from spython.main import Client
+from spython.utils import get_singularity_version
 from .criteria import (
     assess_content, 
     include_file,
@@ -29,6 +28,7 @@ from .levels import get_level
 from singularity.logger import bot
 import hashlib
 import tarfile
+import tempfile
 import sys
 import os
 import re
@@ -37,13 +37,18 @@ import io
 Client.quiet = True
 
 def extract_guts(image_path,
-                 tar,
                  file_filter=None,
                  tag_root=True,
                  include_sizes=True):
 
-    '''extract the file guts from an in memory tarfile. The file is not closed.
-       This should not be done for large images.
+    '''extract the file guts from an image. 
+
+       Parameters
+       ==========
+       image_path: can be a tar, a Singularity image (sif) or a sandbox
+       file_filter: the file filter to extract guts for.
+       tag_root: if True (default) include if root owned or not.
+       include_sizes: include content sizes (defaults to True)
     '''
     if file_filter is None:
         file_filter = get_level('IDENTICAL')
@@ -58,26 +63,55 @@ def extract_guts(image_path,
     if include_sizes: 
         sizes = dict()
 
-    for member in tar:
-        member_name = member.name.replace('.','',1)
-        allfiles.append(member_name)
-        included = False
-        if member.isdir() or member.issym():
-            continue
-        elif assess_content(member,file_filter):
-            digest[member_name] = extract_content(image_path, member.name, return_hash=True)
-            included = True
-        elif include_file(member,file_filter):
-            hasher = hashlib.md5()
-            buf = member.tobuf()
-            hasher.update(buf)
-            digest[member_name] = hasher.hexdigest()
-            included = True
-        if included:
-            if include_sizes:
-                sizes[member_name] = member.size
-            if tag_root:
-                roots[member_name] = is_root_owned(member)
+    # Option 1: We are given a sandbox
+    if os.path.isdir(image_path):
+        sandbox = image_path
+
+    # Option 2: it's not a sandbox, and we need to export.
+    elif 'version 3' in get_singularity_version():
+        sandbox = Client.export(image_path)
+    else:
+        sandbox = Client.image.export(image_path)
+
+    # If it's tar, extract
+    if os.path.isfile(sandbox) and sandbox.endswith('tar'):
+        with tarfile.open(sandbox) as tar:
+            sandbox = os.path.join(os.path.dirname(sandbox), 'sandbox') 
+            tar.extractall(path=sandbox)
+
+    # Recursively walk through sandbox
+    for root, dirnames, filenames in os.walk(sandbox):
+        for filename in filenames:
+            sandbox_name = os.path.join(root, filename)
+
+            # Remove the sandbox base
+            member_name = sandbox_name.lstrip(sandbox)
+
+            allfiles.append(member_name)
+            included = False
+
+            # Skip over directories and symbolic links
+            if os.path.isdir(sandbox_name) or os.path.islink(sandbox_name):
+                continue
+
+            # If we have flagged to include, and not flagged to skip
+            elif assess_content(sandbox_name, file_filter):
+                digest[member_name] = extract_content(sandbox_name, return_hash=True)
+                included = True
+            elif include_file(sandbox_name, file_filter):
+                hasher = hashlib.md5()
+                with open(sandbox_name, 'rb') as filey:
+                    buf = filey.read()
+                    hasher.update(buf)
+                digest[member_name] = hasher.hexdigest()
+                included = True
+
+            # Derive size, and if root owned
+            if included:
+                if include_sizes:
+                    sizes[member_name] = os.stat(sandbox_name).st_size
+                if tag_root:
+                    roots[member_name] = is_root_owned(sandbox_name)
 
     results['all'] = allfiles
     results['hashes'] = digest
@@ -88,15 +122,13 @@ def extract_guts(image_path,
     return results
 
 
-
-def get_memory_tar(image_path):
-    '''get an in memory tar of an image. Use carefully, not as reliable
-       as get_image_tar
-    '''
-    byte_array = Client.image.export(image_path)
-    file_object = io.BytesIO(byte_array)
-    tar = tarfile.open(mode="r|*", fileobj=file_object)
-    return (file_object,tar)
+def create_tarfile(source_dir, output_filename=None):
+    ''' create a tarfile from a source directory'''
+    if output_filename == None:
+        output_filename = "%s/tmptar.tar" %(tempfile.mkdtemp())
+    with tarfile.open(output_filename, "w:gz") as tar:
+        tar.add(source_dir, arcname=os.path.basename(source_dir))
+    return output_filename
 
 
 def get_image_tar(image_path):
@@ -104,11 +136,16 @@ def get_image_tar(image_path):
     the file system. file_obj will either be the file object,
     or the file itself.
     '''
-    bot.debug('Generate file system tar...')   
-    file_obj = Client.image.export(image_path=image_path)
-    if file_obj is None:
-        bot.error("Error generating tar, exiting.")
-        sys.exit(1)
+    bot.debug('Generate file system tar...')
+
+    if 'version 3' in get_singularity_version():
+        sandbox = Client.export(image_path)
+        file_obj = create_tarfile(sandbox)
+    else:
+        file_obj = Client.image.export(image_path=image_path)
+        if file_obj is None:
+            bot.exit("Error generating tar, exiting.")
+            
     tar = tarfile.open(file_obj)
     return file_obj, tar
 
@@ -127,21 +164,27 @@ def delete_image_tar(file_obj, tar):
     return deleted
 
 
-def extract_content(image_path, member_name, return_hash=False):
+def extract_content(member_name, return_hash=False):
     '''extract_content will extract content from an image using cat.
     If hash=True, a hash sum is returned instead
     '''
-    if member_name.startswith('./'):
-        member_name = member_name.replace('.','',1)
     if return_hash:
         hashy = hashlib.md5()
 
+    # First try reading regular
     try:
-        content = Client.execute(image_path,'cat %s' %(member_name))
+        with open(member_name, 'r') as filey:
+            content = filey.read()
     except:
-        return None
 
-    if not isinstance(content,bytes):
+        # Then try binary
+        try:
+            with open(member_name, 'rb') as filey:
+                content = filey.read()
+        except:
+            return None
+
+    if not isinstance(content, bytes):
         content = content.encode('utf-8')
         content = bytes(content)
 

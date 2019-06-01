@@ -1,8 +1,6 @@
 '''
 
-Copyright (C) 2017 The Board of Trustees of the Leland Stanford Junior
-University.
-Copyright (C) 2016-2017 Vanessa Sochat.
+Copyright (C) 2017-2019 Vanessa Sochat.
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Affero General Public License as published by
@@ -105,7 +103,7 @@ def zip_up(file_list,zip_name,output_folder=None):
     if output_folder is not None:
         shutil.copyfile(output_zip,"%s/%s"%(output_folder,zip_name))
         shutil.rmtree(tmpdir)
-        output_zip = "%s/%s"%(output_folder,zip_name)
+        output_zip = "%s/%s"%(output_folder, zip_name)
 
     return output_zip
 
@@ -128,13 +126,11 @@ def get_container_contents(container, split_delim=None):
     # We will look for everything in guts, then return it
     guts = dict()
 
-    SINGULARITY_HUB = os.environ.get('SINGULARITY_HUB',"False")
+    SINGULARITY_HUB = os.environ.get('SINGULARITY_HUB', "False")
 
     # Visualization deployed local or elsewhere
     if SINGULARITY_HUB == "False":
-        file_obj,tar = get_image_tar(container)     
-        guts = extract_guts(image_path=container, tar=tar)
-        delete_image_tar(file_obj, tar)
+        guts = extract_guts(image_path=container)
 
     # Visualization deployed by singularity hub
     else:   

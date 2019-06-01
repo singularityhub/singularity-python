@@ -1,34 +1,23 @@
 from glob import glob
 
-from singularity.analysis.reproduce import assess_differences
+from singularity.analysis.reproduce import assess_differences, get_level
 
-image_files=glob('*.img')
+# singularity pull docker://ubuntu:14.04
+# singularity pull docker://ubuntu:12.04
+
+image_files = glob('ubuntu*.sif')
+
+
+# Choose a level that you want to assess based on
+level_filter = {"RECIPE": get_level('RECIPE')}
 
 # ASSESS DIFFERENCES #######################################
-# returns dictionary with 
 
-report = assess_differences(image_files[0],image_files[1])
+# Running for all levels, this will take a few minutes
+report = assess_differences(image_files[0], image_files[1], levels=level_filter)
 
-report.keys()
-# dict_keys(['different', 'missing', 'same'])
-
-# These files are equivalent between the images
-print(len(report['same']))
-5663
-
-# These files are present in both, but different
-print(report['different'])
-['./etc/hosts', 
- './.exec', 
- './environment', 
- './etc/mtab', 
- './etc/resolv.conf', 
- './.run', 
- './.shell', 
- './singularity']
-
-# These files are found in the first image, but not the second
-print(report['missing'])
-['./var/lib/apt/lists/.wh.archive.ubuntu.com_ubuntu_dists_xenial-updates_main_i18n_Translation-en', 
- './bin/gunzip']
-
+# {'RECIPE': {'difference': [],
+#  'intersect_different': [],
+#  'same': 7,
+#  'union': 14},
+# 'scores': {'RECIPE': 1.0}}

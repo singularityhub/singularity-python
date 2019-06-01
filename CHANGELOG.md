@@ -15,6 +15,7 @@ and changes prior to that are (unfortunately) done retrospectively. Critical ite
 
 
 ## [master](https://github.com/singularityware/singularity-python/tree/master)
+ - updating Singularity python for version 3 singularity (3.0.0)
  - removed all client functionality in favor of using spython (2.5)
  - build on Google will not extract file counts, etc.
 
