@@ -22,14 +22,14 @@ from setuptools import setup, find_packages
 import codecs
 import os
 
-##########################################################################################
-# HELPER FUNCTIONS #######################################################################
-##########################################################################################
+################################################################################
+# HELPER FUNCTIONS #############################################################
+################################################################################
 
 def get_lookup():
     '''get version by way of singularity.version, returns a 
-    lookup dictionary with several global variables without
-    needing to import singularity
+       lookup dictionary with several global variables without
+       needing to import singularity
     '''
     lookup = dict()
     version_file = os.path.join('singularity', 'version.py')
@@ -41,7 +41,8 @@ def get_lookup():
 # Read in requirements
 def get_reqs(lookup=None, key='INSTALL_REQUIRES'):
     '''get requirements, mean reading in requirements and versions from
-    the lookup obtained with get_lookup'''
+       the lookup obtained with get_lookup
+    '''
 
     if lookup == None:
         lookup = get_lookup()
@@ -76,12 +77,10 @@ PACKAGE_URL = lookup['PACKAGE_URL']
 KEYWORDS = lookup['KEYWORDS']
 DESCRIPTION = lookup['DESCRIPTION']
 LICENSE = lookup['LICENSE']
-with open('README.md') as filey:
-    LONG_DESCRIPTION = filey.read()
 
-##########################################################################################
-# MAIN ###################################################################################
-##########################################################################################
+################################################################################
+# MAIN #########################################################################
+################################################################################
 
 
 if __name__ == "__main__":
@@ -106,7 +105,6 @@ if __name__ == "__main__":
           url=PACKAGE_URL,
           license=LICENSE,
           description=DESCRIPTION,
-          long_description=LONG_DESCRIPTION,
           keywords=KEYWORDS,
           install_requires = INSTALL_REQUIRES,
           extras_require={

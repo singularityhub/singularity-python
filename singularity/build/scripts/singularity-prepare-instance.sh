@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ################################################################################
-# Instance Preparation
+# Instance Preparation (version 3.*)
 # For Google cloud, Stackdriver/logging should have Write, 
 #                   Google Storage should have Full
 #                   All other APIs None,
@@ -26,19 +26,16 @@
 sudo apt-get update &&
 sudo apt-get -y install git \
                    build-essential \
-                   libtool \
+                   libssl-dev \
+                   uuid-dev \
+                   libgpgme11-dev \
+                   libseccomp-dev \
+                   pkg-config
                    squashfs-tools \
-                   autotools-dev \
-                   libarchive-dev \
-                   automake \
-                   autoconf \
                    debootstrap \
                    yum \
-                   uuid-dev \
                    zypper \
-                   libssl-dev \
                    python3-pip
-
 
 # Pip3 installs
 sudo pip3 install --upgrade pip &&
@@ -47,11 +44,87 @@ sudo pip3 install --upgrade google-api-python-client &&
 sudo pip3 install --upgrade google &&
 sudo pip3 install oauth2client==3.0.0
 
+# Install GoLang
+export VERSION=1.12.6 OS=linux ARCH=amd64
+
+wget -O /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz https://dl.google.com/go/go${VERSION}.${OS}-${ARCH}.tar.gz && \
+    sudo tar -C /usr/local -xzf /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz
+
 # Install Singularity from Github
 
-cd /tmp && git clone -b feature-squashbuild-secbuild-2.5.0 https://github.com/cclerget/singularity.git &&
-cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install && sudo make secbuildimg
+mkdir -p /tmp/go
+export GOPATH=/tmp/go SINGULARITY_VERSION=3.2.1
+export PATH=/usr/local/go/bin:$PATH
+echo 'Defaults env_keep += "GOPATH"' | sudo tee --append /etc/sudoers.d/env_keep
+
+mkdir -p ${GOPATH}/src/github.com/sylabs && \
+    cd ${GOPATH}/src/github.com/sylabs && \
+    wget https://github.com/sylabs/singularity/archive/v${SINGULARITY_VERSION}.tar.gz && \
+    tar -xzvf v${SINGULARITY_VERSION}.tar.gz && \
+    mv singularity-${SINGULARITY_VERSION} singularity && \
+    cd singularity && \
+    echo "v${SINGULARITY_VERSION}" > VERSION
+
+cd ${GOPATH}/src/github.com/sylabs/singularity && \
+    ./mconfig && \
+    cd ./builddir && \
+    make && \
+    sudo make install
+
+# Prepare Secure Build
+
+SINGULARITY_libexecdir="/usr/local/libexec/singularity"
+SINGULARITY_PATH="/usr/local/bin"
+
+sudo mkdir -p "$SINGULARITY_libexecdir/secure-build"
+SECBUILD_IMAGE="$SINGULARITY_libexecdir/secure-build/secbuild.sif"
+
+BUILDTMP=$(mktemp -d)
+SECBUILD_SINGULARITY="$BUILDTMP/singularity"
+SECBUILD_DEFFILE="$BUILDTMP/secbuild.def"
+
+cat > "$SECBUILD_DEFFILE" << DEFFILE
+Bootstrap: docker
+From: ubuntu:18.04
+%post 
+    export LC_LANG=C
+    export VERSION=1.12.6 OS=linux ARCH=amd64
+    export SINGULARITY_VERSION=3.2.1
+    apt-get update -y
+    apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc
+    apt-get -y install libgpgme11-dev libseccomp-dev squashfs-tools libc6-dev-i386
+    apt-get install -y debootstrap yum pacman
+    apt-get clean
+    apt-get autoclean
+    rm -rf /usr/local/libexec/singularity
+    rm -rf /usr/local/lib/singularity
+    wget -O /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz https://dl.google.com/go/go${VERSION}.${OS}-${ARCH}.tar.gz && \
+    tar -C /usr/local -xzf /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz
+
+    mkdir -p /tmp/go
+    export GOPATH=/tmp/go
+    export PATH=/usr/local/go/bin:$PATH
+    export HOME=/root
+
+    mkdir -p ${GOPATH}/src/github.com/sylabs && \
+        cd ${GOPATH}/src/github.com/sylabs && \
+        wget https://github.com/sylabs/singularity/archive/v${SINGULARITY_VERSION}.tar.gz && \
+        tar -xzvf v${SINGULARITY_VERSION}.tar.gz && \
+        mv singularity-${SINGULARITY_VERSION} singularity && \
+        cd singularity && \
+        echo "v${SINGULARITY_VERSION}" > VERSION
+
+    cd ${GOPATH}/src/github.com/sylabs/singularity && \
+        ./mconfig && \
+        cd ./builddir && \
+        make && \
+        make install
+
+    sed -i 's/^.*allow-setuid.*$/allow setuid = no/' /usr/local/etc/singularity/singularity.conf
+DEFFILE
+
+sudo $SINGULARITY_PATH/singularity build --sandbox $SECBUILD_IMAGE $SECBUILD_DEFFILE
 
 # Singularity python development
-cd /tmp && git clone -b v2.5 https://www.github.com/vsoch/singularity-python.git &&
+cd /tmp && git clone -b v${SINGULARITY_VERSION} https://www.github.com/singularityhub/singularity-python.git &&
 cd /tmp/singularity-python && sudo python3 setup.py install
