@@ -38,11 +38,11 @@ sudo apt-get -y install git \
                    python3-pip
 
 # Pip3 installs
-sudo pip3 install --upgrade pip &&
-sudo pip3 install pyasn1-modules -U &&
-sudo pip3 install --upgrade google-api-python-client &&
-sudo pip3 install --upgrade google &&
-sudo pip3 install oauth2client==3.0.0
+sudo -H pip3 install -H --upgrade pip
+sudo -H pip3 install pyasn1-modules -U
+sudo -H pip3 install --upgrade google-api-python-client
+sudo -H pip3 install --upgrade google
+sudo -H pip3 install oauth2client==3.0.0
 
 # Install GoLang
 export VERSION=1.12.6 OS=linux ARCH=amd64
@@ -66,6 +66,7 @@ mkdir -p ${GOPATH}/src/github.com/sylabs && \
     echo "v${SINGULARITY_VERSION}" > VERSION
 
 cd ${GOPATH}/src/github.com/sylabs/singularity && \
+    wget 
     ./mconfig && \
     cd ./builddir && \
     make && \
