@@ -5,7 +5,7 @@
 SINGULARITY_BUILDDEF="${1}"
 SINGULARITY_FINAL="${2}"
 
-if [ ! -f ${SINGULARITY_BUILDDEF} ]; then
+if [ ! -f "${SINGULARITY_BUILDDEF}" ]; then
     echo "${SINGULARITY_BUILDDEF} does not exist";
     exit 1;
 fi
@@ -53,7 +53,7 @@ REPO_DIR="/root/repo"
 STAGED_BUILD_IMAGE="/root/build"
 
 # Move the repo to be the REPO_DIR
-mv $BUILDDEF_DIR $REPO_DIR
+cp -R $BUILDDEF_DIR $REPO_DIR
 
 mkdir ${SINGULARITY_WORKDIR}${REPO_DIR}
 mkdir ${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}

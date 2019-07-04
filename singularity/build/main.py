@@ -21,6 +21,7 @@ from spython.main import Client
 from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
     stop_if_result_none,
+    get_build_template_path,
     get_singularity_version,
     test_container
 )
@@ -58,7 +59,6 @@ def run_build(build_dir, params, verbose=True):
 
        The following must be included in params: 
        spec_file, repo_url, branch, commit
-
     '''
 
     # Download the repository
@@ -68,7 +68,7 @@ def run_build(build_dir, params, verbose=True):
 
     os.chdir(build_dir)
 
-    if params['branch'] != None:
+    if params['branch'] is not None:
         bot.info('Checking out branch %s' %params['branch'])
         os.system('git checkout %s' %(params['branch']))
     else:
@@ -81,7 +81,7 @@ def run_build(build_dir, params, verbose=True):
 
     # Commit
 
-    if params['commit'] not in [None,'']:
+    if params['commit'] not in [None, '']:
         bot.info('Checking out commit %s' %params['commit'])
         os.system('git checkout %s .' %(params['commit']))
 
@@ -96,7 +96,7 @@ def run_build(build_dir, params, verbose=True):
 
     # Now look for spec file
     if os.path.exists(params['spec_file']):
-        bot.info("Found spec file %s in repository" %params['spec_file'])
+        bot.info("Found spec file %s in repository" % params['spec_file'])
 
         # If the user has a symbolic link
         if os.path.islink(params['spec_file']):
@@ -107,6 +107,16 @@ def run_build(build_dir, params, verbose=True):
         start_time = datetime.now()
 
         # Secure Build
+        template = get_build_template_path("secure-build.sh")
+        if not os.path.exists(template):
+            bot.exit("Cannot find build template. Exiting.")
+
+        # Assemble the recipe
+        recipe_path = os.path.join(build_dir, params['spec_file'])
+        if not os.path.exists(recipe_path):
+            bot.exit("Cannot find build recipe %s. Exiting." % recipe_path)
+
+        result = Client._run_command(["/bin/bash", template, recipe_path, "container.sif"])
         image = Client.build(recipe=params['spec_file'],
                              build_folder=build_dir,
                              isolated=True)

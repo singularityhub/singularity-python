@@ -40,13 +40,13 @@ from subprocess import (
 import tempfile
 import zipfile
 
-######################################################################################
+################################################################################
 # Testing/Retry Functions
-######################################################################################
+################################################################################
 
 def stop_if_result_none(result):
     '''stop if result none will return True if we should not retry 
-    when result is none, False otherwise using retrying python package
+       when result is none, False otherwise using retrying python package
     '''
     do_retry = result is not None
     return do_retry
@@ -54,8 +54,11 @@ def stop_if_result_none(result):
 
 def test_container(image_path):
     '''test_container is a simple function to send a command to a container, and 
-    return the status code and any message run for the test. This comes after
-    :param image_path: path to the container image
+       return the status code and any message run for the test. This comes after
+    
+       Parameters
+       ==========
+       image_path: path to the container image
     '''
     from singularity.utils import run_command
     bot.debug('Testing container exec with a list command.')
@@ -63,20 +66,21 @@ def test_container(image_path):
     return run_command(testing_command)
     
 
-######################################################################################
+################################################################################
 # Build Templates
-######################################################################################
+################################################################################
 
 def get_build_template(template_name,params=None,to_file=None):
     '''get_build template returns a string or file for a particular build template, which is
-    intended to build a version of a Singularity image on a cloud resource.
-    :param template_name: the name of the template to retrieve in build/scripts
-    :param params: (if needed) a dictionary of parameters to substitute in the file
-    :param to_file: if defined, will write to file. Default returns string.
+       intended to build a version of a Singularity image on a cloud resource.
+
+       Parameters
+       ==========
+        template_name: the name of the template to retrieve in build/scripts
+        params: (if needed) a dictionary of parameters to substitute in the file
+        to_file: if defined, will write to file. Default returns string.
     '''
-    base = get_installdir()
-    template_folder = "%s/build/scripts" %(base)
-    template_file = "%s/%s" %(template_folder,template_name)
+    template_file = get_build_template_path(template_name)
     if os.path.exists(template_file):
         bot.debug("Found template %s" %template_file)
 
@@ -95,7 +99,25 @@ def get_build_template(template_name,params=None,to_file=None):
 
 
     else:
-        bot.warning("Template %s not found." %template_file)
+        bot.warning("Template %s not found." % template_file)
+
+
+def get_build_template_path(template_name):
+    '''get_build template returns a string or file for a particular build template, which is
+       intended to build a version of a Singularity image on a cloud resource.
+
+       Parameters
+       ==========
+       template_name: the name of the template to retrieve in build/scripts
+    '''
+    base = get_installdir()
+    template_folder = "%s/build/scripts" % base
+    template_file = "%s/%s" %(template_folder, template_name)
+    if os.path.exists(template_file):
+        bot.debug("Found template %s" % template_file)
+        return template_file
+    else:
+        bot.warning("Template %s not found." % template_file)
 
 
 ######################################################################################
