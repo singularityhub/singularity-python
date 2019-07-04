@@ -28,17 +28,16 @@ sudo apt-get -y install git \
                    build-essential \
                    libssl-dev \
                    uuid-dev \
-                   libgpgme11-dev \
+                   libgpgme-dev \
                    libseccomp-dev \
-                   pkg-config
+                   pkg-config \
                    squashfs-tools \
                    debootstrap \
                    yum \
-                   zypper \
                    python3-pip
 
 # Pip3 installs
-sudo -H pip3 install -H --upgrade pip
+sudo -H pip3 install --upgrade pip
 sudo -H pip3 install pyasn1-modules -U
 sudo -H pip3 install --upgrade google-api-python-client
 sudo -H pip3 install --upgrade google
@@ -91,7 +90,7 @@ From: ubuntu:18.04
 %post 
     export LC_LANG=C
     export VERSION=1.12.6 OS=linux ARCH=amd64
-    export SINGULARITY_VERSION=${SINGULARITY_VERSION}
+    export SINGULARITY_VERSION=3.2.1
     apt-get update -y
     apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc
     apt-get -y install libgpgme11-dev libseccomp-dev squashfs-tools libc6-dev-i386

@@ -74,7 +74,7 @@ func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error) {
 
 	// Bundle path must be predictable
 	b.Path = "/tmp/sbuild"
-	err = os.Mkdir(b.Path)
+	err = os.Mkdir(b.Path, 0755)
 	if err != nil {
 		return nil, err
 	}

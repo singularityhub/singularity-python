@@ -43,35 +43,37 @@ def run_build(logfile='/tmp/.shub-log'):
 
     '''run_build will generate the Singularity build from a spec_file from a repo_url.
 
-    If no arguments are required, the metadata api is queried for the values.
+       If no arguments are required, the metadata api is queried for the values.
 
-    :param build_dir: directory to do the build in. If not specified, will use temporary.   
-    :param spec_file: the spec_file name to use, assumed to be in git repo
-    :param repo_url: the url to download the repo from
-    :param repo_id: the repo_id to uniquely identify the repo (in case name changes)
-    :param commit: the commit to checkout. If none provided, will use most recent.
-    :param bucket_name: the name of the bucket to send files to
-    :param verbose: print out extra details as we go (default True)    
-    :param token: a token to send back to the server to authenticate the collection
-    :param secret: a secret to match to the correct container
-    :param response_url: the build url to send the response back to. Should also come
-    from metadata. If not specified, no response is sent
-    :param branch: the branch to checkout for the build.
+       Parameters
+       ==========
+       build_dir: directory to do the build in. If not specified, will use temporary.   
+       spec_file: the spec_file name to use, assumed to be in git repo
+       repo_url: the url to download the repo from
+       repo_id: the repo_id to uniquely identify the repo (in case name changes)
+       commit: the commit to checkout. If none provided, will use most recent.
+       bucket_name: the name of the bucket to send files to
+       verbose: print out extra details as we go (default True)    
+       token: a token to send back to the server to authenticate the collection
+       secret: a secret to match to the correct container
+       response_url: the build url to send the response back to. Should also come
+                    from metadata. If not specified, no response is sent
+       branch: the branch to checkout for the build.
 
-    :: note: this function is currently configured to work with Google Compute
-    Engine metadata api, and should (will) be customized if needed to work elsewhere 
+       :: note: this function is currently configured to work with Google Compute
+       Engine metadata api, and should (will) be customized if needed to work elsewhere 
 
     '''
 
     # If we are building the image, this will not be set
     go = get_build_metadata(key='dobuild')
-    if go == None:
+    if go is None:
         sys.exit(0)
 
     # If the user wants debug, this will be set
     debug = True
     enable_debug = get_build_metadata(key='debug')
-    if enable_debug == None:
+    if enable_debug is None:
         debug = False
     bot.info('DEBUG %s' %debug)
 
@@ -117,7 +119,7 @@ def run_build(logfile='/tmp/.shub-log'):
 
     # Upload image package files to Google Storage
     if os.path.exists(finished_image):
-        bot.info("%s successfully built" %finished_image)
+        bot.info("%s successfully built" % finished_image)
         dest_dir = tempfile.mkdtemp(prefix='build')
 
         # The path to the images on google drive will be the github url/commit folder
@@ -175,10 +177,11 @@ def run_build(logfile='/tmp/.shub-log'):
 
 def finish_build(verbose=True):
     '''finish_build will finish the build by way of sending the log to the same bucket.
-    the params are loaded from the previous function that built the image, expected in
-    $HOME/params.pkl
-    :: note: this function is currently configured to work with Google Compute
-    Engine metadata api, and should (will) be customized if needed to work elsewhere 
+       the params are loaded from the previous function that built the image, expected in
+       $HOME/params.pkl
+     
+       :: note: this function is currently configured to work with Google Compute
+       Engine metadata api, and should (will) be customized if needed to work elsewhere 
     '''
     # If we are building the image, this will not be set
     go = get_build_metadata(key='dobuild')
@@ -218,7 +221,10 @@ def finish_build(verbose=True):
 
 def get_build_metadata(key):
     '''get_build_metadata will return metadata about an instance from within it.
-    :param key: the key to look up
+
+       Parameters
+       ==========
+       key: the key to look up
     '''
     headers = {"Metadata-Flavor":"Google"}
     url = "http://metadata.google.internal/computeMetadata/v1/instance/attributes/%s" % key  

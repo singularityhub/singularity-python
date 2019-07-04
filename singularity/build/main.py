@@ -56,7 +56,7 @@ def run_build(build_dir, params, verbose=True):
       - returns a dictionary with: 
           image (path), metadata (dict)
 
-    The following must be included in params: 
+       The following must be included in params: 
        spec_file, repo_url, branch, commit
 
     '''
