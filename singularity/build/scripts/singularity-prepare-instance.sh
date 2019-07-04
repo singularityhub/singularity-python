@@ -66,7 +66,8 @@ mkdir -p ${GOPATH}/src/github.com/sylabs && \
     echo "v${SINGULARITY_VERSION}" > VERSION
 
 cd ${GOPATH}/src/github.com/sylabs/singularity && \
-    wget 
+    wget https://raw.githubusercontent.com/singularityhub/singularity-python/v3.2.1/singularity/build/scripts/bundle.go && \
+    mv bundle.go pkg/build/types/ && \
     ./mconfig && \
     cd ./builddir && \
     make && \
@@ -90,7 +91,7 @@ From: ubuntu:18.04
 %post 
     export LC_LANG=C
     export VERSION=1.12.6 OS=linux ARCH=amd64
-    export SINGULARITY_VERSION=3.2.1
+    export SINGULARITY_VERSION=${SINGULARITY_VERSION}
     apt-get update -y
     apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc
     apt-get -y install libgpgme11-dev libseccomp-dev squashfs-tools libc6-dev-i386

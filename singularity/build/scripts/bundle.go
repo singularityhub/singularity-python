@@ -6,7 +6,6 @@
 package types
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -75,7 +74,7 @@ func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error) {
 
 	// Bundle path must be predictable
 	b.Path = "/tmp/sbuild"
-	err = os.MkDir(b.Path)
+	err = os.Mkdir(b.Path)
 	if err != nil {
 		return nil, err
 	}
