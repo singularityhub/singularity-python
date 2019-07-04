@@ -8,6 +8,8 @@ SINGULARITY_FINAL="${2}"
 if [ ! -f "${SINGULARITY_BUILDDEF}" ]; then
     echo "${SINGULARITY_BUILDDEF} does not exist";
     exit 1;
+else
+    echo "Build definition file found as ${SINGULARITY_BUILDDEF}"
 fi
 
 SINGULARITY_confdir="/usr/local/etc/singularity"
@@ -53,10 +55,10 @@ REPO_DIR="/root/repo"
 STAGED_BUILD_IMAGE="/root/build"
 
 # Move the repo to be the REPO_DIR
-cp -R $BUILDDEF_DIR $REPO_DIR
+cp -R $BUILDDEF_DIR/* ${SINGULARITY_WORKDIR}$REPO_DIR
 
-mkdir ${SINGULARITY_WORKDIR}${REPO_DIR}
-mkdir ${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}
+mkdir -p ${SINGULARITY_WORKDIR}${REPO_DIR}
+mkdir -p ${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}
 
 BUILD_SCRIPT="$SINGULARITY_WORKDIR/tmp/build-script"
 TMP_CONF_FILE="$SINGULARITY_WORKDIR/tmp.conf"
@@ -98,7 +100,7 @@ allow setuid = yes
 CONF
 
 # We only use the builder once, make default config
-sudo cp "$TMP_CONF_FILE" "${SINGULARITY_confdir}/singularity.conf"
+cp "$TMP_CONF_FILE" "${SINGULARITY_confdir}/singularity.conf"
 
 # here build pre-stage
 cat > "$BUILD_SCRIPT" << SCRIPT
@@ -137,5 +139,5 @@ if [ ! -f "${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}/container.sif" ]; then
    exit 1;
 fi
 
-sudo mv "${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}/container.sif" "${SINGULARITY_FINAL}"
-sudo rm -rf $SINGULARITY_WORKDIR
+mv "${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}/container.sif" "$BUILDDEF_DIR/${SINGULARITY_FINAL}"
+rm -rf $SINGULARITY_WORKDIR

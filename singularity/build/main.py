@@ -111,12 +111,7 @@ def run_build(build_dir, params, verbose=True):
         if not os.path.exists(template):
             bot.exit("Cannot find build template. Exiting.")
 
-        # Assemble the recipe
-        recipe_path = os.path.join(build_dir, params['spec_file'])
-        if not os.path.exists(recipe_path):
-            bot.exit("Cannot find build recipe %s. Exiting." % recipe_path)
-
-        result = Client._run_command(["/bin/bash", template, recipe_path, "container.sif"])
+        result = Client._run_command(["/bin/bash", template, params['spec_file'], "container.sif"])
         image = Client.build(recipe=params['spec_file'],
                              build_folder=build_dir,
                              isolated=True)
