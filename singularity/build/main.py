@@ -17,6 +17,7 @@ from singularity.version import (
 )
 
 from spython.main import Client
+from spython.utils import stream_command
 
 from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
@@ -103,46 +104,62 @@ def run_build(build_dir, params, verbose=True):
             bot.info("%s is a symbolic link." %params['spec_file'])
             params['spec_file'] = os.path.realpath(params['spec_file'])
 
-        # START TIMING
-        start_time = datetime.now()
-
         # Secure Build
         template = get_build_template_path("secure-build.sh")
         if not os.path.exists(template):
             bot.exit("Cannot find build template. Exiting.")
 
-        result = Client._run_command(["/bin/bash", template, params['spec_file'], "container.sif"])
-        image = Client.build(recipe=params['spec_file'],
-                             build_folder=build_dir,
-                             isolated=True)
+        # START TIMING
+        start_time = datetime.now()
+
+        try:
+            # Stream output
+            for line in stream_command(["/bin/bash", template, "Singularity", "container.sif"]):
+                print(line)
+        except:
+            bot.exit("Build error. See above for details")
+
+        # Ensure that the image exists
+        image = os.path.join(build_dir, 'container.sif')
+        if not os.path.exists(image):
+            bot.exit("Final image does not exist.")
 
         # Save has for metadata (also is image name)
         version = get_image_file_hash(image)
         params['version'] = version
-        pickle.dump(params, open(passing_params,'wb'))
+        pickle.dump(params, open(passing_params, 'wb'))
 
         # Rename image to be hash
-        finished_image = "%s/%s.simg" %(os.path.dirname(image), version)
+        finished_image = "%s/%s.sif" %(os.path.dirname(image), version)
         image = shutil.move(image, finished_image)
 
         final_time = (datetime.now() - start_time).seconds
-        bot.info("Final time of build %s seconds." %final_time)  
+        bot.info("Final time of build %s seconds." % final_time)  
 
         # Did the container build successfully?
         test_result = test_container(image)
         if test_result['return_code'] != 0:
-            bot.error("Image failed to build, cancelling.")
-            sys.exit(1)
+            bot.exit("Image failed to build, cancelling.")
 
         # Get singularity version
         singularity_version = Client.version()
         Client.debug = False
-        inspect = Client.inspect(image) # this is a string
+        inspect = Client.inspect(image)
+
+        # Fix the incorrect data structure
+        if "data" not in inspect:
+            inspect["data"] = {}
+ 
+            if "attributes" in inspect:
+                inspect["data"]['attributes'] = inspect['attributes']
+                del inspect['attributes']
+
         Client.debug = params['debug']
 
         # Get information on apps
         Client.debug = False
         app_names = Client.apps(image)
+        app_names = [a for a in app_names if "\x1b[0m" not in a]
         Client.debug = params['debug']
         apps = extract_apps(image, app_names)
         
@@ -163,7 +180,7 @@ def run_build(build_dir, params, verbose=True):
 
         # Tell the user what is actually there
         present_files = glob("*")
-        bot.error("Build file %s not found in repository" %params['spec_file'])
+        bot.error("Build file %s not found in repository" % params['spec_file'])
         bot.info("Found files are %s" %"\n".join(present_files))
         # Params have been exported, will be found by log
         sys.exit(1)
@@ -173,10 +190,13 @@ def run_build(build_dir, params, verbose=True):
 def send_build_data(build_dir, data, secret, 
                     response_url=None,clean_up=True):
     '''finish build sends the build and data (response) to a response url
-    :param build_dir: the directory of the build
-    :response_url: where to send the response. If None, won't send
-    :param data: the data object to send as a post
-    :param clean_up: If true (default) removes build directory
+
+       Parameters
+       ==========
+       build_dir: the directory of the build
+       response_url: where to send the response. If None, won't send
+       the data object to send as a post
+       clean_up: If true (default) removes build directory
     '''
     # Send with Authentication header
     body = '%s|%s|%s|%s|%s' %(data['container_id'],
@@ -210,9 +230,9 @@ def send_build_data(build_dir, data, secret,
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,retry_on_result=stop_if_result_none)
 def send_build_close(params,response_url):
     '''send build close sends a final response (post) to the server to bring down
-    the instance. The following must be included in params:
+       the instance. The following must be included in params:
 
-    repo_url, logfile, repo_id, secret, log_file, token
+       repo_url, logfile, repo_id, secret, log_file, token
     '''
     # Finally, package everything to send back to shub
     response = {"log": json.dumps(params['log_file']),

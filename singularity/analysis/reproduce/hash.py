@@ -39,7 +39,7 @@ Client.quiet = True
 
 def get_image_hashes(image_path, version=None, levels=None):
     '''get_image_hashes returns the hash for an image across all levels. This is the quickest,
-    easiest way to define a container's reproducibility on each level.
+       easiest way to define a container's reproducibility on each level.
     '''
     if levels is None:
         levels = get_levels(version=version)
@@ -179,13 +179,21 @@ def get_content_hashes(image_path,
     return results
 
 
+def get_image_file_hash(image_path, algorithm='sha256'):
+    '''return an md5 hash of the file based on a criteria level. This
+       is intended to give the file a reasonable version.
+    
+       Parameters
+       ==========
+       image_path: full path to the singularity image
 
-def get_image_file_hash(image_path):
-    '''get_image_hash will return an md5 hash of the file based on a criteria level.
-    :param level: one of LOW, MEDIUM, HIGH
-    :param image_path: full path to the singularity image
     '''
-    hasher = hashlib.md5()
+    try:
+        hasher = getattr(hashlib, algorithm)()
+    except AttributeError:
+        bot.error("%s is an invalid algorithm.")
+        bot.exit(' '.join(hashlib.algorithms_guaranteed))
+
     with open(image_path, "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hasher.update(chunk)

@@ -70,7 +70,7 @@ def test_container(image_path):
 # Build Templates
 ################################################################################
 
-def get_build_template(template_name,params=None,to_file=None):
+def get_build_template(template_name, params=None,to_file=None):
     '''get_build template returns a string or file for a particular build template, which is
        intended to build a version of a Singularity image on a cloud resource.
 
@@ -80,7 +80,7 @@ def get_build_template(template_name,params=None,to_file=None):
         params: (if needed) a dictionary of parameters to substitute in the file
         to_file: if defined, will write to file. Default returns string.
     '''
-    template_file = get_build_template_path(template_name)
+    template_file = get_build_template_path(template_name) or ""
     if os.path.exists(template_file):
         bot.debug("Found template %s" %template_file)
 
