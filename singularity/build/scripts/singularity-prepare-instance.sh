@@ -40,5 +40,5 @@ cd /tmp && git clone -b feature-squashbuild-secbuild-2.5.0 https://github.com/vs
 cd /tmp/singularity && ./autogen.sh && ./configure --prefix=/usr/local && make && sudo make install && sudo make secbuildimg
 
 # Singularity python development
-cd /tmp && git clone -b v2.5 https://www.github.com/vsoch/singularity-python.git &&
+cd /tmp && git clone -b v2.5-private https://www.github.com/vsoch/singularity-python.git &&
 cd /tmp/singularity-python && sudo python3 setup.py install
