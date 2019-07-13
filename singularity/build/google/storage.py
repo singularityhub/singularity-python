@@ -34,7 +34,7 @@ from singularity.logger import bot
 ################################################################################
     
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def get_bucket(storage_service,bucket_name):
+def get_bucket(storage_service, bucket_name):
     req = storage_service.buckets().get(bucket=bucket_name)
     return req.execute()
 
@@ -42,9 +42,12 @@ def get_bucket(storage_service,bucket_name):
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=10)
 def delete_object(storage_service, bucket_name, object_name):
     '''delete_file will delete a file from a bucket
-    :param storage_service: the service obtained with get_storage_service
-    :param bucket_name: the name of the bucket (eg singularity-hub)
-    :param object_name: the "name" parameter of the object.
+
+       Parameters
+       ==========
+       storage_service: the service obtained with get_storage_service
+       bucket_name: the name of the bucket (eg singularity-hub)
+       object_name: the "name" parameter of the object.
     '''
     try:
         operation = storage_service.objects().delete(bucket=bucket_name,
@@ -79,7 +82,6 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
                                      resumable=True)
         request = storage_service.objects().insert(bucket=bucket['id'], 
                                                    body=body,
-                                                   predefinedAcl="publicRead",
                                                    media_body=media)
         result = request.execute()
         return result
@@ -100,9 +102,12 @@ def list_bucket(bucket,storage_service):
 
 def get_image_path(repo_url, trailing_path):
     '''get_image_path will determine an image path based on a repo url, removing
-    any token, and taking into account urls that end with .git.
-    :param repo_url: the repo url to parse:
-    :param trailing_path: the trailing path (commit then hash is common)
+       any token, and taking into account urls that end with .git.
+
+       Parameters
+       ==========
+       repo_url: the repo url to parse:
+       trailing_path: the trailing path (commit then hash is common)
     '''
     repo_url = repo_url.split('@')[-1].strip()
     if repo_url.endswith('.git'):
