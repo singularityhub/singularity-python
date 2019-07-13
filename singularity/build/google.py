@@ -64,9 +64,9 @@ import zipfile
 # Log everything to stdout
 from singularity.logger import bot
 
-##########################################################################################
-# GOOGLE GENERAL API #####################################################################
-##########################################################################################
+################################################################################
+# GOOGLE GENERAL API ###########################################################
+################################################################################
 
 def get_google_service(service_type=None,version=None):
     '''
@@ -83,9 +83,9 @@ def get_google_service(service_type=None,version=None):
     return build(service_type, version, credentials=credentials) 
 
 
-##########################################################################################
-# GOOGLE STORAGE API #####################################################################
-##########################################################################################
+################################################################################
+# GOOGLE STORAGE API ###########################################################
+################################################################################
     
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def get_bucket(storage_service,bucket_name):
@@ -125,6 +125,7 @@ def upload_file(storage_service, bucket,bucket_path, file_name, verbose=True):
         upload_path = "%s/" %(upload_path)
     upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
     body = {'name': upload_path }
+
     # Create media object with correct mimetype
     if os.path.exists(file_name):
         mimetype = sniff_extension(file_name,verbose=verbose)
@@ -133,11 +134,10 @@ def upload_file(storage_service, bucket,bucket_path, file_name, verbose=True):
                                      resumable=True)
         request = storage_service.objects().insert(bucket=bucket['id'], 
                                                    body=body,
-                                                   predefinedAcl="publicRead",
                                                    media_body=media)
         result = request.execute()
         return result
-    bot.warning('%s requested for upload does not exist, skipping' %file_name)
+    bot.warning('%s requested for upload does not exist, skipping' % file_name)
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def list_bucket(bucket,storage_service):
