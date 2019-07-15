@@ -39,7 +39,7 @@ def get_bucket(storage_service, bucket_name):
     return req.execute()
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,stop_max_attempt_number=10)
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=10)
 def delete_object(storage_service, bucket_name, object_name):
     '''delete_file will delete a file from a bucket
 
@@ -58,8 +58,8 @@ def delete_object(storage_service, bucket_name, object_name):
     return operation
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000, stop_max_attempt_number=3)
+def upload_file(storage_service, bucket, bucket_path, file_name, verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
        will create it if not found. If folder is found or created, the metadata is
        returned, otherwise None is returned
@@ -80,10 +80,11 @@ def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
 
     # Create media object with correct mimetype
     if os.path.exists(file_name):
-        mimetype = sniff_extension(file_name,verbose=verbose)
+        mimetype = sniff_extension(file_name, verbose=verbose)
         media = http.MediaFileUpload(file_name,
                                      mimetype=mimetype,
                                      resumable=True)
+
         request = storage_service.objects().insert(bucket=bucket['id'], 
                                                    body=body,
                                                    media_body=media)

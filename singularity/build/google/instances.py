@@ -140,7 +140,7 @@ def run_build(logfile='/tmp/.shub-log'):
         # For each file, upload to storage
         files = []
         for build_file in build_files:
-            bot.info("Uploading %s to storage..." %build_file)
+            bot.info("Uploading %s to storage..." % build_file)
             storage_file = upload_file(storage_service,
                                        bucket=bucket,
                                        bucket_path=image_path,
