@@ -29,10 +29,12 @@ import requests
 ################################################################################
 
 def get_google_service(service_type=None, version=None):
-    '''
-    get a google service using the discovery client.
-    :param service_type: the service to get (default is storage)
-    :param version: version to use (default is v1)
+    '''get a google service using the discovery client.
+
+       Parameters
+       ==========
+       service_type: the service to get (default is storage)
+       version: version to use (default is v1)
     '''
     if service_type == None:
         service_type = "storage"

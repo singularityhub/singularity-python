@@ -61,19 +61,23 @@ def delete_object(storage_service, bucket_name, object_name):
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def upload_file(storage_service,bucket,bucket_path,file_name,verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
-    will create it if not found. If folder is found or created, the metadata is
-    returned, otherwise None is returned
-    :param storage_service: the drive_service created from get_storage_service
-    :param bucket: the bucket object from get_bucket
-    :param file_name: the name of the file to upload
-    :param bucket_path: the path to upload to
+       will create it if not found. If folder is found or created, the metadata is
+       returned, otherwise None is returned
+
+       Parameters
+       ==========
+       storage_service: the drive_service created from get_storage_service
+       bucket: the bucket object from get_bucket
+       file_name: the name of the file to upload
+       bucket_path: the path to upload to
     '''
     # Set up path on bucket
     upload_path = "%s/%s" %(bucket['id'],bucket_path)
     if upload_path[-1] != '/':
         upload_path = "%s/" %(upload_path)
     upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
-    body = {'name': upload_path }
+    body = {'name': upload_path}
+
     # Create media object with correct mimetype
     if os.path.exists(file_name):
         mimetype = sniff_extension(file_name,verbose=verbose)

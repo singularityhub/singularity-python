@@ -182,6 +182,7 @@ def sniff_extension(file_path,verbose=True):
                       "mp3": 'audio/mpeg',
                       "zip": 'application/zip',
                       "simg": 'application/zip',
+                      "sif": 'application/zip',
                       "rar": 'application/rar',
                       "tar": 'application/tar',
                       "arj": 'application/arj',
