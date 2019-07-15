@@ -42,6 +42,7 @@ sudo -H python3 -m pip install pyasn1-modules -U
 sudo -H python3 -m pip install --upgrade google-api-python-client
 sudo -H python3 -m pip install --upgrade google
 sudo -H python3 -m pip install oauth2client==3.0.0
+sudo -H python3 -m pip install ipython
 
 # Install GoLang
 export VERSION=1.12.6 OS=linux ARCH=amd64
