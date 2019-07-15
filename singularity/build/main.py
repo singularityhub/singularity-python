@@ -126,9 +126,9 @@ def run_build(build_dir, params, verbose=True):
                              isolated=True)
 
         # If the image is None, the build has failed
-        if image == None:
+        if image is None or not os.path.exists(image):
             final_time = (datetime.now() - start_time).seconds
-            bot.info("Image failed build: build end %s seconds." %final_time)  
+            bot.info("Image failed build: build end %s seconds." % final_time)  
             sys.exit(1)
 
         # Save has for metadata (also is image name)
@@ -137,7 +137,7 @@ def run_build(build_dir, params, verbose=True):
         pickle.dump(params, open(passing_params,'wb'))
 
         # Rename image to be hash
-        finished_image = "%s/%s.simg" %(os.path.dirname(image), version)
+        finished_image = "%s/%s.sif" %(os.path.dirname(image), version)
         image = shutil.move(image, finished_image)
 
         final_time = (datetime.now() - start_time).seconds
@@ -170,9 +170,12 @@ def run_build(build_dir, params, verbose=True):
   
         output = {'image':image,
                   'metadata':metrics,
-                  'params':params }
+                  'params':params}
 
         return output
+
+# STOPPED - need to test instance upload to storage. Try pushing singularity-python
+# for update, then redoing build to see why not working
 
     else:
 

@@ -110,7 +110,7 @@ def delete_object(storage_service,bucket_name,object_name):
 
 
 @retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
-def upload_file(storage_service, bucket,bucket_path, file_name, verbose=True):
+def upload_file(storage_service, bucket, bucket_path, file_name, verbose=True):
     '''get_folder will return the folder with folder_name, and if create=True,
     will create it if not found. If folder is found or created, the metadata is
     returned, otherwise None is returned
@@ -124,7 +124,7 @@ def upload_file(storage_service, bucket,bucket_path, file_name, verbose=True):
     if upload_path[-1] != '/':
         upload_path = "%s/" %(upload_path)
     upload_path = "%s%s" %(upload_path,os.path.basename(file_name))
-    body = {'name': upload_path }
+    body = {'name': upload_path}
 
     # Create media object with correct mimetype
     if os.path.exists(file_name):
@@ -238,14 +238,14 @@ def run_build(logfile='/tmp/.shub-log'):
 
     # Output includes:
     finished_image = output['image']
-    finished_recipe = '/%s/%s' %(build_dir, os.path.basename(params['spec_file']))
-    bot.info('Recipe to upload to storage %s' %finished_recipe)
+    finished_recipe = '%s/%s' %(build_dir, os.path.basename(params['spec_file']))
+    bot.info('Recipe to upload to storage %s' % finished_recipe)
     metadata = output['metadata']  
     params = output['params']  
 
     # Upload image package files to Google Storage
     if os.path.exists(finished_image):
-        bot.info("%s successfully built" %finished_image)
+        bot.info("%s successfully built" % finished_image)
         dest_dir = tempfile.mkdtemp(prefix='build')
 
         # The path to the images on google drive will be the github url/commit folder
@@ -269,7 +269,7 @@ def run_build(logfile='/tmp/.shub-log'):
         # For each file, upload to storage
         files = []
         for build_file in build_files:
-            bot.info("Uploading %s to storage..." %build_file)
+            bot.info("Uploading %s to storage..." % build_file)
             storage_file = upload_file(storage_service,
                                        bucket=bucket,
                                        bucket_path=image_path,
@@ -344,9 +344,9 @@ def finish_build(verbose=True):
                      response_url=params['logging_url'])
 
 
-#####################################################################################
+################################################################################
 # METADATA
-#####################################################################################
+################################################################################
 
 
 def get_build_metadata(key):
