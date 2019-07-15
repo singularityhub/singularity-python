@@ -36,6 +36,7 @@ from singularity.logger import bot
 from .utils import get_google_service
 from .storage import (
     get_image_path,
+    get_bucket,
     upload_file
 )
 
@@ -194,7 +195,7 @@ def finish_build(verbose=True):
 
     # Start the storage service, retrieve the bucket
     storage_service = get_google_service()
-    bucket = get_bucket(storage_service,params['bucket_name'])
+    bucket = get_bucket(storage_service, params['bucket_name'])
 
     # If version isn't in params, build failed
     version = 'error-%s' % str(uuid.uuid4())
