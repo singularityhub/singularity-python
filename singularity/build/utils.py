@@ -156,6 +156,14 @@ def get_singularity_version(singularity_version=None):
 # Extensions and Files
 ######################################################################################
 
+def convert_size(size_bytes, to, bsize=1024):
+    '''A function to convert bytes to a human friendly string.
+    '''
+    a = {'KB': 1, 'MB': 2, 'GB': 3, 'TB': 4, 'PB': 5, 'EB': 6}
+    r = float(size_bytes)
+    for _ in range(a[to]):
+        r = r / bsize
+    return r
 
 def sniff_extension(file_path,verbose=True):
     '''sniff_extension will attempt to determine the file type based on the extension,

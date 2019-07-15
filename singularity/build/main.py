@@ -21,6 +21,7 @@ from spython.utils import stream_command
 
 from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
+    convert_size,
     stop_if_result_none,
     get_build_template_path,
     get_singularity_version,
@@ -153,6 +154,11 @@ def run_build(build_dir, params, verbose=True):
             if "attributes" in inspect:
                 inspect["data"]['attributes'] = inspect['attributes']
                 del inspect['attributes']
+
+        # Singularity 3.x no longer calculates size
+        if 'org.label-schema.build-size' not in inspect['data']['attributes']['labels']:
+            image_size = convert_size(os.path.getsize(image), "MB")  # bytes to MB             
+            inspect['data']['attributes']['labels']['org.label-schema.build-size'] = "%sMB" % image_size
 
         Client.debug = params['debug']
 
