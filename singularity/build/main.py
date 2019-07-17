@@ -231,9 +231,10 @@ def send_build_data(build_dir, data, secret,
     # Delay a bit, to give buffer between bringing instance down
     time.sleep(20)
 
-
-
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,retry_on_result=stop_if_result_none)
+@retry(wait_exponential_multiplier=1000,
+       wait_exponential_max=10000,
+       retry_on_result=stop_if_result_none,
+       stop_max_attempt_number=5)
 def send_build_close(params,response_url):
     '''send build close sends a final response (post) to the server to bring down
        the instance. The following must be included in params:
