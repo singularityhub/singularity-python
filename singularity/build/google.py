@@ -302,8 +302,7 @@ def run_build(logfile='/tmp/.shub-log'):
 
         # Dump final params, for logger to retrieve
         passing_params = "/tmp/params.pkl"
-        pickle.dump(params,open(passing_params,'wb'))
-
+        pickle.dump(params, open(passing_params,'wb'))
 
 
 def finish_build(verbose=True):

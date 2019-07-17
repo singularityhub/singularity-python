@@ -22,15 +22,17 @@ sudo apt-get -y install git \
                    yum \
                    uuid-dev \
                    libssl-dev \
+                   python3 \
                    python3-pip
 
 
 # Pip3 installs
-sudo -H pip3 install --upgrade pip
-sudo -H pip3 install pyasn1-modules -U
-sudo -H pip3 install --upgrade google-api-python-client
-sudo -H pip3 install --upgrade google 
-sudo -H pip3 install oauth2client==3.0.0
+sudo -H python3 -m pip install --upgrade pip
+sudo -H python3 -m pip install pyasn1-modules -U
+sudo -H python3 -m pip install --upgrade google-api-python-client
+sudo -H python3 -m pip install --upgrade google 
+sudo -H python3 -m pip install oauth2client==3.0.0
+sudo -H python3 -m pip install ipython
 
 # Install Singularity from Github
 

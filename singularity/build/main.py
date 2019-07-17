@@ -174,9 +174,6 @@ def run_build(build_dir, params, verbose=True):
 
         return output
 
-# STOPPED - need to test instance upload to storage. Try pushing singularity-python
-# for update, then redoing build to see why not working
-
     else:
 
         # Tell the user what is actually there
@@ -225,7 +222,10 @@ def send_build_data(build_dir, data, secret,
 
 
 
-@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000,retry_on_result=stop_if_result_none)
+@retry(wait_exponential_multiplier=1000,
+       wait_exponential_max=10000,
+       retry_on_result=stop_if_result_none,
+       stop_max_attempt_number=5)
 def send_build_close(params,response_url):
     '''send build close sends a final response (post) to the server to bring down
     the instance. The following must be included in params:
