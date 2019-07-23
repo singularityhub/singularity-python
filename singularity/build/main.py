@@ -111,6 +111,7 @@ def run_build(build_dir, params, verbose=True):
             bot.exit("Cannot find build template. Exiting.")
 
         # START TIMING
+        bot.info("\nSTARTING BUILD")
         start_time = datetime.now()
 
         try:
