@@ -85,12 +85,12 @@ def run_build(build_dir, params, verbose=True):
 
     if params['commit'] not in [None, '']:
         bot.info('Checking out commit %s' %params['commit'])
-        os.system('git checkout %s .' %(params['commit']))
+        os.system('git checkout %s .' % params['commit'])
 
     # From here on out commit is used as a unique id, if we don't have one, we use current
     else:
         params['commit'] = os.popen('git log -n 1 --pretty=format:"%H"').read()
-        bot.warning("commit not specified, setting to current %s" %params['commit'])
+        bot.warning("commit not specified, setting to current %s" % params['commit'])
 
     # Dump some params for the builder, in case it fails after this
     passing_params = "/tmp/params.pkl"
@@ -102,7 +102,7 @@ def run_build(build_dir, params, verbose=True):
 
         # If the user has a symbolic link
         if os.path.islink(params['spec_file']):
-            bot.info("%s is a symbolic link." %params['spec_file'])
+            bot.info("%s is a symbolic link." % params['spec_file'])
             params['spec_file'] = os.path.realpath(params['spec_file'])
 
         # Secure Build
@@ -115,7 +115,7 @@ def run_build(build_dir, params, verbose=True):
 
         try:
             # Stream output
-            for line in stream_command(["/bin/bash", template, "Singularity", "container.sif"]):
+            for line in stream_command(["/bin/bash", template, params['spec_file'], "container.sif"]):
                 print(line)
         except:
             bot.exit("Build error. See above for details")
@@ -260,7 +260,7 @@ def send_build_close(params,response_url):
 
     headers = {'Authorization': signature }
 
-    finish = requests.post(response_url,data=response, headers=headers)
+    finish = requests.post(response_url, data=response, headers=headers)
     bot.debug("FINISH POST TO SINGULARITY HUB ---------------------")
     bot.debug(finish.status_code)
     bot.debug(finish.reason)
