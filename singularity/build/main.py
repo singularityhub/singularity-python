@@ -34,7 +34,7 @@ from spython.main import Client
 
 from singularity.analysis.apps import extract_apps
 from singularity.build.utils import (
-    retry_if_server_busy,
+    stop_if_result_none,
     get_singularity_version,
     test_container
 )
@@ -186,7 +186,6 @@ def run_build(build_dir, params, verbose=True):
 
 @retry(wait_exponential_multiplier=1000, 
        wait_exponential_max=10000, 
-       retry_on_result=retry_if_server_busy,
        stop_max_attempt_number=5)
 def send_build_data(build_dir, data, secret, 
                     response_url=None,clean_up=True):
@@ -227,7 +226,7 @@ def send_build_data(build_dir, data, secret,
 
 @retry(wait_exponential_multiplier=1000,
        wait_exponential_max=10000,
-       retry_on_result=retry_if_server_busy,
+       retry_on_result=stop_if_result_none,
        stop_max_attempt_number=5)
 def send_build_close(params, response_url):
     '''send build close sends a final response (post) to the server to bring down

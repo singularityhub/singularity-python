@@ -62,15 +62,6 @@ def stop_if_result_none(result):
     return do_retry
 
 
-def retry_if_server_busy(result):
-    '''if the result.status_code is 500 or 502, retry.
-    '''
-    do_retry = False
-    if result.status_code in [500, 502]:
-        do_retry = True
-    return do_retry
-
-
 def test_container(image_path):
     '''test_container is a simple function to send a command to a container, and 
     return the status code and any message run for the test. This comes after
