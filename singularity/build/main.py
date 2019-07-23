@@ -207,7 +207,7 @@ def send_build_data(build_dir, data, secret,
                                           payload=body,
                                           request_type="push")
 
-    headers = {'Authorization': signature }
+    headers = {'Authorization': signature}
 
     if response_url is not None:
         finish = requests.post(response_url,data=data, headers=headers)
