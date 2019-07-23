@@ -224,7 +224,6 @@ def send_build_data(build_dir, data, secret,
 
 @retry(wait_exponential_multiplier=1000,
        wait_exponential_max=10000,
-       retry_on_result=stop_if_result_none,
        stop_max_attempt_number=5)
 def send_build_close(params,response_url):
     '''send build close sends a final response (post) to the server to bring down
@@ -249,9 +248,9 @@ def send_build_close(params,response_url):
                                           payload=body,
                                           request_type="finish")
 
-    headers = {'Authorization': signature }
+    headers = {'Authorization': signature}
 
-    finish = requests.post(response_url,data=response, headers=headers)
+    finish = requests.post(response_url, data=response, headers=headers)
     bot.debug("FINISH POST TO SINGULARITY HUB ---------------------")
     bot.debug(finish.status_code)
     bot.debug(finish.reason)

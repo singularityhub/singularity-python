@@ -25,7 +25,6 @@ sudo apt-get -y install git \
                    python3 \
                    python3-pip
 
-
 # Pip3 installs
 sudo -H python3 -m pip install --upgrade pip
 sudo -H python3 -m pip install pyasn1-modules -U

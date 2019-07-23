@@ -339,9 +339,9 @@ def finish_build(verbose=True):
                                      file_name=params['logfile'])
                 
     # Close up shop
-    send_build_close(params=params,
-                     response_url=params['logging_url'])
-
+    result = send_build_close(params=params,
+                              response_url=params['logging_url'])
+    sys.exit(result.status_code)
 
 ################################################################################
 # METADATA
