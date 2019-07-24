@@ -133,8 +133,7 @@ def run_build(logfile='/tmp/.shub-log'):
         # The finished recipe must be called Singularity
         recipe_upload = os.path.join(build_dir, "Singularity")
         spec_file = os.path.join(build_dir, params['spec_file'])
-        if not os.path.exists(recipe_upload):
-            shutil.move(spec_file, recipe_upload) 
+        shutil.move(spec_file, recipe_upload) 
 
         build_files = [finished_image, recipe_upload]
         bot.info("Sending image to storage:") 

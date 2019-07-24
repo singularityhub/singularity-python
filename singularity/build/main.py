@@ -71,8 +71,8 @@ def run_build(build_dir, params, verbose=True):
     os.chdir(build_dir)
 
     if params['branch'] is not None:
-        bot.info('Checking out branch %s' %params['branch'])
-        os.system('git checkout %s' %(params['branch']))
+        bot.info('Checking out branch %s' % params['branch'])
+        os.system('git checkout %s' % params['branch'])
     else:
         params['branch'] = "master"
 
@@ -216,10 +216,10 @@ def send_build_data(build_dir, data, secret,
                                           payload=body,
                                           request_type="push")
 
-    headers = {'Authorization': signature }
+    headers = {'Authorization': signature}
 
     if response_url is not None:
-        finish = requests.post(response_url,data=data, headers=headers)
+        finish = requests.post(response_url, data=data, headers=headers)
         bot.debug("RECEIVE POST TO SINGULARITY HUB ---------------------")
         bot.debug(finish.status_code)
         bot.debug(finish.reason)
