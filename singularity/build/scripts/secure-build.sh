@@ -17,7 +17,7 @@ CONTENDER_STAGES=$(cat $SINGULARITY_BUILDDEF | grep ^[[:blank:]]*Stage:)
 
 # Case 1: We have stages
 for stage in $CONTENDER_STAGES; do
-    if [ "$stage" != "Stage" ]; then
+    if [ "$stage" != "Stage:" ]; then
         stages="$stage $stages"
     fi
 done
@@ -152,7 +152,6 @@ else
         mkdir -p "${SINGULARITY_WORKDIR}$STAGED_BUILD_IMAGE"
         echo "none ${STAGED_BUILD_IMAGE}      bind    dev     0 0" >> "$FSTAB_FILE"
         echo "bind path = /tmp/sbuild$stage/fs:$STAGED_BUILD_IMAGE" >> "$TMP_CONF_FILE"
-        echo "bind path = /tmp/sbuild$stage/fs:$STAGED_BUILD_IMAGE" >> "$TMP_CONF_FILE"
     done
 
     # The final stage is where we put the container
@@ -160,6 +159,10 @@ else
 
     # We only use the builder once, make default config
     cp "$TMP_CONF_FILE" "${SINGULARITY_confdir}/singularity.conf"
+
+    # add final lines of build script
+    echo "singularity build --no-cleanup $STAGED_BUILD_IMAGE/container.sif $BUILDDEF" >> "${BUILD_SCRIPT}"
+    echo "exit \$?" >> ${BUILD_SCRIPT}
 
 fi
 
