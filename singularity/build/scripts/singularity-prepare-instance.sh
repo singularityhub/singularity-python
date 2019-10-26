@@ -97,6 +97,7 @@ From: ubuntu:18.04
     export LC_LANG=C
     export VERSION=1.12.6 OS=linux ARCH=amd64
     export SINGULARITY_VERSION=3.2.1
+    export DEBIAN_FRONTEND=noninteractive
     apt-get update -y
     apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc cryptsetup
     apt-get -y install libgpgme11-dev libseccomp-dev squashfs-tools libc6-dev-i386
@@ -132,6 +133,6 @@ DEFFILE
 
 sudo $SINGULARITY_PATH/singularity build --sandbox $SECBUILD_IMAGE $SECBUILD_DEFFILE
 
-# Singularity python development
+# Singularity python
 cd /tmp && git clone -b v${SINGULARITY_VERSION} https://www.github.com/singularityhub/singularity-python.git &&
 cd /tmp/singularity-python && sudo python3 setup.py install
