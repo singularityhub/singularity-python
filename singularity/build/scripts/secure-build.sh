@@ -12,6 +12,18 @@ else
     echo "Build definition file found as ${SINGULARITY_BUILDDEF}"
 fi
 
+# Get all stages
+CONTENDER_STAGES=$(cat $SINGULARITY_BUILDDEF | grep ^[[:blank:]]*Stage:)
+
+stages="build"
+for stage in $CONTENDER_STAGES; do
+    if [ "$stage" != "Stage" ]; then
+        stages="$stage $stages"
+    fi
+done
+
+echo "Found stages $stages"
+
 SINGULARITY_confdir="/usr/local/etc/singularity"
 SINGULARITY_bindir="/usr/local/bin"
 SINGULARITY_libexecdir="/usr/local/libexec/singularity"
@@ -51,11 +63,18 @@ cat > "$SINGULARITY_WORKDIR/root/.rpmmacros" << RPMMAC
 %_dbpath %{_var}/lib/rpm
 RPMMAC
 
+# Staged build image is the main / final build
 REPO_DIR="/root/repo"
 STAGED_BUILD_IMAGE="/root/build"
 
 mkdir -p ${SINGULARITY_WORKDIR}${REPO_DIR}
 mkdir -p ${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}
+
+# Make directory for each stage (build included)
+#for stage in $stages; do
+#    echo "Creating ${SINGULARITY_WORKDIR}/root/$stage"
+#    mkdir -p "${SINGULARITY_WORKDIR}/root/$stage"
+#done
 
 # Move the repo to be the REPO_DIR
 cp -R $BUILDDEF_DIR/* ${SINGULARITY_WORKDIR}$REPO_DIR

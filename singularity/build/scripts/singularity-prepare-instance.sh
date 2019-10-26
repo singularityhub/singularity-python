@@ -1,11 +1,12 @@
 #!/bin/bash
 
 ################################################################################
-# Instance Preparation (version 3.*)
+# Instance Preparation (version 3.4*)
 # For Google cloud, Stackdriver/logging should have Write, 
 #                   Google Storage should have Full
 #                   All other APIs None,
-#
+#                   Ubuntu 18.04 LTS
+#      
 # Copyright (C) 2016-2019 Vanessa Sochat.
 #
 # This program is free software: you can redistribute it and/or modify it
@@ -26,6 +27,7 @@
 sudo apt-get update &&
 sudo apt-get -y install git \
                    build-essential \
+                   cryptsetup \
                    libssl-dev \
                    uuid-dev \
                    libgpgme-dev \
@@ -65,9 +67,11 @@ mkdir -p ${GOPATH}/src/github.com/sylabs && \
     cd singularity && \
     echo "v${SINGULARITY_VERSION}" > VERSION
 
+# https://github.com/sylabs/singularity/blob/release-3.4/internal/pkg/build/build.go is 3.4.2 at build time
 cd ${GOPATH}/src/github.com/sylabs/singularity && \
     wget https://raw.githubusercontent.com/singularityhub/singularity-python/v3.2.1/singularity/build/scripts/bundle.go && \
     mv bundle.go pkg/build/types/ && \
+    mv build.go internal/pkg/build/build.go
     ./mconfig && \
     cd ./builddir && \
     make && \

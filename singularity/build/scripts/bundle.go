@@ -6,12 +6,17 @@
 package types
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	ocitypes "github.com/containers/image/types"
+	"github.com/sylabs/singularity/internal/pkg/client/cache"
 	"github.com/sylabs/singularity/internal/pkg/sylog"
+	"github.com/sylabs/singularity/pkg/util/crypt"
 )
+
+
 
 // Bundle is the temporary build environment used during the image
 // building process. A Bundle is the programmatic representation of
@@ -40,7 +45,7 @@ type Bundle struct {
 
 // Options defines build time behavior to be executed on the bundle
 type Options struct {
-	// sections are the parts of the definition to run during the build
+	// Sections are the parts of the definition to run during the build
 	Sections []string `json:"sections"`
 	// TmpDir specifies a non-standard temporary location to perform a build
 	TmpDir string
@@ -50,6 +55,10 @@ type Options struct {
 	LibraryAuthToken string `json:"libraryAuthToken"`
 	// contains docker credentials if specified
 	DockerAuthConfig *ocitypes.DockerAuthConfig
+	// EncryptionKeyInfo specifies the key used for filesystem
+	// encryption if applicable
+	// A nil value indicated encryption should not occur
+	EncryptionKeyInfo *crypt.KeyInfo
 	// noTest indicates if build should skip running the test script
 	NoTest bool `json:"noTest"`
 	// force automatically deletes an existing container at build destination while performing build
@@ -61,10 +70,15 @@ type Options struct {
 	// NoCleanUp allows a user to prevent a bundle from being cleaned up after a failed build
 	// useful for debugging
 	NoCleanUp bool `json:"noCleanUp"`
+	// NoCache when true, will not use any cache, or make cache.
+	NoCache bool
+	// ImgCache stores a pointer to the image cache to use
+	ImgCache *cache.Handle
 }
 
-// NewBundle creates a Bundle environment
-func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error) {
+// Common code between NewBundle and NewEncryptedBundle
+func bundleCommon(bundleDir, bundlePrefix string, keyInfo *crypt.KeyInfo, stageName string) (b *Bundle, err error) {
+
 	b = &Bundle{}
 	b.JSONObjects = make(map[string][]byte)
 
@@ -73,7 +87,11 @@ func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error) {
 	}
 
 	// Bundle path must be predictable
-	b.Path = "/tmp/sbuild"
+	// TODO if this isn't defined just do sbuild
+	sylog.Debugf("Stage name is %v\n", stageName)
+	b.Path = "/tmp/sbuild" + stageName
+	sylog.Debugf("Will use path for bundle %v\n", b.Path)
+
 	err = os.Mkdir(b.Path, 0755)
 	if err != nil {
 		return nil, err
@@ -84,6 +102,8 @@ func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error) {
 		"rootfs": "fs",
 	}
 
+	b.Opts.EncryptionKeyInfo = keyInfo
+
 	for _, fso := range b.FSObjects {
 		if err = os.MkdirAll(filepath.Join(b.Path, fso), 0755); err != nil {
 			return
@@ -91,6 +111,17 @@ func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error) {
 	}
 
 	return b, nil
+
+}
+
+// NewEncryptedBundle creates an Encrypted Bundle environment
+func NewEncryptedBundle(bundleDir, bundlePrefix string, keyInfo *crypt.KeyInfo, stageName string) (b *Bundle, err error) {
+	return bundleCommon(bundleDir, bundlePrefix, keyInfo, stageName)
+}
+
+// NewBundle creates a Bundle environment
+func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error, stageName string) {
+	return bundleCommon(bundleDir, bundlePrefix, nil, stageName)
 }
 
 // Rootfs give the path to the root filesystem in the Bundle
