@@ -95,8 +95,8 @@ Bootstrap: docker
 From: ubuntu:18.04
 %post 
     export LC_LANG=C
-    export VERSION=1.12.6 OS=linux ARCH=amd64
-    export SINGULARITY_VERSION=3.2.1
+    export VERSION=1.13 OS=linux ARCH=amd64
+    export SINGULARITY_VERSION=3.4.2
     export DEBIAN_FRONTEND=noninteractive
     apt-get update -y
     apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc cryptsetup
