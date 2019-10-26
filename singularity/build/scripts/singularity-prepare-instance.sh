@@ -47,7 +47,7 @@ sudo -H python3 -m pip install oauth2client==3.0.0
 sudo -H python3 -m pip install ipython
 
 # Install GoLang
-export VERSION=1.12.6 OS=linux ARCH=amd64
+export VERSION=1.13 OS=linux ARCH=amd64
 
 wget -O /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz https://dl.google.com/go/go${VERSION}.${OS}-${ARCH}.tar.gz && \
     sudo tar -C /usr/local -xzf /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz
@@ -55,7 +55,7 @@ wget -O /tmp/go${VERSION}.${OS}-${ARCH}.tar.gz https://dl.google.com/go/go${VERS
 # Install Singularity from Github
 
 mkdir -p /tmp/go
-export GOPATH=/tmp/go SINGULARITY_VERSION=3.2.1
+export GOPATH=/tmp/go SINGULARITY_VERSION=3.4.2
 export PATH=/usr/local/go/bin:$PATH
 echo 'Defaults env_keep += "GOPATH"' | sudo tee --append /etc/sudoers.d/env_keep
 
@@ -69,7 +69,8 @@ mkdir -p ${GOPATH}/src/github.com/sylabs && \
 
 # https://github.com/sylabs/singularity/blob/release-3.4/internal/pkg/build/build.go is 3.4.2 at build time
 cd ${GOPATH}/src/github.com/sylabs/singularity && \
-    wget https://raw.githubusercontent.com/singularityhub/singularity-python/v3.2.1/singularity/build/scripts/bundle.go && \
+    wget https://raw.githubusercontent.com/singularityhub/singularity-python/v$SINGULARITY_VERSION/singularity/build/scripts/bundle.go && \
+    wget https://raw.githubusercontent.com/singularityhub/singularity-python/v$SINGULARITY_VERSION/singularity/build/scripts/build.go && \
     mv bundle.go pkg/build/types/ && \
     mv build.go internal/pkg/build/build.go
     ./mconfig && \
@@ -97,7 +98,7 @@ From: ubuntu:18.04
     export VERSION=1.12.6 OS=linux ARCH=amd64
     export SINGULARITY_VERSION=3.2.1
     apt-get update -y
-    apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc
+    apt-get -y install git build-essential libssl-dev uuid-dev pkg-config curl gcc cryptsetup
     apt-get -y install libgpgme11-dev libseccomp-dev squashfs-tools libc6-dev-i386
     apt-get install -y debootstrap yum pacman
     apt-get clean

@@ -6,7 +6,6 @@
 package types
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -86,11 +85,10 @@ func bundleCommon(bundleDir, bundlePrefix string, keyInfo *crypt.KeyInfo, stageN
 		bundlePrefix = "sbuild-"
 	}
 
-	// Bundle path must be predictable
-	// TODO if this isn't defined just do sbuild
-	sylog.Debugf("Stage name is %v\n", stageName)
+	// Bundle path must be predictable (/tmp/sbuild if not defined)
+	sylog.Infof("Stage name is %v\n", stageName)
 	b.Path = "/tmp/sbuild" + stageName
-	sylog.Debugf("Will use path for bundle %v\n", b.Path)
+	sylog.Infof("Will use path for bundle %v\n", b.Path)
 
 	err = os.Mkdir(b.Path, 0755)
 	if err != nil {
@@ -120,7 +118,7 @@ func NewEncryptedBundle(bundleDir, bundlePrefix string, keyInfo *crypt.KeyInfo, 
 }
 
 // NewBundle creates a Bundle environment
-func NewBundle(bundleDir, bundlePrefix string) (b *Bundle, err error, stageName string) {
+func NewBundle(bundleDir, bundlePrefix string, stageName string) (b *Bundle, err error) {
 	return bundleCommon(bundleDir, bundlePrefix, nil, stageName)
 }
 

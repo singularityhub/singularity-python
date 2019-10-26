@@ -15,14 +15,12 @@ fi
 # Get all stages
 CONTENDER_STAGES=$(cat $SINGULARITY_BUILDDEF | grep ^[[:blank:]]*Stage:)
 
-stages="build"
+# Case 1: We have stages
 for stage in $CONTENDER_STAGES; do
     if [ "$stage" != "Stage" ]; then
         stages="$stage $stages"
     fi
 done
-
-echo "Found stages $stages"
 
 SINGULARITY_confdir="/usr/local/etc/singularity"
 SINGULARITY_bindir="/usr/local/bin"
@@ -63,18 +61,9 @@ cat > "$SINGULARITY_WORKDIR/root/.rpmmacros" << RPMMAC
 %_dbpath %{_var}/lib/rpm
 RPMMAC
 
-# Staged build image is the main / final build
+# Location for the repository
 REPO_DIR="/root/repo"
-STAGED_BUILD_IMAGE="/root/build"
-
 mkdir -p ${SINGULARITY_WORKDIR}${REPO_DIR}
-mkdir -p ${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}
-
-# Make directory for each stage (build included)
-#for stage in $stages; do
-#    echo "Creating ${SINGULARITY_WORKDIR}/root/$stage"
-#    mkdir -p "${SINGULARITY_WORKDIR}/root/$stage"
-#done
 
 # Move the repo to be the REPO_DIR
 cp -R $BUILDDEF_DIR/* ${SINGULARITY_WORKDIR}$REPO_DIR
@@ -88,10 +77,7 @@ HOSTS_FILE="$SINGULARITY_WORKDIR/hosts"
 cp /etc/resolv.conf $RESOLV_CONF
 cp /etc/hosts $HOSTS_FILE
 
-cat > "$FSTAB_FILE" << FSTAB
-none $STAGED_BUILD_IMAGE      bind    dev     0 0
-FSTAB
-
+# Create base temporary config file
 cat > "$TMP_CONF_FILE" << CONF
 config passwd = yes
 config group = no
@@ -109,7 +95,6 @@ user bind control = no
 bind path = $SINGULARITY_WORKDIR/root:/root
 bind path = $SINGULARITY_WORKDIR/tmp:/tmp
 bind path = $SINGULARITY_WORKDIR/var_tmp:/var/tmp
-bind path = /tmp/sbuild/fs:$STAGED_BUILD_IMAGE
 bind path = $FSTAB_FILE:/etc/fstab
 bind path = $RESOLV_CONF:/etc/resolv.conf
 bind path = $HOSTS_FILE:/etc/hosts
@@ -118,10 +103,7 @@ allow user capabilities = no
 allow setuid = yes
 CONF
 
-# We only use the builder once, make default config
-cp "$TMP_CONF_FILE" "${SINGULARITY_confdir}/singularity.conf"
-
-# here build pre-stage
+# Shared starting script (will have build command appended)
 cat > "$BUILD_SCRIPT" << SCRIPT
 #!/bin/sh
 mount -r --no-mtab -t proc proc /proc
@@ -135,10 +117,53 @@ if [ \$? != 0 ]; then
     exit 1
 fi
 cd $REPO_DIR
-singularity build $STAGED_BUILD_IMAGE/container.sif $BUILDDEF
-exit \$?
 SCRIPT
 
+
+# Proceed based on stages (or not)
+if [ "$stages" == "" ]; then 
+    echo "NO STAGES"
+
+    # Staged build image is the main / final build
+    STAGED_BUILD_IMAGE="/root/build"
+    mkdir -p ${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}
+
+    cat > "$FSTAB_FILE" << FSTAB
+none $STAGED_BUILD_IMAGE      bind    dev     0 0
+FSTAB
+
+    # Update config file with staged build image
+    echo "bind path = /tmp/sbuild/fs:$STAGED_BUILD_IMAGE" >> "$TMP_CONF_FILE"
+
+    # We only use the builder once, make default config
+    cp "$TMP_CONF_FILE" "${SINGULARITY_confdir}/singularity.conf"
+
+    # add final lines of build script
+    echo "singularity build $STAGED_BUILD_IMAGE/container.sif $BUILDDEF" >> "${BUILD_SCRIPT}"
+    echo "exit \$?" >> ${BUILD_SCRIPT}
+
+else 
+    echo "Found stages $stages"
+
+    # Make directory for each stage (/root/<stage>
+    for stage in $stages; do
+        STAGED_BUILD_IMAGE="/root/$stage"
+        echo "Creating ${SINGULARITY_WORKDIR}$STAGED_BUILD_IMAGE"
+        mkdir -p "${SINGULARITY_WORKDIR}$STAGED_BUILD_IMAGE"
+        echo "none ${STAGED_BUILD_IMAGE}      bind    dev     0 0" >> "$FSTAB_FILE"
+        echo "bind path = /tmp/sbuild$stage/fs:$STAGED_BUILD_IMAGE" >> "$TMP_CONF_FILE"
+        echo "bind path = /tmp/sbuild$stage/fs:$STAGED_BUILD_IMAGE" >> "$TMP_CONF_FILE"
+    done
+
+    # The final stage is where we put the container
+    echo "Final staged build image is $STAGED_BUILD_IMAGE"
+
+    # We only use the builder once, make default config
+    cp "$TMP_CONF_FILE" "${SINGULARITY_confdir}/singularity.conf"
+
+fi
+
+# Shared final tweaks
 chmod +x $BUILD_SCRIPT
 
 unset SINGULARITY_IMAGE
@@ -154,8 +179,8 @@ if [ $? != 0 ]; then
 fi
 
 if [ ! -f "${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}/container.sif" ]; then
-   echo "Container was not built.";
-   exit 1;
+    echo "Container was not built.";
+    exit 1;
 fi
 
 mv "${SINGULARITY_WORKDIR}${STAGED_BUILD_IMAGE}/container.sif" "$BUILDDEF_DIR/${SINGULARITY_FINAL}"
