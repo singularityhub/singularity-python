@@ -13,11 +13,12 @@ else
 fi
 
 # Get all stages
-CONTENDER_STAGES=$(cat $SINGULARITY_BUILDDEF | grep ^[[:blank:]]*Stage:)
+CONTENDER_STAGES=$(cat $SINGULARITY_BUILDDEF | grep -i ^[[:blank:]]*Stage:)
 
 # Case 1: We have stages
 for stage in $CONTENDER_STAGES; do
-    if [ "$stage" != "Stage:" ]; then
+    lowerstage=$(echo "$stage" | tr '[:upper:]' '[:lower:]')
+    if [ "$lowerstage" != "stage:" ]; then
         stages="$stage $stages"
     fi
 done
