@@ -121,8 +121,9 @@ def run_build(build_dir, params, verbose=True):
         except:
             bot.exit("Build error. See above for details")
 
-        # Ensure that the image exists
-        image = os.path.join(build_dir, 'container.sif')
+        # Ensure that the image exists, it is moved to the build-def directory
+        image_dir = os.path.dirname(params['spec_file'])
+        image = os.path.join(image_dir, 'container.sif')
         if not os.path.exists(image):
             bot.exit("Final image does not exist.")
 
